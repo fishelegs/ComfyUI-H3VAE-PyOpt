@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.inductor_cache/
+.pytest_cache/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.engine
+*.onnx
+*.mp4
+*.mov
+bench_*_results.json
+bench_*_report.md
+results/
