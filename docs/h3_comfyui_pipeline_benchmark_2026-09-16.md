@@ -6,7 +6,7 @@
 
 - ComfyUI `0.33.0`
 - PyTorch `2.11.0+cu130`，Python `3.12.14`
-- NVIDIA Graphics Device，FP16 VAE、BF16 UNet/text encoder
+- NVIDIA RTX PRO 6000 72GB，FP16 VAE、BF16 UNet/text encoder
 - 1344×768，124 帧，24 fps，`res_multistep`，20 steps
 - 独立 ComfyUI `8081` 测试服务；正式 `8080` 未改动
 - workflow 仅将节点 119 从原生 `VAELoader` 换成 `H3VAEPyOptLoader`

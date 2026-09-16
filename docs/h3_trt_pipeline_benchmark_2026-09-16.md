@@ -11,7 +11,7 @@
 - PyTorch `2.8.0+cu128`，Torch CUDA `12.8`
 - TensorRT Python binding `11.2.1.2`
 - NumPy `2.4.6`，safetensors `0.8.0`
-- GPU：`NVIDIA Graphics Device`，driver `580.82.07`
+- GPU：`NVIDIA RTX PRO 6000 72GB`，Compute Capability `12.0`，driver `580.82.07`
 - CUDA toolkit（`nvcc`）：`13.0.48`
 
 环境曾先在 `/tmp/h3_trt_env` 完成安装和 engine smoke test，随后克隆到上述持久路径并再次验证 `torch.cuda.is_available()`、TensorRT import 和两个 engine 反序列化均成功。完整依赖清单见 [`environment/trt_requirements.txt`](../environment/trt_requirements.txt)。
