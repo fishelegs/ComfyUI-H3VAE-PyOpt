@@ -33,3 +33,7 @@
 这是**旧基准脚本里的优化 PyTorch 路径**，不是现行 ComfyUI PyOpt 运行时的新 A/B；不能据此声称新项目已经超过 TRT。当前 TRT engine 固定 672 配置，亦不能直接与 1344×768 ComfyUI 时间比较。历史细节见 `bench_h3vae_672_summary_report.md`。
 
 新项目应保留优化实现和公平 benchmark：同一 FP16 权重、相同随机输入、相同 tile/帧数、充分预热、CUDA Event、encode/decode 分项与画质误差；报告 GPU/软件版本、编译与热启动分别计时。旧 TRT 对照需要可用的 TensorRT Python binding 和匹配 engine。权重、engine、上游 MiniMax 模型代码不得打包提交。
+
+## 本地项目状态
+
+新 Git 项目已在当前目录的 `ComfyUI-H3VAE-PyTorch/` 建立，包含 PyOpt ComfyUI loader、历史优化版 PyTorch/原 TRT benchmark，以及新的 `bench_pyopt_vs_trt.py` 全视频同输入对照。CPU 测试与全部 Python 文件语法检查通过。当前 Python 3.12 环境未安装 TensorRT binding，GPU 同时有明显业务负载，故**没有伪造新 PyOpt vs TRT 的性能数字**；需在兼容 engine 的空闲环境中正式复测。GitHub 目标待用户提供，目前只完成本地提交。
