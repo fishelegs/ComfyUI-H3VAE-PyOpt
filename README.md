@@ -1,4 +1,4 @@
-# ComfyUI-H3VAE-PyTorch
+# ComfyUI-H3VAE-PyOpt
 
 MiniMax H3 视频 VAE 的 PyTorch encode/decode 优化项目，包含 ComfyUI loader、独立全视频基准和旧 TensorRT VAE 对照。**仓库不包含 MiniMax 模型源码、权重或 TensorRT engine。**
 

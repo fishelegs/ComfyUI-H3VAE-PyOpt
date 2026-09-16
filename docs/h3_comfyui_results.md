@@ -36,4 +36,4 @@
 
 ## 本地项目状态
 
-新 Git 项目已在当前目录的 `ComfyUI-H3VAE-PyTorch/` 建立，包含 PyOpt ComfyUI loader、历史优化版 PyTorch/原 TRT benchmark，以及新的 `bench_pyopt_vs_trt.py` 全视频同输入对照。CPU 测试与全部 Python 文件语法检查通过。TensorRT 11.2.1.2 对照环境已安装在 `/data/miniconda3/envs/h3_trt_11_2` 并完成当前尺寸 engine 测试；GPU 同时有明显业务负载，严格同 tile A/B 仍需在空闲 GPU 上复测。GitHub 目标待用户提供，目前只完成本地提交。
+新 Git 项目已在当前目录的 `ComfyUI-H3VAE-PyOpt/` 建立，包含 PyOpt ComfyUI loader、历史优化版 PyTorch/原 TRT benchmark，以及新的 `bench_pyopt_vs_trt.py` 全视频同输入对照。CPU 测试与全部 Python 文件语法检查通过。TensorRT 11.2.1.2 对照环境已安装在 `/data/miniconda3/envs/h3_trt_11_2` 并完成当前尺寸 engine 测试；GPU 同时有明显业务负载，严格同 tile A/B 仍需在空闲 GPU 上复测。GitHub 目标待用户提供，目前只完成本地提交。
