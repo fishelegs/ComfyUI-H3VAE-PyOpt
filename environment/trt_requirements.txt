@@ -1,0 +1,6 @@
+# Tested on 2026-09-16 with the existing MiniMax H3 TensorRT engines.
+# Create the environment with Python 3.11.13 before installing this file.
+torch==2.8.0+cu128
+tensorrt==11.2.1.2
+safetensors==0.8.0
+numpy==2.4.6

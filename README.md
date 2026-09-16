@@ -4,7 +4,7 @@ MiniMax H3 视频 VAE 的 PyTorch encode/decode 优化项目，包含 ComfyUI lo
 
 ## 当前结论
 
-历史同轮 672×672 FP16、124/243 帧测试里，旧优化 PyTorch 路径的 decode+encode 总耗时分别比原 TensorRT 路径低 **1.69% / 1.58%**。这来自 `bench_h3vae_trt.py` 的旧优化分支，**不是本仓库 ComfyUI PyOpt runtime 与 TRT 的新 A/B**；后者需要按下述命令在兼容 TRT 的环境里重测，不能先宣布胜出。见 `docs/h3_comfyui_results.md`。
+历史同轮 672×672 FP16、124/243 帧测试里，旧优化 PyTorch 路径的 decode+encode 总耗时分别比原 TensorRT 路径低 **1.69% / 1.58%**。在当前 ComfyUI 使用的 1344×768×124 视频上，已有 TRT engine 的新实测为 decoder **13.750 s median**、encoder **21.467 s median**；当前 ComfyUI PyOpt decoder 为 **12.028 s**，但使用 tile 256，而该 TRT engine 固定 tile 368，不能把它当作严格同 tile A/B。完整结果和环境见 `docs/h3_trt_pipeline_benchmark_2026-09-16.md`。
 
 本项目保留两条 PyTorch 路径：
 
@@ -14,6 +14,8 @@ MiniMax H3 视频 VAE 的 PyTorch encode/decode 优化项目，包含 ComfyUI lo
 ## 外部依赖
 
 需要 CUDA、PyTorch（历史结果为 2.8；当前 ComfyUI 为 2.11）、Triton、safetensors、MiniMax H3 `FL2VA/video_vae` 目录和匹配的 VAE FP16 权重。TRT 对照另需与 engine 版本兼容的 TensorRT Python binding；不能用新版不兼容 runtime 直接加载旧 engine。请遵守 MiniMax H3 原许可，不要把模型代码/权重/engine 提交到本仓库。
+
+已验证的 TensorRT 对照环境持久化在 `/data/miniconda3/envs/h3_trt_11_2`，依赖清单见 `environment/trt_requirements.txt`。若需重建，可使用 Python 3.11.13、PyTorch 2.8.0+cu128 和 TensorRT 11.2.1.2；TensorRT binding 必须与 engine 兼容。
 
 设置：
 
@@ -43,7 +45,7 @@ python bench_pyopt_vs_trt.py \
 
 无需 GPU 的基础测试：`python -m unittest discover -s tests -v`。
 
-历史 benchmark 的原命令与详细结果见 `docs/h3_comfyui_results.md` 指向的旧报告。新旧脚本都要求使用同一权重生成的 TRT engines。若新的 PyOpt 672 路径不比 TRT 快，应先定位 encoder staged batch 在该 shape 的收益/退化，再选择经过画质验证的优化组合；不能通过改 tile 或降低精度偷换比较口径。
+历史 benchmark 的原命令与详细结果见 `docs/h3_comfyui_results.md` 指向的旧报告；当前尺寸 TRT 实测见 `docs/h3_trt_pipeline_benchmark_2026-09-16.md`。新旧脚本都要求使用同一权重生成的 TRT engines。若新的 PyOpt 672 路径不比 TRT 快，应先定位 encoder staged batch 在该 shape 的收益/退化，再选择经过画质验证的优化组合；不能通过改 tile 或降低精度偷换比较口径。
 
 ## 发布注意
 
