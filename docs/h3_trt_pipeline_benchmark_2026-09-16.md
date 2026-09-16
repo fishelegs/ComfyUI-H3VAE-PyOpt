@@ -46,6 +46,8 @@
 
 ## 与当前 ComfyUI 数字的关系
 
+严格同 tile 的两轮交换顺序 A/B 已补测：优化 PyTorch（decoder 368、encoder 672）decode median 平均 `13.647 s`、encode `20.586 s`、合计 `34.233 s`；TRT 分别为 `13.768 s`、`21.468 s`、`35.235 s`。因此 PyTorch 总体快约 `2.84%`，decoder 约 `0.88%`、encoder 约 `4.11%`。详见 [`h3_same_tile_ab_benchmark_2026-09-16.md`](h3_same_tile_ab_benchmark_2026-09-16.md)。
+
 - 当前 ComfyUI PyOpt 视频 VAE decode：`12.028 s`（decoder tile `256`、tile batch `2`、compile 开启）。在本次实测条件下，PyOpt 比 TRT decoder median `13.750 s` 快约 **12.5%**（TRT 为 PyOpt 的约 `1.143×`）。
 - 同版本原生 ComfyUI VAE decode 的既有代表值：约 `15.896 s`；该数字与本次 TRT 的 tile/实现口径不同，只能作方向性参考。
 - 这不是完全同 tile 的严格 A/B：当前 engine 是静态 decoder tile `368`，PyOpt 管线使用 tile `256`；tile 会改变调用次数、边界 padding、RoPE 坐标和输出。要发布最终结论，应在空闲 GPU、同一 tile、同一输入及交替顺序下重新测量，并做画质回归。

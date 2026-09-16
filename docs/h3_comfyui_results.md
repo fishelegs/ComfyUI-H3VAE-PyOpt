@@ -32,7 +32,7 @@
 
 这是**旧基准脚本里的优化 PyTorch 路径**，不是现行 ComfyUI PyOpt 运行时的新 A/B；不能据此声称新项目已经超过 TRT。当前 TRT engine 固定 672 配置，亦不能直接与 1344×768 ComfyUI 时间比较。历史细节见 `bench_h3vae_672_summary_report.md`。
 
-新项目应保留优化实现和公平 benchmark：同一 FP16 权重、相同随机输入、相同 tile/帧数、充分预热、CUDA Event、encode/decode 分项与画质误差；报告 GPU/软件版本、编译与热启动分别计时。当前兼容 TensorRT 环境已经安装并完成 1344×768×124 的 engine 实测：TRT decoder median 13.750 s、encoder median 21.467 s；与当前 PyOpt 12.028 s 的 tile 口径差异和 GPU 负载说明见 [`h3_trt_pipeline_benchmark_2026-09-16.md`](h3_trt_pipeline_benchmark_2026-09-16.md)。权重、engine、上游 MiniMax 模型代码不得打包提交。
+新项目应保留优化实现和公平 benchmark：同一 FP16 权重、相同随机输入、相同 tile/帧数、充分预热、CUDA Event、encode/decode 分项与画质误差；报告 GPU/软件版本、编译与热启动分别计时。当前兼容 TensorRT 环境已经安装并完成 1344×768×124 的 engine 实测：TRT decoder median 13.750 s、encoder median 21.467 s；随后按完全同 tile（decoder 368、encoder 672）交换顺序复测两轮，优化 PyTorch 总计比 TRT 快约 2.84%。详细数字、顺序和 GPU 负载说明见 [`h3_same_tile_ab_benchmark_2026-09-16.md`](h3_same_tile_ab_benchmark_2026-09-16.md)。权重、engine、上游 MiniMax 模型代码不得打包提交。
 
 ## 本地项目状态
 
