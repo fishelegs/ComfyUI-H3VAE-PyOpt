@@ -1,0 +1,59 @@
+{
+  "prompt": {
+    "1": {
+      "inputs": {
+        "vae_name": "use default",
+        "dtype": "fp16",
+        "decoder_tile_size": 256,
+        "tile_batch": 2,
+        "compile_decoder": true,
+        "compile_encoder": true,
+        "encoder_staged_batch": 4,
+        "cudnn_benchmark": true,
+        "warmup": "decode",
+        "warmup_frames": 124,
+        "warmup_width": 1344,
+        "warmup_height": 768,
+        "log_calls": false,
+        "model_code_dir": "/path/to/MiniMax-H3/FL2VA/video_vae",
+        "weights_path": "/path/to/minimax_h3_video_vae_fp16.safetensors"
+      },
+      "class_type": "H3VAEPyOptLoader",
+      "_meta": {
+        "title": "MiniMax H3 VAE Load (PyTorch Optimized)"
+      }
+    },
+    "2": {
+      "inputs": {
+        "width": 1344,
+        "height": 768,
+        "length": 124
+      },
+      "class_type": "EmptyMiniMaxH3LatentAV",
+      "_meta": {
+        "title": "Empty MiniMax H3 AV Latent"
+      }
+    },
+    "3": {
+      "inputs": {
+        "samples": ["2", 0],
+        "vae": ["1", 0]
+      },
+      "class_type": "VAEDecode",
+      "_meta": {
+        "title": "VAE Decode"
+      }
+    },
+    "4": {
+      "inputs": {
+        "images": ["3", 0]
+      },
+      "class_type": "PreviewImage",
+      "_meta": {
+        "title": "Preview decoded frames"
+      }
+    }
+  },
+  "client_id": "h3vae-pyopt-example"
+}
+
