@@ -42,3 +42,7 @@
 本机测试期间仍有 ComfyUI/trpc 业务负载（GPU 利用率约 82–100%），所以这里的可靠结论是“方向和量级”，不是宣称固定的 2.84% 产品收益。发布前应在空闲 GPU 上交替运行更多轮，并补充同 tile 的像素/latent 误差和视频画质回归。
 
 生产 ComfyUI PyOpt decoder 的 `12.028 s` 使用 tile `256`，不能直接与这里的 PyTorch `13.647 s` 或 TRT `13.768 s` 比较；原生 ComfyUI VAE 既有代表值约 `15.896 s`，同样只作方向性参考。
+
+## 默认 PyTorch decode 基线
+
+为补齐对比表，另外测量了未启用本项目优化的上游默认 PyTorch VAE。仍是 `1344×768×124`、同一 FP16 latent、`2` 次 warmup + `7` 次 CUDA Event；不启用 decoder 融合、`torch.compile`、channels-last 或 staged batch。decoder tile `368` 时 median 为 **19.643 s**，tile `256` 时为 **18.740 s**。因此严格同 tile 表应增加：默认 PyTorch `19.643 s`、优化 PyTorch `13.647 s`、TRT `13.768 s`；优化 PyTorch 和 TRT 相对默认分别少约 `30.5%` 和 `29.9%`。完整测量和与 ComfyUI 原生 `≈15.896 s` 日志的口径区别见 [`h3_default_pytorch_vae_decode_2026-09-16.md`](h3_default_pytorch_vae_decode_2026-09-16.md)。

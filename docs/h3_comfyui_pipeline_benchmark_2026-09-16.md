@@ -39,3 +39,15 @@
 - 8081 任务完成后队列为空；8081 已停止，8080 仍在线且队列为空
 
 完整请求、history、节点计时和结果 JSON 保存在 `/tmp/h3_comfyui_test/artifacts/`，可用 `bench_h3_cudnn_ab.py` 重跑。由于本次没有在同一 8081 进程再跑原生 VAELoader，性能判断使用之前同版本默认基线；若要发表严格 A/B 数字，应在空闲 GPU、同一进程交替重复 stock/PyOpt，并报告中位数和画质误差。
+
+## VAE decode 对比
+
+生产管线中可直接引用的同尺寸记录如下。前两行来自当前 ComfyUI `0.33.0`（PyTorch `2.11.0+cu130`）日志，均使用 decoder tile `256`；后一行是独立 PyTorch `2.8.0+cu128` 环境的上游默认实现，作为严格同 tile TRT 表的 baseline，不能与前两行当成同一运行栈。
+
+| 实现 | decoder tile | video VAE decode | 口径 |
+| --- | ---: | ---: | --- |
+| ComfyUI 原生 `nodes.VAEDecode` | 256 | **约 15.896 s** | 8080 既有热启动日志（范围约 15.894–15.912 s） |
+| ComfyUI H3VAE PyOpt | 256 | **12.028 s** | 8081 热启动，compile 开启、tile batch 2 |
+| 上游默认 PyTorch（无优化） | 368 | **19.643 s** | 独立同 tile 基准，2 warmup + 7 CUDA Event |
+
+与优化 PyTorch/TRT 的严格同 tile 对比见 [`h3_same_tile_ab_benchmark_2026-09-16.md`](h3_same_tile_ab_benchmark_2026-09-16.md)，默认 PyTorch 的两种 tile 测量细节见 [`h3_default_pytorch_vae_decode_2026-09-16.md`](h3_default_pytorch_vae_decode_2026-09-16.md)。

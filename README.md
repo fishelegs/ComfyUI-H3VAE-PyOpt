@@ -6,6 +6,8 @@ MiniMax H3 视频 VAE 的 PyTorch encode/decode 优化项目，包含 ComfyUI lo
 
 历史同轮 672×672 FP16、124/243 帧测试里，旧优化 PyTorch 路径的 decode+encode 总耗时分别比原 TensorRT 路径低 **1.69% / 1.58%**。在当前 ComfyUI 使用的 1344×768×124 视频上，按 decoder 368、encoder 672 完全同 tile、交换先后顺序复测两轮后，优化 PyTorch 的 decode+encode median 平均为 **34.233 s**，TRT 为 **35.235 s**，PyTorch 小幅快约 **2.84%**；decoder 基本持平（约 0.88%），encoder 约快 4.11%。完整结果见 `docs/h3_same_tile_ab_benchmark_2026-09-16.md`。生产 ComfyUI PyOpt 的 12.028 s 使用 tile 256，不能直接套用到该同 tile 数字。
 
+同一尺寸下，未启用优化的上游默认 PyTorch decoder 在 tile 368 时为 **19.643 s**，可作为严格同 tile 表的 baseline；优化 PyTorch 为 **13.647 s**，TRT 为 **13.768 s**。默认基线与当前 ComfyUI 原生日志的 `≈15.896 s` 不属于同一运行栈，分别见 [`docs/h3_default_pytorch_vae_decode_2026-09-16.md`](docs/h3_default_pytorch_vae_decode_2026-09-16.md)。
+
 本项目保留两条 PyTorch 路径：
 
 - `h3vae_runtime.py` + `opt/`：ComfyUI 现用的 PyOpt 运行时，decoder QK RMSNorm/RoPE 融合、whole-decoder compile、空间 tile batch；encoder GN/SiLU/padding 融合、channels-last-3d、分阶段 clip batch 和 compile。
