@@ -80,7 +80,8 @@ def run_pyopt(args, z, x01):
     torch.backends.cudnn.benchmark_limit = 5
     runtime = H3VAEPyOptRuntime(
         model_code_dir=str(args.model_code_dir), weights_path=str(args.weights),
-        decoder_tile_size=args.decoder_tile, tile_batch=args.tile_batch,
+        decoder_tile_size=args.decoder_tile, encoder_tile_size=args.encoder_tile,
+        tile_batch=args.tile_batch,
         encoder_staged_batch=args.staged_batch, compile_decoder=not args.no_compile,
         compile_encoder=not args.no_compile, log_calls=False,
     ).eval()
@@ -136,7 +137,8 @@ def main():
     parser.add_argument("--frames", type=int, default=124)
     parser.add_argument("--decoder-tile", type=int, default=368)
     parser.add_argument("--encoder-tile", type=int, default=672)
-    parser.add_argument("--tile-batch", type=int, default=2)
+    parser.add_argument("--tile-batch", type=int, default=2,
+                        help="decoder tiles per call; 0 selects adaptive batching")
     parser.add_argument("--staged-batch", type=int, default=4)
     parser.add_argument("--no-compile", action="store_true")
     parser.add_argument("--warmup", type=int, default=2)

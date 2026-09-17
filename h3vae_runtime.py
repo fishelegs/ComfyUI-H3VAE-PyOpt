@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import sys
 import time
@@ -136,17 +137,25 @@ class H3VAEPyOptRuntime(torch.nn.Module):
                  decoder_tile_size: int = 256, tile_batch: int = 2,
                  compile_decoder: bool = True, compile_encoder: bool = True,
                  qk_rows: int = 8, encoder_staged_batch: int = 4,
-                 log_calls: bool = True):
+                 log_calls: bool = True, encoder_tile_size: int = 0):
         super().__init__()
+        if encoder_tile_size < 0 or encoder_tile_size % 16:
+            raise ValueError("encoder_tile_size must be 0 (auto) or a positive multiple of 16")
+        if int(tile_batch) < 0:
+            raise ValueError("tile_batch must be non-negative")
         (clone_with_qk_fusion, fused_suffix, next_fused_prefix, replace_selected,
          encode_staged, enable_decoder_attention_in_graph) = _import_opt_modules()
         self._encode_staged = encode_staged
 
         core, cfg = _load_klvae_core(model_code_dir)
+        if encoder_tile_size and encoder_tile_size <= core.tile_overlap_min:
+            raise ValueError("encoder_tile_size must exceed encoder tile overlap")
         _load_weights(core, weights_path)
         core.to(device=device, dtype=dtype)
         self.core = core
         self.config = cfg
+        self.encoder_tile_size = int(encoder_tile_size)
+        core.tile_size = self.encoder_tile_size or 672
 
         # ---------------- decoder wiring ----------------
         raw_dec = core.decoder
@@ -157,7 +166,7 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         core.decoder = new_dec
         core.decoder_tile_size = int(decoder_tile_size)
         core.stack_tiling = False
-        if tile_batch and int(tile_batch) > 1:
+        if int(tile_batch) == 0 or int(tile_batch) > 1:
             self._install_batched_tiles(core, int(tile_batch))
 
         # ---------------- encoder wiring ----------------
@@ -192,9 +201,9 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         self._enc_total_ms = 0.0
 
         logger.info(
-            "[H3VAE-PyOpt] runtime ready: tile=%d tile_batch=%d compile_dec=%s "
-            "compile_enc=%s staged_batch=%d",
-            core.decoder_tile_size, tile_batch, compile_decoder,
+            "[H3VAE-PyOpt] runtime ready: decoder_tile=%d encoder_tile=%s "
+            "tile_batch=%d compile_dec=%s compile_enc=%s staged_batch=%d",
+            core.decoder_tile_size, self.encoder_tile_size or "auto", tile_batch, compile_decoder,
             compile_encoder, self.encoder_staged_batch)
 
     # ------------------------------------------------------------------
@@ -203,16 +212,27 @@ class H3VAEPyOptRuntime(torch.nn.Module):
 
     @staticmethod
     def _install_batched_tiles(core, batch: int):
-        """Batch decoder spatial tiles (validated at batch=2; general form)."""
+        """Batch decoder tiles; zero selects a conservative free-memory cap."""
         original = core._run_tile_tasks
 
         def batched(tiles, indices, forward_fn, stack_tiling, cls_agg=None):
             if (cls_agg is not None or not tiles or tiles[0].shape[1] != 24
                     or tiles[0].shape[0] != 1 or torch.is_grad_enabled()):
                 return original(tiles, indices, forward_fn, stack_tiling, cls_agg)
+            current_batch = batch
+            if batch == 0:
+                free, _ = torch.cuda.mem_get_info(tiles[0].device)
+                # One full video output can already occupy several GiB. Keep
+                # headroom for it and for other GPU users before pairing tiles.
+                reserve = 12 * 1024**3
+                current_batch = max(1, min(2, (free - reserve) // (4 * 1024**3)))
+            if current_batch == 1:
+                core._last_tile_batch = 1
+                return original(tiles, indices, forward_fn, stack_tiling, cls_agg)
+            core._last_tile_batch = current_batch
             outputs = []
-            for start in range(0, len(indices), batch):
-                selected = indices[start:start + batch]
+            for start in range(0, len(indices), current_batch):
+                selected = indices[start:start + current_batch]
                 pixels = forward_fn(torch.cat([tiles[i] for i in selected], dim=0))
                 outputs.extend(pixels.split(1, dim=0))
             return outputs
@@ -291,29 +311,95 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         self._log_call("decode", t0)
         return out
 
-    def encode(self, x, device=None):
-        t0 = time.monotonic()
-        dev = self._device()
-        x = x.to(device=dev)
+    def _normalize_pixels(self, x):
         # comfy process_input gives [-1,1]; the model wants ImageNet-normalized [0,1]
         x01 = (x.float() + 1.0) * 0.5
-        del x
         normed = (x01 - self._img_mean.to(x01.dtype)) / self._img_std.to(x01.dtype)
-        normed = normed.to(self.latents_mean.dtype)
+        return normed.to(self.latents_mean.dtype)
 
+    def _encode_moments(self, normed):
         t = normed.shape[2]
         if t == 1:
             moments = self.suffix(self.prefix(
                 normed.contiguous(memory_format=torch.channels_last_3d)))
-            mean = torch.chunk(moments.float(), 2, dim=1)[0][:, :, -1:, :, :]
-        else:
-            out = self._encode_staged(
-                normed, self.prefix, self.suffix,
-                clip_length=self.core.clip_length,
-                token_drop=self.core.token_drop,
-                batch_size=self.encoder_staged_batch, cut=2)
-            mean = out.float()[:, :out.shape[1] // 2]
+            return moments[:, :, -1:, :, :]
+        return self._encode_staged(
+            normed, self.prefix, self.suffix,
+            clip_length=self.core.clip_length,
+            token_drop=self.core.token_drop,
+            batch_size=self.encoder_staged_batch, cut=2)
 
+    @staticmethod
+    def _split_encoder_tiles(length, tile_size, overlap_min, ratio):
+        """Match the reference VAE split_tiles without mutating shared core state."""
+        if tile_size <= overlap_min:
+            raise ValueError("encoder tile must exceed its minimum overlap")
+        if tile_size >= length:
+            return [0], [length], []
+        count = math.ceil(length / tile_size)
+        while True:
+            overlaps = [overlap_min] * (count - 1)
+            remaining = tile_size * count - sum(overlaps) - length
+            if remaining >= 0:
+                break
+            count += 1
+        for i in range(remaining // ratio):
+            overlaps[i % (count - 1)] += ratio
+        starts = [0]
+        for overlap in overlaps:
+            starts.append(starts[-1] + tile_size - overlap)
+        return starts, [tile_size] * count, overlaps
+
+    @staticmethod
+    def _select_encoder_tile(configured, height, width):
+        return configured or (672 if max(height, width) <= 672 else 256)
+
+    def _encode_spatial_tiled(self, x, tile_size):
+        core = self.core
+        split = lambda length: self._split_encoder_tiles(
+            length, tile_size, core.tile_overlap_min, core.vae_ratio)
+        y_idx, y_len, y_overlap = split(x.shape[-2])
+        x_idx, x_len, x_overlap = split(x.shape[-1])
+        rows = []
+        for y_pos, height in zip(y_idx, y_len):
+            row = []
+            for x_pos, width in zip(x_idx, x_len):
+                tile = x[..., y_pos:y_pos + height, x_pos:x_pos + width]
+                row.append(self._encode_moments(self._normalize_pixels(tile)))
+            rows.append(row)
+
+        y_overlap = [overlap // core.vae_ratio for overlap in y_overlap]
+        x_overlap = [overlap // core.vae_ratio for overlap in x_overlap]
+        result_rows = []
+        for i, row in enumerate(rows):
+            result_row = []
+            for j, tile in enumerate(row):
+                if i:
+                    tile = core.blend(rows[i - 1][j], tile, y_overlap[i - 1], dim=-2)
+                if j:
+                    tile = core.blend(row[j - 1], tile, x_overlap[j - 1], dim=-1)
+                if i < len(rows) - 1:
+                    tile = tile[..., :-y_overlap[i], :]
+                if j < len(row) - 1:
+                    tile = tile[..., :, :-x_overlap[j]]
+                result_row.append(tile)
+            result_rows.append(torch.cat(result_row, dim=-1))
+        return torch.cat(result_rows, dim=-2)
+
+    def encode(self, x, device=None):
+        t0 = time.monotonic()
+        dev = self._device()
+        x = x.to(device=dev)
+        if x.ndim == 4:
+            x = x.unsqueeze(2)
+        tile_size = self._select_encoder_tile(
+            self.encoder_tile_size, x.shape[-2], x.shape[-1])
+        if x.shape[-2] > tile_size or x.shape[-1] > tile_size:
+            moments = self._encode_spatial_tiled(x, tile_size)
+        else:
+            moments = self._encode_moments(self._normalize_pixels(x))
+
+        mean = moments.float()[:, :moments.shape[1] // 2]
         latents = (mean - self.latents_mean.float()) / self.latents_std.float()
         self._log_call("encode", t0)
         return latents

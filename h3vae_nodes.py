@@ -58,9 +58,9 @@ class H3VAEPyOptLoader:
                                "configuration, but RoPE coords are tile-normalized so the "
                                "output shifts (~20% mean) -- verify quality."}),
                 "tile_batch": ("INT", {
-                    "default": 2, "min": 1, "max": 8, "step": 1,
-                    "tooltip": "Decoder tiles batched per forward call. 1 = serial "
-                               "(stock). 2 = the validated pairing (+~1%)."}),
+                    "default": 2, "min": 0, "max": 8, "step": 1,
+                    "tooltip": "Decoder tiles per forward call. 0 = adaptive (up to 2, "
+                               "limited by free GPU memory); 1 = serial; 2 = tested default."}),
                 "compile_decoder": ("BOOLEAN", {"default": True,
                     "tooltip": "Whole-decoder torch.compile + QK RMSNorm/RoPE Triton "
                                "fusion (max-autotune-no-cudagraphs)."}),
@@ -86,6 +86,10 @@ class H3VAEPyOptLoader:
                                "A/B comparison."}),
             },
             "optional": {
+                "encoder_tile_size": ("INT", {"default": 0, "min": 0,
+                    "max": 1024, "step": 16,
+                    "tooltip": "0 = measured auto choice: 672 up to 672x672, else 256. "
+                               "Changing tile can change overlap blending and output quality."}),
                 "model_code_dir": ("STRING", {"default": DEFAULT_MODEL_CODE_DIR,
                     "tooltip": "FL2VA video_vae bundle dir (klvae reference code + "
                                "source config)."}),
@@ -108,9 +112,9 @@ class H3VAEPyOptLoader:
              compile_decoder, compile_encoder, encoder_staged_batch,
              cudnn_benchmark, warmup, warmup_frames, warmup_width,
              warmup_height, log_calls, model_code_dir=DEFAULT_MODEL_CODE_DIR,
-             weights_path=""):
+             weights_path="", encoder_tile_size=0):
         key = (vae_name, weights_path, dtype, int(decoder_tile_size),
-               int(tile_batch), bool(compile_decoder), bool(compile_encoder),
+               int(encoder_tile_size), int(tile_batch), bool(compile_decoder), bool(compile_encoder),
                int(encoder_staged_batch), model_code_dir, bool(log_calls))
         vae = _VAE_CACHE.get(key)
         if vae is None:
@@ -123,6 +127,7 @@ class H3VAEPyOptLoader:
                 device="cuda",
                 dtype=torch.float16 if dtype == "fp16" else torch.float32,
                 decoder_tile_size=int(decoder_tile_size),
+                encoder_tile_size=int(encoder_tile_size),
                 tile_batch=int(tile_batch),
                 compile_decoder=bool(compile_decoder),
                 compile_encoder=bool(compile_encoder),
