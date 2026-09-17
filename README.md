@@ -45,11 +45,11 @@ ComfyUI 的 [MiniMax-H3 VAE 优化提交 `b2e31e8`](https://github.com/Comfy-Org
 | Shape（H×W×帧） | ComfyUI 提交前 | `b2e31e8` 默认 | `b2e31e8` + `--fast fp16_accumulation` | 当前 PyOpt |
 | --- | ---: | ---: | ---: | ---: |
 | `672×672×124` | `9.781 / 13.325 / 23.107` | `8.340 / 7.627 / 15.967` | `6.965 / 6.890 / 13.854` | **`6.511 / 2.951 / 9.461`** |
-| `768×1344×124` | `17.329 / 23.325 / 40.653` | `14.995 / 13.369 / 28.364` | `12.492 / 12.090 / 24.582` | **`13.647 / 20.586 / 34.233`**† |
+| `768×1344×124` | `17.329 / 23.325 / 40.653` | `14.995 / 13.369 / 28.364` | `12.492 / 12.090 / 24.582` | **`11.443 / 未支持整帧 encoder / 未形成总计`**† |
 
-在 `672×672×124` 上，PyOpt 比提交后默认配置快 **40.75%**，比显式 `fp16_accumulation` 配置快 **31.71%**。当前分辨率的完整 PyOpt 数字来自仓库已验证的空间 tiled benchmark（decoder tile `368`、encoder tile `672`）；同一项目的 ComfyUI tile `256` runtime 单独测得 decoder `11.443 s`，但其整帧 encoder 仍触发 int32 索引保护，不能把这个 decoder 数字与 tiled encoder 拼成新的总时长。该表与上面的 TRT 严格同 tile 表使用不同 PyTorch/依赖栈，不能把两张表的绝对时延直接相加或横向拼接。
+在 `672×672×124` 上，PyOpt 比提交后默认配置快 **40.75%**，比显式 `fp16_accumulation` 配置快 **31.71%**。在 `768×1344×124` 上，当前 ComfyUI tile `256` runtime 的 PyOpt decoder 为 `11.443 s`；整帧 encoder 会触发当前仓库的 int32 索引保护，因此不能计算当前 runtime 的完整 encode+decode。该表与上面的 TRT 严格同 tile 表使用不同 PyTorch/依赖栈，不能把两张表的绝对时延直接相加或横向拼接。
 
-`†` 该行使用仓库已有的完整空间 tiled benchmark，Python 3.11、PyTorch 2.8；ComfyUI tile `256` runtime 的整帧 encoder 仍需后续空间 tile/staged tile 路径。
+`†` 仓库旧的 `bench_h3vae_trt.py` 空间 tiled 路径曾测得 `13.647 / 20.586 / 34.233 s`，但它使用 decoder tile `368`、encoder tile `672`、Python 3.11/PyTorch 2.8，不是当前 ComfyUI tile `256` runtime；该历史数字不作为本表的当前 PyOpt 结果。
 
 ### 默认 PyTorch 与 ComfyUI 原生 VAE
 
