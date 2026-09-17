@@ -137,7 +137,8 @@ class H3VAEPyOptRuntime(torch.nn.Module):
                  decoder_tile_size: int = 256, tile_batch: int = 2,
                  compile_decoder: bool = True, compile_encoder: bool = True,
                  qk_rows: int = 8, encoder_staged_batch: int = 4,
-                 log_calls: bool = True, encoder_tile_size: int = 0):
+                 log_calls: bool = True, encoder_tile_size: int = 0,
+                 fast_linear: bool = False):
         super().__init__()
         if encoder_tile_size < 0 or encoder_tile_size % 16:
             raise ValueError("encoder_tile_size must be 0 (auto) or a positive multiple of 16")
@@ -161,6 +162,10 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         raw_dec = core.decoder
         enable_decoder_attention_in_graph(raw_dec)
         new_dec = clone_with_qk_fusion(raw_dec, qk_rows)
+        if fast_linear:
+            from opt.kitchen_linear import install_kitchen_linears
+            count = install_kitchen_linears(new_dec)
+            logger.info("[H3VAE-PyOpt] experimental comfy-kitchen linears: %d", count)
         if compile_decoder:
             new_dec = torch.compile(new_dec, mode=DECODER_COMPILE_MODE, dynamic=False)
         core.decoder = new_dec
@@ -183,6 +188,7 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         self.prefix = prefix
         self.suffix = suffix
         self.encoder_staged_batch = int(encoder_staged_batch)
+        self.fast_linear = bool(fast_linear)
 
         # ---------------- normalization constants ----------------
         lat_mean = torch.tensor(cfg["latents_mean"], dtype=dtype, device=device)

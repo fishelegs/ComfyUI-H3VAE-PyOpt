@@ -90,6 +90,10 @@ class H3VAEPyOptLoader:
                     "max": 1024, "step": 16,
                     "tooltip": "0 = measured auto choice: 672 up to 672x672, else 256. "
                                "Changing tile can change overlap blending and output quality."}),
+                "fast_linear": ("BOOLEAN", {"default": False,
+                    "tooltip": "Experimental FP16 decoder linear kernels via comfy-kitchen "
+                               ">=0.2.34. About 2-3% faster decode on the tested GPU, "
+                               "but changes output; no global --fast flag required."}),
                 "model_code_dir": ("STRING", {"default": DEFAULT_MODEL_CODE_DIR,
                     "tooltip": "FL2VA video_vae bundle dir (klvae reference code + "
                                "source config)."}),
@@ -112,10 +116,10 @@ class H3VAEPyOptLoader:
              compile_decoder, compile_encoder, encoder_staged_batch,
              cudnn_benchmark, warmup, warmup_frames, warmup_width,
              warmup_height, log_calls, model_code_dir=DEFAULT_MODEL_CODE_DIR,
-             weights_path="", encoder_tile_size=0):
+             weights_path="", encoder_tile_size=0, fast_linear=False):
         key = (vae_name, weights_path, dtype, int(decoder_tile_size),
                int(encoder_tile_size), int(tile_batch), bool(compile_decoder), bool(compile_encoder),
-               int(encoder_staged_batch), model_code_dir, bool(log_calls))
+               int(encoder_staged_batch), model_code_dir, bool(log_calls), bool(fast_linear))
         vae = _VAE_CACHE.get(key)
         if vae is None:
             weights = _resolve_weights(vae_name, weights_path)
@@ -132,6 +136,7 @@ class H3VAEPyOptLoader:
                 compile_decoder=bool(compile_decoder),
                 compile_encoder=bool(compile_encoder),
                 encoder_staged_batch=int(encoder_staged_batch),
+                fast_linear=bool(fast_linear),
                 log_calls=bool(log_calls),
             )
             vae = build_comfy_vae(runtime)

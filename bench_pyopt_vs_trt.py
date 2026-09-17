@@ -82,6 +82,7 @@ def run_pyopt(args, z, x01):
         model_code_dir=str(args.model_code_dir), weights_path=str(args.weights),
         decoder_tile_size=args.decoder_tile, encoder_tile_size=args.encoder_tile,
         tile_batch=args.tile_batch,
+        fast_linear=args.fast_linear,
         encoder_staged_batch=args.staged_batch, compile_decoder=not args.no_compile,
         compile_encoder=not args.no_compile, log_calls=False,
     ).eval()
@@ -141,6 +142,8 @@ def main():
                         help="decoder tiles per call; 0 selects adaptive batching")
     parser.add_argument("--staged-batch", type=int, default=4)
     parser.add_argument("--no-compile", action="store_true")
+    parser.add_argument("--fast-linear", action="store_true",
+                        help="experimental comfy-kitchen FP16 decoder linear kernels")
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--runs", type=int, default=7)
     parser.add_argument("--seed", type=int, default=20260916)
@@ -180,7 +183,8 @@ def main():
                          "tile_batch": args.tile_batch,
                          "staged_batch": args.staged_batch,
                          "warmup": args.warmup, "runs": args.runs,
-                         "seed": args.seed, "compile": not args.no_compile},
+                         "seed": args.seed, "compile": not args.no_compile,
+                         "fast_linear": args.fast_linear},
               "artifacts_sha256": {str(path): digest(path) for path in required[1:]},
               "note": "PyOpt accepts [-1,1] pixels; TRT accepts [0,1]. Both derive from x01."}
     torch.cuda.reset_peak_memory_stats()
