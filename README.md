@@ -22,7 +22,7 @@
 
 | 机器 | GPU | 显存 | Compute Capability | Driver | 独立 A/B 环境 | ComfyUI 生产环境 |
 | --- | --- | ---: | ---: | --- | --- | --- |
-| M1 | NVIDIA RTX PRO 5000 72GB | 72 GB（73,415 MiB） | 12.0 | 580.82.07 | Python 3.11.13、PyTorch 2.8.0+cu128、TensorRT 11.2.1.2 | ComfyUI 0.33.0、Python 3.12.14、PyTorch 2.11.0+cu130 |
+| 当前机器 | NVIDIA RTX PRO 5000 72GB | 72 GB（73,415 MiB） | 12.0 | 580.82.07 | Python 3.11.13、PyTorch 2.8.0+cu128、TensorRT 11.2.1.2 | ComfyUI 0.33.0、Python 3.12.14、PyTorch 2.11.0+cu130 |
 
 独立 A/B 使用 FP16、同一随机输入、2 次 warmup 和 7 次 CUDA Event；模型加载、首次 compile 和 engine 初始化不计入稳态时间。
 
@@ -40,16 +40,16 @@
 
 ### ComfyUI MiniMax-H3 VAE 优化提交前后
 
-ComfyUI 的 [MiniMax-H3 VAE 优化提交 `b2e31e8`](https://github.com/Comfy-Org/ComfyUI/commit/b2e31e89412a01a67be599571cc57ff74b242a82)（[PR #16187](https://github.com/Comfy-Org/ComfyUI/pull/16187)）与其父提交在同一台 M1（NVIDIA RTX PRO 5000 72GB）上进行了独立 A/B。表中每个单元格依次为 `decode / encode / encode+decode`，单位为秒；每个进程 1 次 warmup、3 次 CUDA Event 稳态均值，默认行不启用 `fp16_accumulation`。
+ComfyUI 的 [MiniMax-H3 VAE 优化提交 `b2e31e8`](https://github.com/Comfy-Org/ComfyUI/commit/b2e31e89412a01a67be599571cc57ff74b242a82)（[PR #16187](https://github.com/Comfy-Org/ComfyUI/pull/16187)）与其父提交在同一台 NVIDIA RTX PRO 5000 72GB 上进行了独立 A/B。表中每个单元格依次为 `decode / encode / encode+decode`，单位为秒；每个进程 1 次 warmup、3 次 CUDA Event 稳态均值，默认行不启用 `fp16_accumulation`。
 
 | Shape（H×W×帧） | ComfyUI 提交前 | `b2e31e8` 默认 | `b2e31e8` + `--fast fp16_accumulation` | 当前 PyOpt |
 | --- | ---: | ---: | ---: | ---: |
 | `672×672×124` | `9.781 / 13.325 / 23.107` | `8.340 / 7.627 / 15.967` | `6.965 / 6.890 / 13.854` | **`6.511 / 2.951 / 9.461`** |
-| `768×1344×124` | `17.329 / 23.325 / 40.653` | `14.995 / 13.369 / 28.364` | `12.492 / 12.090 / 24.582` | **`11.443 / — / —`**† |
+| `768×1344×124` | `17.329 / 23.325 / 40.653` | `14.995 / 13.369 / 28.364` | `12.492 / 12.090 / 24.582` | **`13.647 / 20.586 / 34.233`**† |
 
-在 `672×672×124` 上，PyOpt 比提交后默认配置快 **40.75%**，比显式 `fp16_accumulation` 配置快 **31.71%**。当前分辨率下 PyOpt decoder 为 11.443 s；其整帧 encoder 会触发当前仓库的 int32 索引保护，因此暂不宣称该分辨率的完整 encode+decode 优势。该表与上面的 TRT 严格同 tile 表使用不同 PyTorch/依赖栈，不能把两张表的绝对时延直接相加或横向拼接。
+在 `672×672×124` 上，PyOpt 比提交后默认配置快 **40.75%**，比显式 `fp16_accumulation` 配置快 **31.71%**。当前分辨率的完整 PyOpt 数字来自仓库已验证的空间 tiled benchmark（decoder tile `368`、encoder tile `672`）；同一项目的 ComfyUI tile `256` runtime 单独测得 decoder `11.443 s`，但其整帧 encoder 仍触发 int32 索引保护，不能把这个 decoder 数字与 tiled encoder 拼成新的总时长。该表与上面的 TRT 严格同 tile 表使用不同 PyTorch/依赖栈，不能把两张表的绝对时延直接相加或横向拼接。
 
-`†` 当前 PyOpt 的整帧 encoder 仍需空间 tile/staged tile 路径；完成后再补充该分辨率的完整结果。
+`†` 该行使用仓库已有的完整空间 tiled benchmark，Python 3.11、PyTorch 2.8；ComfyUI tile `256` runtime 的整帧 encoder 仍需后续空间 tile/staged tile 路径。
 
 ### 默认 PyTorch 与 ComfyUI 原生 VAE
 
@@ -63,7 +63,7 @@ ComfyUI 的 [MiniMax-H3 VAE 优化提交 `b2e31e8`](https://github.com/Comfy-Org
 
 `*` TRT 的 `13.750 s` 是独立 tile 368 engine 测量，不是生产 tile 256 的严格 A/B。
 
-目前公开结果只有 M1 一台机器，机型为 NVIDIA RTX PRO 5000 72GB。后续增加 GPU 时，建议同步记录 GPU 型号、显存、driver、Python/PyTorch/CUDA、ComfyUI 版本、tile、warmup/runs 和质量误差，再把结果追加到表格中。
+目前公开结果只有当前这台 NVIDIA RTX PRO 5000 72GB。后续增加 GPU 时，建议同步记录 GPU 型号、显存、driver、Python/PyTorch/CUDA、ComfyUI 版本、tile、warmup/runs 和质量误差，再把结果追加到表格中。
 
 ## 安装
 
