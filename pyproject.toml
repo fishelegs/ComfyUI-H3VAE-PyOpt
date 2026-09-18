@@ -1,5 +1,5 @@
 [project]
-name = "comfyui-h3vae-pyopt"
+name = "h3vae-pyopt"
 version = "0.1.0"
 description = "Optimized PyTorch/Triton MiniMax H3 video VAE runtime for ComfyUI."
 readme = "README.md"
@@ -24,3 +24,7 @@ classifiers = [
 Repository = "https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt"
 Documentation = "https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt#readme"
 Issues = "https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt/issues"
+
+[tool.comfy]
+PublisherId = "fishelegs"
+DisplayName = "ComfyUI-H3VAE-PyOpt"

@@ -9,7 +9,7 @@ class ProjectMetadataTest(unittest.TestCase):
         data = tomllib.loads(path.read_text(encoding="utf-8"))
         project = data["project"]
 
-        self.assertEqual(project["name"], "comfyui-h3vae-pyopt")
+        self.assertEqual(project["name"], "h3vae-pyopt")
         self.assertEqual(project["version"], "0.1.0")
         self.assertEqual(project["license"], {"file": "LICENSE"})
         self.assertEqual(
@@ -20,7 +20,9 @@ class ProjectMetadataTest(unittest.TestCase):
             set(project["dependencies"]),
             {"torch>=2.8", "triton", "safetensors"},
         )
-        self.assertNotIn("comfy", data.get("tool", {}))
+        comfy = data["tool"]["comfy"]
+        self.assertEqual(comfy["PublisherId"], "fishelegs")
+        self.assertEqual(comfy["DisplayName"], "ComfyUI-H3VAE-PyOpt")
 
 
 if __name__ == "__main__":

@@ -53,9 +53,14 @@ Do not create a release tag until CI is green.
 
 ## ComfyUI Registry
 
-The repository is structurally prepared for Registry packaging, but
-`[tool.comfy].PublisherId` must be the exact publisher ID owned by the
-maintainer. Never invent or commit a placeholder publisher ID. See
+Registry identity is fixed as:
+
+- Publisher ID: `fishelegs`
+- Node ID: `h3vae-pyopt`
+- Display name: `ComfyUI-H3VAE-PyOpt`
+
+Never commit Registry API keys. GitHub Actions must read the publishing key
+only from the `REGISTRY_ACCESS_TOKEN` repository secret. See
 `docs/registry.md`.
 
 ## Licensing boundary
