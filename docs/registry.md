@@ -1,64 +1,92 @@
 # ComfyUI Registry Publication
 
-This repository now contains the standard project metadata needed for Registry
-packaging in `pyproject.toml`, plus `.comfyignore` rules for excluding
-development-only files from the published archive.
+The repository is configured for ComfyUI Registry publication.
 
-Publication is intentionally not enabled yet because the Registry publisher
-identity must be a real publisher ID owned by the maintainer. During this
-readiness pass, no public evidence of an existing `fishelegs` publisher was
-found, so the repository does not guess or reserve that identity.
+## Registry identity
 
-## Final publisher step
+- Publisher ID: `fishelegs`
+- Node ID: `h3vae-pyopt`
+- Display name: `ComfyUI-H3VAE-PyOpt`
+- Version: `0.1.0`
 
-After creating or confirming the publisher in the ComfyUI Registry, add the
-following section to `pyproject.toml` using the exact publisher ID shown on
-the Registry profile:
-
-```toml
-[tool.comfy]
-PublisherId = "<the exact publisher id owned by the maintainer>"
-DisplayName = "ComfyUI-H3VAE-PyOpt"
-Icon = ""
-```
-
-The placeholder above is documentation only. Do not commit it verbatim to
-`pyproject.toml`.
-
-The publisher ID is an account/Registry identity, not simply a repository
-owner string. It should only be added after ownership is confirmed.
-
-## Current package metadata
-
-The current `pyproject.toml` records:
-
-- package name: `comfyui-h3vae-pyopt`
-- version: `0.1.0`
-- license file: `LICENSE`
-- repository URL
-- Python requirement: `>=3.10`
-- runtime dependencies matching `requirements.txt`:
-  - `torch>=2.8`
-  - `triton`
-  - `safetensors`
-- current validated platform metadata: Linux and NVIDIA CUDA
+The node ID is intentionally shorter than the GitHub repository name because
+ComfyUI's Registry guidance recommends not including `ComfyUI` in
+`[project].name`. The GitHub repository name does not need to change.
 
 The MiniMax H3 / FL2VA model code and weights are not included in the package
 and are not relicensed by this project.
 
-## Publishing workflow
+## API key handling
 
-Once a publisher ID exists:
+Registry publishing keys are secrets. Never commit a key to this repository,
+paste it into an issue or pull request, or place it directly in a workflow
+file.
 
-1. Add the verified `[tool.comfy]` section to `pyproject.toml`.
-2. Validate that the Registry package metadata matches the release version.
-3. Create or obtain a Comfy Registry API token using the official publishing
-   flow.
-4. Publish only from a reviewed release commit.
-5. Keep the Registry version synchronized with `__version__`, the changelog,
-   and the Git tag.
+For GitHub Actions, create a repository secret named:
 
-Do not store Registry access tokens in the repository.
+```text
+REGISTRY_ACCESS_TOKEN
+```
+
+and store the Registry publishing key as its value.
+
+GitHub path:
+
+```text
+Settings
+→ Secrets and variables
+→ Actions
+→ Repository secrets
+→ New repository secret
+```
+
+The workflow at `.github/workflows/publish_action.yml` references the secret
+as `${{ secrets.REGISTRY_ACCESS_TOKEN }}`. It is intentionally
+`workflow_dispatch`-only so publishing requires an explicit manual action.
+
+## Publish with GitHub Actions
+
+After the secret exists:
+
+1. Open the repository's **Actions** tab.
+2. Select **Publish to Comfy Registry**.
+3. Click **Run workflow**.
+4. Run it from `main`.
+5. Confirm the workflow completes successfully.
+6. Verify the published node in the ComfyUI Registry under publisher
+   `@fishelegs`.
+
+Do not bump the version merely to retry a failed workflow unless the Registry
+has already accepted that version.
+
+## Publish from a local CLI
+
+Alternatively, install the Comfy CLI and run from the repository root:
+
+```bash
+comfy node publish
+```
+
+The CLI will prompt for the Registry API key interactively. The key should not
+be stored in the repository.
+
+## Versioning
+
+Registry versions must remain synchronized with:
+
+- `__version__`
+- `pyproject.toml`
+- `CHANGELOG.md`
+- the corresponding Git tag / GitHub Release
+
+Before publishing a new version, update these version references together and
+run CI.
+
+## Package contents
+
+`.comfyignore` excludes development-only files from the Registry archive.
+Runtime source code, README, license files, requirements, examples, and other
+required package files remain available.
 
 ## Official documentation
 
