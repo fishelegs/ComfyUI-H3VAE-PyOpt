@@ -1,8 +1,6 @@
 name: Benchmark report
 description: Share a reproducible MiniMax H3 VAE performance and compatibility result.
 title: "[Benchmark] "
-labels:
-  - benchmark
 body:
   - type: markdown
     attributes:
