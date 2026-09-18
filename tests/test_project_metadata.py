@@ -1,20 +1,27 @@
 import tomllib
+import unittest
 from pathlib import Path
 
 
-def test_project_metadata():
-    data = tomllib.loads((Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
-    project = data["project"]
+class ProjectMetadataTest(unittest.TestCase):
+    def test_project_metadata(self):
+        path = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+        project = data["project"]
 
-    assert project["name"] == "comfyui-h3vae-pyopt"
-    assert project["version"] == "0.1.0"
-    assert project["license"] == {"file": "LICENSE"}
-    assert project["urls"]["Repository"] == (
-        "https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt"
-    )
-    assert set(project["dependencies"]) == {
-        "torch>=2.8",
-        "triton",
-        "safetensors",
-    }
-    assert "comfy" not in data.get("tool", {})
+        self.assertEqual(project["name"], "comfyui-h3vae-pyopt")
+        self.assertEqual(project["version"], "0.1.0")
+        self.assertEqual(project["license"], {"file": "LICENSE"})
+        self.assertEqual(
+            project["urls"]["Repository"],
+            "https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt",
+        )
+        self.assertEqual(
+            set(project["dependencies"]),
+            {"torch>=2.8", "triton", "safetensors"},
+        )
+        self.assertNotIn("comfy", data.get("tool", {}))
+
+
+if __name__ == "__main__":
+    unittest.main()
