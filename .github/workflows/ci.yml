@@ -43,4 +43,4 @@ jobs:
         run: ruff check . --exclude "bench_*.py" --select E9,F63,F7,F82
 
       - name: Run CPU regression tests
-        run: pytest -q tests --rootdir=tests
+        run: cd tests && pytest -q .
