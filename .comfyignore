@@ -1,0 +1,9 @@
+.git/
+.github/
+tests/
+results/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+docs/superpowers/
