@@ -9,7 +9,7 @@ Run the lightweight checks used by GitHub Actions:
 ```bash
 python -m compileall -q .
 ruff check . --exclude "bench_*.py" --select E9,F63,F7,F82
-cd tests && pytest -q .
+python -m unittest discover -s tests -p 'test_*.py'
 ```
 
 These checks are intentionally CPU-friendly. See [docs/testing.md](docs/testing.md)
