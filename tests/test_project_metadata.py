@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def test_project_metadata():
-    data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    data = tomllib.loads((Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
     project = data["project"]
 
     assert project["name"] == "comfyui-h3vae-pyopt"
