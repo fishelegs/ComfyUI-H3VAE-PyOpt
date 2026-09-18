@@ -13,6 +13,8 @@ modules under unique h3vae_* names.
 import os
 import sys
 
+__version__ = "0.1.0"
+
 # Must happen before video_vae is imported (deferred to runtime load) and
 # before any inductor compile computes its cache dir.
 os.environ.setdefault("MINIMAX_H3_TORCH_SDPA_BACKEND", "flash")
