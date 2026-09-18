@@ -14,7 +14,7 @@ Run:
 ```bash
 python -m compileall -q .
 ruff check . --exclude "bench_*.py" --select E9,F63,F7,F82
-pytest -q tests --rootdir=tests
+cd tests && pytest -q .
 ```
 
 Do not treat CPU CI as proof that CUDA/Triton kernels, model loading, numerical
