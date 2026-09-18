@@ -20,8 +20,11 @@ TRT decoder engine 从同一 MiniMax H3 权重导出 256×256 tile ONNX 后，�
 | PyOpt 默认 runtime | **11.437 s** | **11.983 s** | **23.420 s** |
 | PyOpt `fast_linear` | **11.107 s** | **11.989 s** | **23.096 s** |
 | TensorRT 11.2.1.2 | 11.966 s | 14.270 s | **26.237 s** |
+| 原 TRT 仓库 TensorRT engine（368/672 tile） | 13.768 s | 21.468 s | **35.235 s** |
 
 相对 TRT 合计：PyOpt 默认快 **10.74%**（少 2.817 s）；PyOpt `fast_linear` 快 **11.97%**（少 3.141 s）。分项上，默认 PyOpt decode 快 **4.42%**、encode 快 **16.03%**；`fast_linear` decode 快 **7.18%**、encode 快 **15.99%**。`fast_linear` 只改 decoder，encoder 时间基本不变。
+
+最后一行是原 `ComfyUI-H3VAE_TRT` 仓库预置 engine 的历史同视频结果，decoder/encoder tile 为 368/672，不参与前三行 256/256 的严格优势计算；它只能作为原始 TRT 基线参考。
 
 ## 可复现命令
 
