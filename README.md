@@ -105,3 +105,16 @@ python bench_pyopt_vs_trt.py --pyopt-only \
 测试 768×1344×124 时改用 `--height 768 --width 1344 --encoder-tile 256 --output results/pyopt_768x1344x124.json`；其他参数不变。可用 `bench_encoder_quality.py` 对照原始 VAE 做同 tile 数值回归。
 
 同 tile TRT 基准的复现口径见 [A/B 记录](docs/h3_same_tile_ab_benchmark_2026-09-16.md)。首次编译可能耗时较长；调整 tile 会改变边界处理与输出，需要重新做画质回归。
+
+## License
+
+The source code authored for this repository is available under the
+[MIT License](LICENSE).
+
+ComfyUI, PyTorch, Triton, safetensors, optional comfy-kitchen support, and the
+MiniMax H3 / FL2VA model code and model weights are separate third-party
+components and retain their respective licenses. This repository does not
+include or relicense MiniMax H3 model code or model weights.
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the licensing
+boundary and third-party component notes.
