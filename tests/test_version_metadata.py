@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def test_literal_version_metadata():
-    source = Path("__init__.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parents[1] / "__init__.py").read_text(encoding="utf-8")
     tree = ast.parse(source)
     versions = []
 
