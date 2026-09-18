@@ -1,0 +1,111 @@
+name: Benchmark report
+description: Share a reproducible MiniMax H3 VAE performance and compatibility result.
+title: "[Benchmark] "
+labels:
+  - benchmark
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing a benchmark. Please report both performance and correctness/quality evidence so results are comparable and useful.
+
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU model
+      placeholder: NVIDIA RTX PRO 5000
+    validations:
+      required: true
+
+  - type: input
+    id: vram
+    attributes:
+      label: VRAM
+      placeholder: 72 GB
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Ubuntu 24.04 / Windows 11 / other
+    validations:
+      required: true
+
+  - type: textarea
+    id: software
+    attributes:
+      label: Software versions
+      description: Include Python, PyTorch, CUDA, Triton, ComfyUI revision/version, and this project's commit or version.
+      placeholder: |
+        Python:
+        PyTorch:
+        CUDA:
+        Triton:
+        ComfyUI:
+        ComfyUI-H3VAE-PyOpt:
+    validations:
+      required: true
+
+  - type: textarea
+    id: workload
+    attributes:
+      label: Workload and tile settings
+      description: Include resolution, frame count, dtype, decoder/encoder tile sizes, tile batch, staged batch, warmup, runs, and seed where applicable.
+      placeholder: |
+        Resolution:
+        Frames:
+        Dtype:
+        Decoder tile:
+        Encoder tile:
+        Tile batch:
+        Staged batch:
+        Warmup / runs:
+        Seed:
+    validations:
+      required: true
+
+  - type: textarea
+    id: performance
+    attributes:
+      label: Performance result
+      description: Report decode and encode latency separately, plus peak VRAM when available.
+      placeholder: |
+        Decode:
+        Encode:
+        Total:
+        Peak VRAM:
+    validations:
+      required: true
+
+  - type: textarea
+    id: correctness
+    attributes:
+      label: Correctness or quality evidence
+      description: Include numerical error metrics, PSNR/MAE/RMSE, or a description of real-video visual/temporal checks. Latency alone is not enough for optimization claims.
+      placeholder: Reference vs candidate metrics and/or quality-check notes
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Reproduction command
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Mention other GPU load, driver details, compile behavior, failures, or caveats.
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I can reproduce this result with the information above, and I have not included private credentials, tokens, or proprietary model paths that should not be public.
+          required: true
