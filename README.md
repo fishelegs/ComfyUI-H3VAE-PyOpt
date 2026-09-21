@@ -73,7 +73,7 @@ export H3_VAE_MODEL_CODE_DIR=/path/to/MiniMax-H3/FL2VA/video_vae
 export H3_VAE_WEIGHTS_PATH=/path/to/minimax_h3_video_vae_fp16.safetensors
 ```
 
-权重也可放入 `ComfyUI/models/vae`，在节点中选择；模型代码目录仍需设置。当前性能测试在 Linux 完成；Windows 需要为其 Python/PyTorch/CUDA 组合安装兼容的 Triton。
+权重也可放入 `ComfyUI/models/vae`，在节点中选择；模型代码目录仍需设置。当前性能测试在 Linux 完成；Windows 需要为其 Python/PyTorch/CUDA 组合安装兼容的 Triton。Decoder 的 SDPA 后端默认设为 `auto`：PyTorch 会按当前 GPU、dtype 和输入 shape 选择可用实现，在 Flash Attention 不可用时回退，避免 `No available kernel`。如需固定后端做可复现基准，可在启动 ComfyUI 前显式设置 `MINIMAX_H3_TORCH_SDPA_BACKEND=flash`；强制 `flash` 的环境或输入不受支持时仍会报错。
 
 ## ComfyUI 用法
 

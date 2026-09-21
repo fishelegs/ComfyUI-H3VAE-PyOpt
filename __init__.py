@@ -16,8 +16,11 @@ import sys
 __version__ = "0.1.0"
 
 # Must happen before video_vae is imported (deferred to runtime load) and
-# before any inductor compile computes its cache dir.
-os.environ.setdefault("MINIMAX_H3_TORCH_SDPA_BACKEND", "flash")
+# before any inductor compile computes its cache dir.  ``auto`` lets PyTorch
+# select Flash SDPA when the current GPU, dtype, and tensor shape support it,
+# while retaining its efficient/cuDNN/math fallbacks on other configurations.
+# An explicit user setting is preserved for reproducible benchmarking.
+os.environ.setdefault("MINIMAX_H3_TORCH_SDPA_BACKEND", "auto")
 os.environ.setdefault("MINIMAX_H3_VAE_DECODER_VIT_FP32_NORM", "1")
 
 _here = os.path.dirname(os.path.realpath(__file__))

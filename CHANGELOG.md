@@ -7,6 +7,12 @@ Versioning for release tags.
 
 ## Unreleased
 
+### Fixed
+
+- Default decoder SDPA selection to `auto`, allowing PyTorch to use Flash SDPA
+  when supported and fall back to another available backend instead of raising
+  `No available kernel` on unsupported Windows/GPU/input configurations.
+
 ## 0.1.0 - 2026-09-18
 
 ### Added

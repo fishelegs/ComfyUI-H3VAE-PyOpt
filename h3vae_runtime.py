@@ -208,9 +208,10 @@ class H3VAEPyOptRuntime(torch.nn.Module):
 
         logger.info(
             "[H3VAE-PyOpt] runtime ready: decoder_tile=%d encoder_tile=%s "
-            "tile_batch=%d compile_dec=%s compile_enc=%s staged_batch=%d",
+            "tile_batch=%d compile_dec=%s compile_enc=%s staged_batch=%d sdpa=%s",
             core.decoder_tile_size, self.encoder_tile_size or "auto", tile_batch, compile_decoder,
-            compile_encoder, self.encoder_staged_batch)
+            compile_encoder, self.encoder_staged_batch,
+            os.environ.get("MINIMAX_H3_TORCH_SDPA_BACKEND", "auto"))
 
     # ------------------------------------------------------------------
     # helpers

@@ -51,6 +51,35 @@ performance numbers for other GPU models or for Windows. Those environments
 should remain "not yet reported" until a reproducible result is submitted and
 reviewed.
 
+## SDPA backend fallback
+
+The decoder defaults `MINIMAX_H3_TORCH_SDPA_BACKEND` to `auto`. PyTorch makes
+the backend decision for each attention call, taking the GPU, dtype, tensor
+shape, and installed build into account. A supported NVIDIA configuration can
+therefore still use Flash SDPA, while unsupported configurations can fall back
+to another enabled implementation instead of failing with `No available
+kernel`.
+
+An explicit environment value takes precedence. This is useful for controlled
+benchmarks, but forcing `flash` disables the fallback and can fail when that
+kernel is not available:
+
+```bash
+MINIMAX_H3_TORCH_SDPA_BACKEND=flash python main.py
+```
+
+On Windows PowerShell, restore the compatible default before starting ComfyUI
+with:
+
+```powershell
+$env:MINIMAX_H3_TORCH_SDPA_BACKEND = "auto"
+python main.py
+```
+
+Restart ComfyUI after changing the variable so model imports and compiled
+graphs use the new selection policy. The active policy is included in the
+`[H3VAE-PyOpt] runtime ready` log line.
+
 ## Contributing a result
 
 Use the repository's **Benchmark report** issue form. A useful report includes:
