@@ -102,11 +102,19 @@ class BiasFusedResidualBlock(torch.nn.Module):
         self.first = OpaqueFusedNormPadConv(block.norm1, block.conv1, with_conv=False)
         self.second = OpaqueFusedNormPadConv(block.norm2, block.conv2, with_conv=False)
         self.shortcut = getattr(block, 'nin_shortcut', None)
+        # Optional production INT8 wrappers are installed by
+        # encoder_int8_integration.  None preserves the existing FP16 path.
+        self.int8_first = None
+        self.int8_second = None
 
     def forward(self, x, zq=None):
         if zq is not None:
             raise ValueError('Unconditional inference only')
-        h = F.conv3d(self.first(x), self.first.weight, None, stride=self.first.stride)
+        first_input = self.first(x)
+        h = (self.int8_first(first_input) if self.int8_first is not None else
+             F.conv3d(first_input, self.first.weight, None, stride=self.first.stride))
         h = bias_temporal_norm_pack(h, self.first.bias, self.second.norm_weight, self.second.norm_bias, self.second.eps)
-        h = F.conv3d(h, self.second.weight, self.second.bias, stride=self.second.stride)
+        second_input = h
+        h = (self.int8_second(second_input) if self.int8_second is not None else
+             F.conv3d(second_input, self.second.weight, self.second.bias, stride=self.second.stride))
         return (self.shortcut(x) if self.shortcut is not None else x) + h

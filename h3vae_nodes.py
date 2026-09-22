@@ -94,6 +94,16 @@ class H3VAEPyOptLoader:
                     "tooltip": "Experimental FP16 decoder linear kernels via comfy-kitchen "
                                ">=0.2.34. About 2-3% faster decode on the tested GPU, "
                                "but changes output; no global --fast flag required."}),
+                "int8_decode": ("BOOLEAN", {"default": False,
+                    "tooltip": "Experimental CUDA FP16 decoder-only INT8 FFN path via "
+                               "comfy-kitchen==0.2.34. Strict opt-in: requires SM80+; "
+                               "mutually exclusive with fast_linear and has no fallback."}),
+                "int8_encode": ("BOOLEAN", {"default": False,
+                    "tooltip": "Experimental CUDA FP16 mixed INT8 encoder path: exactly "
+                               "eight 3x3x3 convolutions in prefix stages 0/1; other "
+                               "encoder operations retain their original precision. Measured slower "
+                               "than the default encoder; changes output. No fallback; "
+                               "independent of int8_decode."}),
                 "model_code_dir": ("STRING", {"default": DEFAULT_MODEL_CODE_DIR,
                     "tooltip": "FL2VA video_vae bundle dir (klvae reference code + "
                                "source config)."}),
@@ -109,17 +119,24 @@ class H3VAEPyOptLoader:
         "Load the MiniMax H3 video VAE with the validated PyTorch optimization "
         "stack: decoder QK RMSNorm+RoPE Triton fusion + whole-decoder compile + "
         "batched tiles; encoder GN/SiLU/padding fusions + staged batching. "
-        "Output feeds the stock VAEDecode/VAEEncode nodes."
+        "Optional INT8 encode/decode are independent CUDA-only experimental modes; "
+        "output feeds the stock VAEDecode/VAEEncode nodes."
     )
 
     def load(self, vae_name, dtype, decoder_tile_size, tile_batch,
              compile_decoder, compile_encoder, encoder_staged_batch,
              cudnn_benchmark, warmup, warmup_frames, warmup_width,
              warmup_height, log_calls, model_code_dir=DEFAULT_MODEL_CODE_DIR,
-             weights_path="", encoder_tile_size=0, fast_linear=False):
+             weights_path="", encoder_tile_size=0, fast_linear=False,
+             int8_decode=False, int8_encode=False):
+        if bool(fast_linear) and bool(int8_decode):
+            raise ValueError(
+                "int8_decode and fast_linear are mutually exclusive; choose one"
+            )
         key = (vae_name, weights_path, dtype, int(decoder_tile_size),
                int(encoder_tile_size), int(tile_batch), bool(compile_decoder), bool(compile_encoder),
-               int(encoder_staged_batch), model_code_dir, bool(log_calls), bool(fast_linear))
+               int(encoder_staged_batch), model_code_dir, bool(log_calls),
+               bool(fast_linear), bool(int8_decode), bool(int8_encode))
         vae = _VAE_CACHE.get(key)
         if vae is None:
             weights = _resolve_weights(vae_name, weights_path)
@@ -137,6 +154,8 @@ class H3VAEPyOptLoader:
                 compile_encoder=bool(compile_encoder),
                 encoder_staged_batch=int(encoder_staged_batch),
                 fast_linear=bool(fast_linear),
+                int8_decode=bool(int8_decode),
+                int8_encode=bool(int8_encode),
                 log_calls=bool(log_calls),
             )
             vae = build_comfy_vae(runtime)
@@ -151,6 +170,13 @@ class H3VAEPyOptLoader:
                                int(warmup_height), mode=warmup)
                 runtime._warmed_up = True
             except Exception as exc:  # noqa: BLE001 - warmup is best effort
+                if (
+                    getattr(runtime, "int8_decode", False)
+                    or getattr(runtime, "int8_encode", False)
+                ):
+                    raise RuntimeError(
+                        "explicit INT8 VAE warmup/compile failed; no fallback was applied"
+                    ) from exc
                 logger.warning("[H3VAE-PyOpt] warmup failed (%s: %s); the first "
                                "request will pay the compile cost",
                                type(exc).__name__, exc)

@@ -21,6 +21,7 @@ Inputs/outputs follow the core implementation's conventions exactly:
 from __future__ import annotations
 
 import json
+import importlib.metadata
 import logging
 import math
 import os
@@ -44,6 +45,132 @@ ENCODER_COMPILE_OPTIONS = {
 DECODER_COMPILE_MODE = "max-autotune-no-cudagraphs"
 
 _OPT_DIR = Path(__file__).resolve().parent / "opt"
+
+
+def _validate_int8_decode_options(
+    *,
+    enabled: bool,
+    fast_linear: bool,
+    device,
+    dtype: torch.dtype,
+    cuda_available: bool | None = None,
+    hip: str | None = None,
+    capability: tuple[int, int] | None = None,
+    ck_version: str | None = None,
+    has_quantize_api: bool | None = None,
+    has_linear_api: bool | None = None,
+    check_dependencies: bool = True,
+) -> None:
+    """Validate the explicit INT8 decoder contract without loading a model.
+
+    The pure arguments make the policy testable on CPU CI.  Production calls
+    perform the CUDA and dependency probes before model construction, so an
+    unsupported request fails instead of silently returning an FP16 decoder.
+    """
+    if not enabled:
+        return
+    if fast_linear:
+        raise ValueError(
+            "int8_decode and fast_linear are mutually exclusive; choose one"
+        )
+    try:
+        device_type = torch.device(device).type
+    except (TypeError, RuntimeError) as exc:
+        raise RuntimeError(
+            f"int8_decode requires a CUDA device, got {device!r}"
+        ) from exc
+    if device_type != "cuda":
+        raise RuntimeError(
+            f"int8_decode requires a CUDA device, got {device!r}"
+        )
+    if dtype != torch.float16:
+        raise RuntimeError("int8_decode requires dtype=fp16")
+    if hip is None:
+        hip = torch.version.hip
+    if hip is not None:
+        raise RuntimeError("int8_decode is CUDA-only and does not support ROCm")
+    if cuda_available is None:
+        cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        raise RuntimeError("int8_decode requires an available CUDA GPU")
+    if capability is None:
+        capability = torch.cuda.get_device_capability(torch.device(device))
+    if tuple(capability) < (8, 0):
+        raise RuntimeError(
+            "int8_decode requires CUDA compute capability SM80 or newer; "
+            f"got SM{capability[0]}{capability[1]}"
+        )
+    if not check_dependencies:
+        return
+    if ck_version != "0.2.34":
+        raise RuntimeError(
+            "int8_decode requires comfy-kitchen==0.2.34; "
+            f"found {ck_version or 'not installed'}"
+        )
+    if has_quantize_api is not True or has_linear_api is not True:
+        raise RuntimeError(
+            "int8_decode requires comfy-kitchen quantize_int8_rowwise "
+            "and int8_linear APIs"
+        )
+
+
+def _validate_int8_encode_options(
+    *,
+    enabled: bool,
+    device,
+    dtype: torch.dtype,
+    cuda_available: bool | None = None,
+    hip: str | None = None,
+    capability: tuple[int, int] | None = None,
+) -> None:
+    """Validate the explicit CUDA/FP16 contract for mixed INT8 encoding."""
+
+    if not enabled:
+        return
+    try:
+        device_type = torch.device(device).type
+    except (TypeError, RuntimeError) as exc:
+        raise RuntimeError(
+            f"int8_encode requires a CUDA device, got {device!r}"
+        ) from exc
+    if device_type != "cuda":
+        raise RuntimeError(f"int8_encode requires a CUDA device, got {device!r}")
+    if dtype != torch.float16:
+        raise RuntimeError("int8_encode requires dtype=fp16")
+    if hip is None:
+        hip = torch.version.hip
+    if hip is not None:
+        raise RuntimeError("int8_encode is CUDA-only and does not support ROCm")
+    if cuda_available is None:
+        cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        raise RuntimeError("int8_encode requires an available CUDA GPU")
+    if capability is None:
+        capability = torch.cuda.get_device_capability(torch.device(device))
+    if tuple(capability) < (8, 0):
+        raise RuntimeError(
+            "int8_encode requires CUDA compute capability SM80 or newer; "
+            f"got SM{capability[0]}{capability[1]}"
+        )
+
+
+def _int8_dependency_info() -> tuple[str | None, bool, bool]:
+    """Import CK and inspect the exact APIs used by the production path."""
+    try:
+        import comfy_kitchen as ck
+    except Exception as exc:  # noqa: BLE001 - surface an explicit option error
+        raise RuntimeError(
+            "int8_decode could not import comfy-kitchen 0.2.34"
+        ) from exc
+    try:
+        version = importlib.metadata.version("comfy-kitchen")
+    except importlib.metadata.PackageNotFoundError:
+        version = None
+    return (
+        version,
+        callable(getattr(ck, "quantize_int8_rowwise", None)),
+        callable(getattr(ck, "int8_linear", None)),
+    )
 
 
 def _import_opt_modules():
@@ -138,8 +265,34 @@ class H3VAEPyOptRuntime(torch.nn.Module):
                  compile_decoder: bool = True, compile_encoder: bool = True,
                  qk_rows: int = 8, encoder_staged_batch: int = 4,
                  log_calls: bool = True, encoder_tile_size: int = 0,
-                 fast_linear: bool = False):
+                 fast_linear: bool = False, int8_decode: bool = False,
+                 int8_encode: bool = False):
         super().__init__()
+        int8_decode = bool(int8_decode)
+        int8_encode = bool(int8_encode)
+        _validate_int8_decode_options(
+            enabled=int8_decode,
+            fast_linear=bool(fast_linear),
+            device=device,
+            dtype=dtype,
+            check_dependencies=False,
+        )
+        if int8_decode:
+            ck_version, has_quantize_api, has_linear_api = _int8_dependency_info()
+            _validate_int8_decode_options(
+                enabled=True,
+                fast_linear=bool(fast_linear),
+                device=device,
+                dtype=dtype,
+                ck_version=ck_version,
+                has_quantize_api=has_quantize_api,
+                has_linear_api=has_linear_api,
+            )
+        _validate_int8_encode_options(
+            enabled=int8_encode,
+            device=device,
+            dtype=dtype,
+        )
         if encoder_tile_size < 0 or encoder_tile_size % 16:
             raise ValueError("encoder_tile_size must be 0 (auto) or a positive multiple of 16")
         if int(tile_batch) < 0:
@@ -166,6 +319,20 @@ class H3VAEPyOptRuntime(torch.nn.Module):
             from opt.kitchen_linear import install_kitchen_linears
             count = install_kitchen_linears(new_dec)
             logger.info("[H3VAE-PyOpt] experimental comfy-kitchen linears: %d", count)
+        elif int8_decode:
+            from opt.kitchen_int8 import install_kitchen_int8_ffn
+            try:
+                count = install_kitchen_int8_ffn(
+                    new_dec, mode="INT8both", require_cuda=True
+                )
+            except Exception as exc:  # noqa: BLE001 - explicit option has no fallback
+                raise RuntimeError(
+                    "int8_decode installation failed; no fallback was applied"
+                ) from exc
+            logger.info(
+                "[H3VAE-PyOpt] experimental comfy-kitchen INT8 FFNs: %d",
+                count,
+            )
         if compile_decoder:
             new_dec = torch.compile(new_dec, mode=DECODER_COMPILE_MODE, dynamic=False)
         core.decoder = new_dec
@@ -180,6 +347,21 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         replace_selected(enc, ["down.0.downsample.conv"])
         prefix = next_fused_prefix(enc, "extend_bias_pack")
         suffix = fused_suffix(enc, quant, all_stages=True)
+        int8_encoder_metadata = None
+        if int8_encode:
+            from opt.encoder_int8_integration import install_int8_encoder_prefix
+            try:
+                int8_encoder_metadata = install_int8_encoder_prefix(
+                    prefix, require_cuda=True, tile_variant="auto"
+                )
+            except Exception as exc:  # noqa: BLE001 - explicit option has no fallback
+                raise RuntimeError(
+                    "int8_encode installation failed; no fallback was applied"
+                ) from exc
+            logger.info(
+                "[H3VAE-PyOpt] experimental mixed INT8 encoder convolutions: %d",
+                int8_encoder_metadata["count"],
+            )
         if compile_encoder:
             prefix = torch.compile(prefix, options=ENCODER_COMPILE_OPTIONS,
                                    dynamic=False, fullgraph=True)
@@ -189,6 +371,9 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         self.suffix = suffix
         self.encoder_staged_batch = int(encoder_staged_batch)
         self.fast_linear = bool(fast_linear)
+        self.int8_decode = int8_decode
+        self.int8_encode = int8_encode
+        self.int8_encoder_metadata = int8_encoder_metadata
 
         # ---------------- normalization constants ----------------
         lat_mean = torch.tensor(cfg["latents_mean"], dtype=dtype, device=device)
@@ -208,9 +393,11 @@ class H3VAEPyOptRuntime(torch.nn.Module):
 
         logger.info(
             "[H3VAE-PyOpt] runtime ready: decoder_tile=%d encoder_tile=%s "
-            "tile_batch=%d compile_dec=%s compile_enc=%s staged_batch=%d sdpa=%s",
+            "tile_batch=%d compile_dec=%s compile_enc=%s staged_batch=%d "
+            "fast_linear=%s int8_decode=%s int8_encode=%s sdpa=%s",
             core.decoder_tile_size, self.encoder_tile_size or "auto", tile_batch, compile_decoder,
             compile_encoder, self.encoder_staged_batch,
+            self.fast_linear, self.int8_decode, self.int8_encode,
             os.environ.get("MINIMAX_H3_TORCH_SDPA_BACKEND", "auto"))
 
     # ------------------------------------------------------------------
@@ -292,6 +479,10 @@ class H3VAEPyOptRuntime(torch.nn.Module):
     def decode(self, z, output_buffer=None, **kwargs):
         t0 = time.monotonic()
         dev = self._device()
+        if self.int8_decode and z.dtype != torch.float16:
+            raise RuntimeError(
+                "int8_decode requires FP16 latent input; use the FP16 VAE dtype"
+            )
         z = z.to(device=dev)
         zn = z * self.latents_std + self.latents_mean
 
@@ -396,6 +587,10 @@ class H3VAEPyOptRuntime(torch.nn.Module):
     def encode(self, x, device=None):
         t0 = time.monotonic()
         dev = self._device()
+        if self.int8_encode and x.dtype != torch.float16:
+            raise RuntimeError(
+                "int8_encode requires FP16 pixel input; use the FP16 VAE dtype"
+            )
         x = x.to(device=dev)
         if x.ndim == 4:
             x = x.unsqueeze(2)
@@ -491,7 +686,12 @@ def build_comfy_vae(runtime: H3VAEPyOptRuntime, dtype=None):
             self.upscale_index_formula = (4, 16, 16)
             self.downscale_ratio = (lambda a: max(1, (a - 5) // 17 * 5 + 2) if a > 1 else 1, 16, 16)
             self.downscale_index_formula = (4, 16, 16)
-            self.working_dtypes = [torch.float16, torch.float32]
+            self.working_dtypes = (
+                [torch.float16]
+                if getattr(runtime, "int8_decode", False)
+                or getattr(runtime, "int8_encode", False)
+                else [torch.float16, torch.float32]
+            )
             # the runtime tiles internally; stock tiling fallbacks are no-ops
             self.handles_tiling = True
             # decode already finalizes to [0,1] float32
@@ -514,6 +714,13 @@ def build_comfy_vae(runtime: H3VAEPyOptRuntime, dtype=None):
             offload_device = model_management.vae_offload_device()
             if dtype is None:
                 dtype = model_management.vae_dtype(self.device, self.working_dtypes)
+            if (
+                getattr(runtime, "int8_decode", False)
+                or getattr(runtime, "int8_encode", False)
+            ) and dtype != torch.float16:
+                raise RuntimeError(
+                    "INT8 VAE mode requires ComfyUI to select an FP16 VAE dtype"
+                )
             self.vae_dtype = dtype
             self.output_device = model_management.intermediate_device()
 
