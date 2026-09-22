@@ -11,7 +11,7 @@ MiniMax H3 视频 VAE 的 PyTorch 加速实现与 ComfyUI 插件。通过 Triton
 
 ## 性能
 
-以下结果均在 **NVIDIA RTX PRO 5000 72GB**、FP16 下测得。表中数字依次为 **decode / encode / 合计**，单位为秒；均为预热后的稳态时间，不含加载、首次编译和 engine 初始化。
+以下结果均在 **NVIDIA RTX PRO 5000 72GB** 上测得；除单独标注的 INT8 实验外，使用 FP16。性能数字均为预热后的稳态时间，不含加载、首次编译和 engine 初始化。原有对比表依次列出 **decode / encode / 合计**，单位为秒。
 
 ### 当前插件 runtime
 
@@ -25,6 +25,34 @@ MiniMax H3 视频 VAE 的 PyTorch 加速实现与 ComfyUI 插件。通过 Triton
 672×672×124 的本插件总时长比提交后默认配置低 **40.75%**，比 `--fast` 配置低 **31.71%**。768×1344×124 使用同样的 encoder tile `256` 时，总时长分别低 **17.40%** 和 **4.70%**；与同 tile 原始 VAE 编码器的 latent 相对 RMSE 为 **0.166%**。默认 `encoder_tile_size=0` 会按尺寸选择上述 tile；改变 tile 会改变输出。[完整 A/B 与精度说明](docs/h3_spatial_encoder_followup_2026-09-17.md)。
 
 对 2026-09-17 最新 ComfyUI [`387f98a`](https://github.com/Comfy-Org/ComfyUI/commit/387f98aa2822f684b8597959a52a467d88cc4806) 再测 768×1344×124：默认 **28.370 s**，`--fast fp16_accumulation` **24.499 s**。本项目默认 runtime 为 **23.428 s**；可选 `fast_linear` 模式为 **23.029 s**（decode 11.062 / encode 11.967 s），比官方 `--fast` 合计低约 **6.0%**。`fast_linear` 只作用于 decoder，需 comfy-kitchen 0.2.34，且会改变数值；同输入相对本项目默认 decode 的像素 PSNR 约 **61.2 dB**。它默认关闭，不需要开启 ComfyUI 全局 `--fast`。[测试口径与精度细节](docs/h3_latest_fast_ab_2026-09-18.md)。
+
+### 实验性 INT8 encode / decode
+
+两个独立开关，默认关闭，无需 TensorRT：encoder 的 8 个热点卷积使用真实 **INT8×INT8→INT32** 运算，decoder 的 72 个 FFN Linear 使用 W8A8。其余算子保留原有精度，因此这是**混合精度 INT8**，不是全网络 INT8，也不是无损模式。
+
+RTX PRO 5000 72GB，768×1344×124，encoder/decoder tile 均为 `256`，staged batch `4`、decode batch `2`；2 次预热、3 次交错 CUDA Event 测量：
+
+| 路径 | Encode | Decode | 合计¹ | 相对默认合计耗时 |
+| --- | ---: | ---: | ---: | ---: |
+| 默认 PyOpt | 11.946 s | 11.477 s | 23.423 s | — |
+| 仅 INT8 decode | 11.946 s | **8.278 s** | **20.224 s** | 降低 13.7% |
+| 仅 INT8 encode | 12.538 s | 11.476 s | 24.014 s | 增加 2.5% |
+| INT8 encode + decode | 12.538 s | 8.278 s | 20.816 s | 降低 11.1% |
+
+¹ 合计为分别测得的 encode 与 decode 均值之和，不是完整视频生成耗时。动态量化计入计时，加载、首次编译和视频 I/O 不计入。PyTorch 2.11.0+cu130、Triton 3.6.0、comfy-kitchen 0.2.34；测试期间有后台 GPU 负载。
+
+**收益主要来自 decoder：decode 耗时降低 27.9%；INT8 encoder 反而慢 4.9%，目前仅供实验，不建议为了加速而开启。** 不将本轮结果与其他表中的历史 TRT/ComfyUI 数据混算。质量结果、量化范围、限制与复现见[实验说明](docs/experimental_int8.md)。
+
+8 段视频、共 **992 帧**（768×1376×124 和 768×1344×124）的完整四路重建检查：
+
+| 路径 | 与原视频：平均 / 最差帧 PSNR | 与默认重建：平均 PSNR |
+| --- | ---: | ---: |
+| 默认 | 35.110 / 32.711 dB | — |
+| 仅 INT8 decode | 34.963 / 32.618 dB | 49.585 dB |
+| 仅 INT8 encode | 34.486 / 32.338 dB | 42.589 dB |
+| INT8 encode + decode | 34.355 / 32.235 dB | 41.767 dB |
+
+七组比较全部为 **0/992 帧低于 30 dB**。相对原视频，平均 PSNR 分别下降 0.146、0.623、0.755 dB；INT8 encoder 的 latent 相对 RMSE 为 8.05–12.07%。指标基于未压缩 RGB，30 dB 通过仅是筛查结果，不代表无损或没有时序瑕疵。
 
 ### 当前规格与 TensorRT：严格同 tile A/B
 
@@ -80,6 +108,10 @@ export H3_VAE_WEIGHTS_PATH=/path/to/minimax_h3_video_vae_fp16.safetensors
 添加 **MiniMax H3 VAE Load (PyTorch Optimized)** 节点（`H3VAEPyOptLoader`），把 `VAE` 输出连接到现有的 `VAE Encode`、`VAE Decode` 或 MiniMax H3 workflow。建议从 FP16、decoder tile `256`、tile batch `2`、encoder staged batch `4` 开始；encoder tile 默认自动选择（672×672 用 `672`，768×1344 用 `256`），也可显式设置。`tile_batch=0` 可按空闲显存选择 1 或 2。需要排除首次编译开销时将 `warmup` 设为 `decode` 或 `both`。
 
 需要尝试实验性 decoder 加速时，先在 ComfyUI 的 Python 环境中安装 `python -m pip install 'comfy-kitchen==0.2.34'`，再把 Loader 的 `fast_linear` 设为 `true`；无需全局 `--fast`。该模式是精度/速度折中，建议对真实视频检查细节、接缝和运动连续性。
+
+INT8 encode / decode 可分别用 Loader 的 `int8_encode`、`int8_decode` 开启，保持 `dtype=fp16`。需要 NVIDIA CUDA SM80+；INT8 decoder 另外需要 `comfy-kitchen==0.2.34`，且不能与 `fast_linear` 同时开启。未支持的配置会明确报错，不会静默退回 FP16 并标为 INT8。
+
+[INT8 encode→decode 最小 API workflow](examples/minimal_h3vae_pyopt_int8_roundtrip_prompt.json) 使用 `LoadImage → VAE Encode → VAE Decode → PreviewImage`：先上传一张 256×256 图片并替换示例文件名，再配置模型路径。[仅 INT8 decode 示例](examples/minimal_h3vae_pyopt_int8_prompt.json)也可单独使用。两者只演示节点连接；视频质量需用真实素材验证。
 
 最小 decode workflow：[examples/minimal_h3vae_pyopt_prompt.json](examples/minimal_h3vae_pyopt_prompt.json)。把其中的模型路径改成实际位置后，在仓库目录执行：
 

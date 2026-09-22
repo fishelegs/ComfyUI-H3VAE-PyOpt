@@ -1,0 +1,725 @@
+{
+  "source": {
+    "name": "MiniMax_H3_00015_50steps_seed43.mp4",
+    "sha256": "364c4e2332bc2c979f72a437fa97ecc93a9f4c8f38a7df038968606406473b45",
+    "height": 768,
+    "width": 1344,
+    "frames": 124,
+    "fps": {
+      "num": 24,
+      "den": 1
+    }
+  },
+  "config": {
+    "weights_sha256": "7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522",
+    "decoder_tile_size": 256,
+    "tile_batch": 2,
+    "encoder_tile_size": 256,
+    "encoder_tile_size_effective": 256,
+    "encoder_staged_batch": 4,
+    "cudnn_benchmark": true,
+    "cudnn_benchmark_limit": 5,
+    "compile_decoder": true,
+    "compile_encoder": true,
+    "decoder_compile_mode": "max-autotune-no-cudagraphs",
+    "seed": 20260922,
+    "quality_only": false,
+    "quality_only_warmup_paths": false,
+    "quality_reference": "exact PyAV RGB uint8 / 255 FP32",
+    "quality_threshold_db": 30
+  },
+  "environment": {
+    "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+    "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+    "torch": "2.11.0+cu130",
+    "torch_cuda": "13.0",
+    "torch_hip": null,
+    "triton": "3.6.0",
+    "comfy_kitchen_version": "0.2.34",
+    "sdpa_backend_env": "auto",
+    "fp32_norm_env": "1",
+    "allow_fp16_accumulation": false,
+    "gpu_before_runtime": {
+      "available": true,
+      "device_index": 0,
+      "name": "NVIDIA Graphics Device",
+      "capability": [
+        12,
+        0
+      ],
+      "memory_allocated_bytes": 0,
+      "memory_reserved_bytes": 0,
+      "nvidia_smi": "82, 12815, 73415"
+    },
+    "gpu_after_sample": {
+      "available": true,
+      "device_index": 0,
+      "name": "NVIDIA Graphics Device",
+      "capability": [
+        12,
+        0
+      ],
+      "memory_allocated_bytes": 8643450880,
+      "memory_reserved_bytes": 8757706752,
+      "nvidia_smi": "100, 21611, 73415"
+    }
+  },
+  "implementation_sources": {
+    "h3vae_runtime.py": "a64d5979da0750f99d9bc66e7bd65595e691cfb3a93378fa24be885379cedac3",
+    "opt/kitchen_int8.py": "97daef3984f9e6b0f0cb75dcd7317cbcb5a7c1b1029a8f00e4209ee5212def2e",
+    "opt/encoder_int8.py": "aa2a356e185333459346fef5d3ea822d7d0d0bc4d4feed163431fb1ed9d15424",
+    "opt/encoder_int8_integration.py": "03a2fbe65bb5b4418eab117e79ea894bcc8e56aff345d4c28f2527c95cc7d156",
+    "bench_int8_vae.py": "7c4b6eeac13a663d41071a9d384862115899cc15f6dbb8fb26c264f030eb627d",
+    "bench_int8_roundtrip.py": "61fbb39e1b9d63fd8264f3a8489ddab3934338535c7a07bced8e2239c27a0699"
+  },
+  "timing": {
+    "encode": {
+      "warmup_count_per_variant": 2,
+      "warmup_order": [
+        [
+          "E0",
+          "E1"
+        ],
+        [
+          "E1",
+          "E0"
+        ]
+      ],
+      "timed_runs_per_variant": 3,
+      "alternating_order": [
+        [
+          "E0",
+          "E1"
+        ],
+        [
+          "E1",
+          "E0"
+        ],
+        [
+          "E0",
+          "E1"
+        ]
+      ],
+      "timing": {
+        "E0": {
+          "runs": [
+            {
+              "run_index": 0,
+              "order_position": 0,
+              "cuda_event_ms": 11948.8583984375,
+              "wall_sync_ms": 11949.214664986357,
+              "peak_memory_allocated_bytes": 11262686720
+            },
+            {
+              "run_index": 1,
+              "order_position": 1,
+              "cuda_event_ms": 11939.3955078125,
+              "wall_sync_ms": 11939.700952963904,
+              "peak_memory_allocated_bytes": 11262686720
+            },
+            {
+              "run_index": 2,
+              "order_position": 0,
+              "cuda_event_ms": 11951.2216796875,
+              "wall_sync_ms": 11951.551624108106,
+              "peak_memory_allocated_bytes": 11262686720
+            }
+          ],
+          "mean_cuda_event_ms": 11946.491861979166,
+          "mean_wall_sync_ms": 11946.822414019456,
+          "min_cuda_event_ms": 11939.3955078125,
+          "min_wall_sync_ms": 11939.700952963904,
+          "max_peak_memory_allocated_bytes": 11262686720
+        },
+        "E1": {
+          "runs": [
+            {
+              "run_index": 0,
+              "order_position": 1,
+              "cuda_event_ms": 12537.4765625,
+              "wall_sync_ms": 12537.784083047882,
+              "peak_memory_allocated_bytes": 11421322752
+            },
+            {
+              "run_index": 1,
+              "order_position": 0,
+              "cuda_event_ms": 12540.232421875,
+              "wall_sync_ms": 12540.53748701699,
+              "peak_memory_allocated_bytes": 11421322752
+            },
+            {
+              "run_index": 2,
+              "order_position": 1,
+              "cuda_event_ms": 12534.978515625,
+              "wall_sync_ms": 12535.302584059536,
+              "peak_memory_allocated_bytes": 11421322752
+            }
+          ],
+          "mean_cuda_event_ms": 12537.5625,
+          "mean_wall_sync_ms": 12537.87471804147,
+          "min_cuda_event_ms": 12534.978515625,
+          "min_wall_sync_ms": 12535.302584059536,
+          "max_peak_memory_allocated_bytes": 11421322752
+        }
+      },
+      "input_dtype": "torch.float16",
+      "input_shape": [
+        1,
+        3,
+        124,
+        768,
+        1344
+      ],
+      "dynamic_quantization_in_timed_call": true,
+      "static_quantization_in_timed_call": false
+    },
+    "decode": {
+      "warmup_count_per_path": 2,
+      "warmup_order": [
+        [
+          "default",
+          "d_only",
+          "e_only",
+          "both"
+        ],
+        [
+          "d_only",
+          "e_only",
+          "both",
+          "default"
+        ]
+      ],
+      "timed_runs_per_path": 3,
+      "rotating_order": [
+        [
+          "default",
+          "d_only",
+          "e_only",
+          "both"
+        ],
+        [
+          "d_only",
+          "e_only",
+          "both",
+          "default"
+        ],
+        [
+          "e_only",
+          "both",
+          "default",
+          "d_only"
+        ]
+      ],
+      "timing": {
+        "default": {
+          "runs": [
+            {
+              "run_index": 0,
+              "order_position": 0,
+              "cuda_event_ms": 11486.015625,
+              "wall_sync_ms": 11486.37529509142,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 1,
+              "order_position": 3,
+              "cuda_event_ms": 11473.1201171875,
+              "wall_sync_ms": 11473.4378780704,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 2,
+              "order_position": 2,
+              "cuda_event_ms": 11470.921875,
+              "wall_sync_ms": 11471.240160055459,
+              "peak_memory_allocated_bytes": 14040589312
+            }
+          ],
+          "mean_cuda_event_ms": 11476.685872395834,
+          "mean_wall_sync_ms": 11477.017777739093,
+          "min_cuda_event_ms": 11470.921875,
+          "min_wall_sync_ms": 11471.240160055459,
+          "max_peak_memory_allocated_bytes": 14040589312
+        },
+        "d_only": {
+          "runs": [
+            {
+              "run_index": 0,
+              "order_position": 1,
+              "cuda_event_ms": 8282.181640625,
+              "wall_sync_ms": 8282.520154025406,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 1,
+              "order_position": 0,
+              "cuda_event_ms": 8277.3271484375,
+              "wall_sync_ms": 8277.635323815048,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 2,
+              "order_position": 3,
+              "cuda_event_ms": 8273.216796875,
+              "wall_sync_ms": 8273.499044124037,
+              "peak_memory_allocated_bytes": 14040589312
+            }
+          ],
+          "mean_cuda_event_ms": 8277.5751953125,
+          "mean_wall_sync_ms": 8277.88484065483,
+          "min_cuda_event_ms": 8273.216796875,
+          "min_wall_sync_ms": 8273.499044124037,
+          "max_peak_memory_allocated_bytes": 14040589312
+        },
+        "e_only": {
+          "runs": [
+            {
+              "run_index": 0,
+              "order_position": 2,
+              "cuda_event_ms": 11480.96484375,
+              "wall_sync_ms": 11481.30063386634,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 1,
+              "order_position": 1,
+              "cuda_event_ms": 11474.0146484375,
+              "wall_sync_ms": 11474.341333145276,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 2,
+              "order_position": 0,
+              "cuda_event_ms": 11472.869140625,
+              "wall_sync_ms": 11473.180355038494,
+              "peak_memory_allocated_bytes": 14040589312
+            }
+          ],
+          "mean_cuda_event_ms": 11475.949544270834,
+          "mean_wall_sync_ms": 11476.274107350037,
+          "min_cuda_event_ms": 11472.869140625,
+          "min_wall_sync_ms": 11473.180355038494,
+          "max_peak_memory_allocated_bytes": 14040589312
+        },
+        "both": {
+          "runs": [
+            {
+              "run_index": 0,
+              "order_position": 3,
+              "cuda_event_ms": 8284.2216796875,
+              "wall_sync_ms": 8284.538767999038,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 1,
+              "order_position": 2,
+              "cuda_event_ms": 8276.3876953125,
+              "wall_sync_ms": 8276.705446885899,
+              "peak_memory_allocated_bytes": 14040589312
+            },
+            {
+              "run_index": 2,
+              "order_position": 1,
+              "cuda_event_ms": 8273.966796875,
+              "wall_sync_ms": 8274.278881028295,
+              "peak_memory_allocated_bytes": 14040589312
+            }
+          ],
+          "mean_cuda_event_ms": 8278.192057291666,
+          "mean_wall_sync_ms": 8278.507698637744,
+          "min_cuda_event_ms": 8273.966796875,
+          "min_wall_sync_ms": 8274.278881028295,
+          "max_peak_memory_allocated_bytes": 14040589312
+        }
+      },
+      "dynamic_quantization_in_timed_call": true,
+      "static_quantization_in_timed_call": false
+    }
+  },
+  "encode": {
+    "input_shape": [
+      1,
+      3,
+      124,
+      768,
+      1344
+    ],
+    "input_dtype": "torch.float16",
+    "input_range": "[-1,1]",
+    "same_exact_fp16_input": true,
+    "E0": {
+      "output_shape": [
+        1,
+        24,
+        37,
+        48,
+        84
+      ],
+      "output_dtype": "torch.float32",
+      "output_finite": true,
+      "quality_call_wall_ms": 13673.018581001088
+    },
+    "E1": {
+      "output_shape": [
+        1,
+        24,
+        37,
+        48,
+        84
+      ],
+      "output_dtype": "torch.float32",
+      "output_finite": true,
+      "quality_call_wall_ms": 12835.937638999894
+    },
+    "E1_vs_E0": {
+      "shape_match": true,
+      "finite": true,
+      "mae": 0.07027850300073624,
+      "rmse": 0.11447278410196304,
+      "max_abs": 1.8346235752105713,
+      "reference_rms": 1.0749870538711548,
+      "relative_rmse": 0.1064875932130839
+    }
+  },
+  "quality": {
+    "headlines_vs_source": {
+      "default": {
+        "mean_frame_psnr_db": 34.85196283225777,
+        "mean_frame_psnr_infinite": false,
+        "global_psnr_db": 34.83678318099081,
+        "global_psnr_infinite": false,
+        "min_frame_psnr_db": 33.69374088529287,
+        "min_frame_psnr_infinite": false,
+        "below_30db_count": 0,
+        "frame_count": 124
+      },
+      "d_only": {
+        "mean_frame_psnr_db": 34.70956697942301,
+        "mean_frame_psnr_infinite": false,
+        "global_psnr_db": 34.69483357567632,
+        "global_psnr_infinite": false,
+        "min_frame_psnr_db": 33.568849007611114,
+        "min_frame_psnr_infinite": false,
+        "below_30db_count": 0,
+        "frame_count": 124
+      },
+      "e_only": {
+        "mean_frame_psnr_db": 34.19818280316165,
+        "mean_frame_psnr_infinite": false,
+        "global_psnr_db": 34.18552493591969,
+        "global_psnr_infinite": false,
+        "min_frame_psnr_db": 33.22219432101472,
+        "min_frame_psnr_infinite": false,
+        "below_30db_count": 0,
+        "frame_count": 124
+      },
+      "both": {
+        "mean_frame_psnr_db": 34.06610567728016,
+        "mean_frame_psnr_infinite": false,
+        "global_psnr_db": 34.05363957860801,
+        "global_psnr_infinite": false,
+        "min_frame_psnr_db": 33.10716732672704,
+        "min_frame_psnr_infinite": false,
+        "below_30db_count": 0,
+        "frame_count": 124
+      }
+    },
+    "headlines_vs_default": {
+      "d_only": {
+        "mean_frame_psnr_db": 49.24764568559491,
+        "mean_frame_psnr_infinite": false,
+        "global_psnr_db": 49.22990960367564,
+        "global_psnr_infinite": false,
+        "min_frame_psnr_db": 48.5285036628276,
+        "min_frame_psnr_infinite": false,
+        "below_30db_count": 0,
+        "frame_count": 124
+      },
+      "e_only": {
+        "mean_frame_psnr_db": 42.31889950971489,
+        "mean_frame_psnr_infinite": false,
+        "global_psnr_db": 42.29764896907089,
+        "global_psnr_infinite": false,
+        "min_frame_psnr_db": 40.87215461257148,
+        "min_frame_psnr_infinite": false,
+        "below_30db_count": 0,
+        "frame_count": 124
+      },
+      "both": {
+        "mean_frame_psnr_db": 41.46744582774139,
+        "mean_frame_psnr_infinite": false,
+        "global_psnr_db": 41.449509326636104,
+        "global_psnr_infinite": false,
+        "min_frame_psnr_db": 40.16991374812439,
+        "min_frame_psnr_infinite": false,
+        "below_30db_count": 0,
+        "frame_count": 124
+      }
+    }
+  },
+  "deterministic_controls": {
+    "encode_default_repeat": {
+      "shape_match": true,
+      "finite": true,
+      "mae": 0,
+      "rmse": 0,
+      "max_abs": 0,
+      "reference_rms": 1.0749870538711548,
+      "relative_rmse": 0
+    },
+    "encode_default_repeat_wall_ms": 11931.20266799815,
+    "decode_default_repeat": {
+      "shape_match": true,
+      "finite": true,
+      "mae": 0,
+      "rmse": 0,
+      "max_abs": 0
+    }
+  },
+  "int8_input_validation": {
+    "encoder": {
+      "module_count": 8,
+      "module_hook_count": 8,
+      "total_module_calls": 1792,
+      "all_inputs_finite": true,
+      "output_finite": true,
+      "output_shape": [
+        1,
+        24,
+        37,
+        48,
+        84
+      ],
+      "path": "runtime.encode with uncompiled INT8 encoder prefix hooks",
+      "runtime_metadata": {
+        "enabled": true,
+        "count": 8,
+        "policy": {
+          "stages": [
+            0,
+            1
+          ],
+          "blocks_per_stage": 2,
+          "convolutions_per_block": [
+            "first",
+            "second"
+          ],
+          "quantized_conv_count": 8,
+          "kernel": [
+            3,
+            3,
+            3
+          ],
+          "tile_variants_by_input_channels": {
+            "128": "128x64x64",
+            "256": "128x64x128"
+          },
+          "excluded": [
+            "conv_in",
+            "conv_out",
+            "downsample",
+            "nin_shortcut",
+            "encoder suffix",
+            "quant_conv"
+          ]
+        },
+        "tile_variant": "stage-aware-input-channels",
+        "tile_variants": [
+          "128x64x128",
+          "128x64x64"
+        ],
+        "convolutions": [
+          {
+            "path": "stages.0.block.0.first",
+            "weight_shape": [
+              128,
+              128,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 128,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": false,
+            "tile_variant": "128x64x64"
+          },
+          {
+            "path": "stages.0.block.0.second",
+            "weight_shape": [
+              128,
+              128,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 128,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": true,
+            "tile_variant": "128x64x64"
+          },
+          {
+            "path": "stages.0.block.1.first",
+            "weight_shape": [
+              128,
+              128,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 128,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": false,
+            "tile_variant": "128x64x64"
+          },
+          {
+            "path": "stages.0.block.1.second",
+            "weight_shape": [
+              128,
+              128,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 128,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": true,
+            "tile_variant": "128x64x64"
+          },
+          {
+            "path": "stages.1.block.0.first",
+            "weight_shape": [
+              256,
+              128,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 128,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": false,
+            "tile_variant": "128x64x64"
+          },
+          {
+            "path": "stages.1.block.0.second",
+            "weight_shape": [
+              256,
+              256,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 256,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": true,
+            "tile_variant": "128x64x128"
+          },
+          {
+            "path": "stages.1.block.1.first",
+            "weight_shape": [
+              256,
+              256,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 256,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": false,
+            "tile_variant": "128x64x128"
+          },
+          {
+            "path": "stages.1.block.1.second",
+            "weight_shape": [
+              256,
+              256,
+              3,
+              3,
+              3
+            ],
+            "input_channels": 256,
+            "stride": [
+              1,
+              1,
+              1
+            ],
+            "apply_bias": false,
+            "tile_variant": "128x64x128"
+          }
+        ]
+      },
+      "hook_encode_wall_ms": 18953.863700851798,
+      "hooked_latent_discarded": true,
+      "public_latent_from_restored_compiled_runtime": true
+    },
+    "decoder": {
+      "E0": {
+        "block_count": 36,
+        "linear_hook_count": 72,
+        "total_linear_calls": 7056,
+        "all_inputs_finite": true,
+        "output_finite": true,
+        "output_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "path": "runtime.decode with uncompiled decoder body hooks"
+      },
+      "E1": {
+        "block_count": 36,
+        "linear_hook_count": 72,
+        "total_linear_calls": 7056,
+        "all_inputs_finite": true,
+        "output_finite": true,
+        "output_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "path": "runtime.decode with uncompiled decoder body hooks"
+      }
+    }
+  },
+  "device_identification": {
+    "reported_by_driver": "NVIDIA Graphics Device",
+    "user_confirmed_model": "NVIDIA RTX PRO 5000 72GB"
+  },
+  "notes": [
+    "Measured under concurrent background GPU load; not an idle-GPU benchmark.",
+    "Sum of encode and decode means is not a monolithic end-to-end timer.",
+    "After measurement, only explanatory docstrings/tooltips and initialization-only GPU-device validation changed; convolution/quantization arithmetic stayed unchanged.",
+    "Per-frame CSV and full JSON were independently audited locally; this artifact retains aggregate quality and raw timing."
+  ]
+}

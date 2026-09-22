@@ -7,6 +7,15 @@ Versioning for release tags.
 
 ## Unreleased
 
+### Added
+
+- Independent opt-in experimental INT8 encoder and decoder modes: eight
+  encoder convolutions and 72 decoder FFN linears use real INT8 arithmetic.
+  Other operations and default behavior retain their existing precision.
+- Four-way timing and video reconstruction-quality validation, including
+  per-frame PSNR and explicit encoder/decoder trade-offs. The measured INT8
+  encoder is slower; decoder acceleration does not imply encoder speedup.
+
 ### Fixed
 
 - Default decoder SDPA selection to `auto`, allowing PyTorch to use Flash SDPA
