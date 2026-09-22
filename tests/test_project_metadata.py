@@ -10,7 +10,7 @@ class ProjectMetadataTest(unittest.TestCase):
         project = data["project"]
 
         self.assertEqual(project["name"], "h3vae-pyopt")
-        self.assertEqual(project["version"], "0.1.0")
+        self.assertEqual(project["version"], "0.2.0")
         self.assertEqual(project["license"], {"file": "LICENSE"})
         self.assertEqual(
             project["urls"]["Repository"],

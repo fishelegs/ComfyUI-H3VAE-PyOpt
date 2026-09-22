@@ -7,6 +7,8 @@ Versioning for release tags.
 
 ## Unreleased
 
+## 0.2.0 - 2026-09-22
+
 ### Added
 
 - Independent opt-in experimental INT8 encoder and decoder modes: eight
@@ -15,6 +17,12 @@ Versioning for release tags.
 - Four-way timing and video reconstruction-quality validation, including
   per-frame PSNR and explicit encoder/decoder trade-offs. The measured INT8
   encoder is slower; decoder acceleration does not imply encoder speedup.
+
+### Changed
+
+- Documented the validated FP16 floating-point path as the recommended default
+  and the decoder-only INT8 mode as the practical experimental speed option,
+  including focused performance and 992-frame PSNR tables.
 
 ### Fixed
 

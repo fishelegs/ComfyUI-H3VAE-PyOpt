@@ -1,6 +1,6 @@
 [project]
 name = "h3vae-pyopt"
-version = "0.1.0"
+version = "0.2.0"
 description = "Optimized PyTorch/Triton MiniMax H3 video VAE runtime for ComfyUI."
 readme = "README.md"
 requires-python = ">=3.10"

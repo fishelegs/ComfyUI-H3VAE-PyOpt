@@ -21,7 +21,7 @@ class VersionMetadataTest(unittest.TestCase):
         self.assertEqual(len(versions), 1)
         value = versions[0]
         self.assertIsInstance(value, ast.Constant)
-        self.assertEqual(value.value, "0.1.0")
+        self.assertEqual(value.value, "0.2.0")
 
 
 if __name__ == "__main__":
