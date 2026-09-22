@@ -1,0 +1,70 @@
+{
+  "prompt": {
+    "1": {
+      "inputs": {
+        "vae_name": "use default",
+        "dtype": "fp16",
+        "decoder_tile_size": 256,
+        "tile_batch": 2,
+        "compile_decoder": true,
+        "compile_encoder": true,
+        "encoder_staged_batch": 4,
+        "cudnn_benchmark": true,
+        "warmup": "none",
+        "warmup_frames": 1,
+        "warmup_width": 256,
+        "warmup_height": 256,
+        "log_calls": false,
+        "encoder_tile_size": 0,
+        "fast_linear": false,
+        "int8_decode": true,
+        "int8_encode": true,
+        "model_code_dir": "/path/to/MiniMax-H3/FL2VA/video_vae",
+        "weights_path": "/path/to/minimax_h3_video_vae_fp16.safetensors"
+      },
+      "class_type": "H3VAEPyOptLoader",
+      "_meta": {
+        "title": "MiniMax H3 VAE Load (Experimental INT8 Encode + Decode)"
+      }
+    },
+    "2": {
+      "inputs": {
+        "image": "replace_with_256x256.png"
+      },
+      "class_type": "LoadImage",
+      "_meta": {
+        "title": "Load a 256x256 source image"
+      }
+    },
+    "3": {
+      "inputs": {
+        "pixels": ["2", 0],
+        "vae": ["1", 0]
+      },
+      "class_type": "VAEEncode",
+      "_meta": {
+        "title": "VAE Encode (INT8 experimental path)"
+      }
+    },
+    "4": {
+      "inputs": {
+        "samples": ["3", 0],
+        "vae": ["1", 0]
+      },
+      "class_type": "VAEDecode",
+      "_meta": {
+        "title": "VAE Decode (INT8 experimental path)"
+      }
+    },
+    "5": {
+      "inputs": {
+        "images": ["4", 0]
+      },
+      "class_type": "PreviewImage",
+      "_meta": {
+        "title": "Preview roundtrip reconstruction"
+      }
+    }
+  },
+  "client_id": "h3vae-pyopt-int8-roundtrip-example"
+}
