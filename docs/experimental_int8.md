@@ -6,6 +6,15 @@ This is not a fully quantized VAE and is not lossless.
 
 ## Scope and requirements
 
+This document's original 72-linear results describe v0.2.0 and
+`decode_fusions=false`. The new opt-in `decode_fusions=true` profile extends
+decoder quantization to **144 linears** (72 FFN, 36 QKV, 36 attention output),
+fuses activation/norm quantization, and requires `int8_encode=false`.
+It retains FP32 scales and uses a separately validated, private CUTLASS entry
+point pinned to comfy-kitchen 0.2.34, without requantizing already quantized
+activations. No silent fallback is allowed. See [decode fusions](decode_fusions.md)
+for its different performance/quality results, batch setting and limitations.
+
 | Component | Quantized operations | Quantization | Unchanged operations |
 | --- | --- | --- | --- |
 | Encoder (`int8_encode`) | Eight 3×3×3 convolutions in prefix stages 0–1 | Static per-output-channel INT8 weights, dynamic per-tensor INT8 activations, INT32 accumulation | Input/output convolutions, downsampling, shortcuts, suffix, norms and other operations |

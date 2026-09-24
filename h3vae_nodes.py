@@ -94,6 +94,12 @@ class H3VAEPyOptLoader:
                     "tooltip": "Experimental FP16 decoder linear kernels via comfy-kitchen "
                                ">=0.2.34. About 2-3% faster decode on the tested GPU, "
                                "but changes output; no global --fast flag required."}),
+                "decode_fusions": ("BOOLEAN", {"default": False,
+                    "tooltip": "Opt-in CUDA FP16 decode fusions. Recommended tile_batch: "
+                               "8 for FP16; 4 with int8_decode (expands to 144 INT8 Linear "
+                               "layers). Requires compile_decoder, FP32 norms, SM80+. "
+                               "Not compatible with fast_linear or int8_encode. "
+                               "Changes rounding; larger batches need validation on your GPU."}),
                 "int8_decode": ("BOOLEAN", {"default": False,
                     "tooltip": "Experimental CUDA FP16 decoder-only INT8 FFN path via "
                                "comfy-kitchen==0.2.34. Strict opt-in: requires SM80+; "
@@ -128,7 +134,7 @@ class H3VAEPyOptLoader:
              cudnn_benchmark, warmup, warmup_frames, warmup_width,
              warmup_height, log_calls, model_code_dir=DEFAULT_MODEL_CODE_DIR,
              weights_path="", encoder_tile_size=0, fast_linear=False,
-             int8_decode=False, int8_encode=False):
+             int8_decode=False, int8_encode=False, decode_fusions=False):
         if bool(fast_linear) and bool(int8_decode):
             raise ValueError(
                 "int8_decode and fast_linear are mutually exclusive; choose one"
@@ -136,7 +142,7 @@ class H3VAEPyOptLoader:
         key = (vae_name, weights_path, dtype, int(decoder_tile_size),
                int(encoder_tile_size), int(tile_batch), bool(compile_decoder), bool(compile_encoder),
                int(encoder_staged_batch), model_code_dir, bool(log_calls),
-               bool(fast_linear), bool(int8_decode), bool(int8_encode))
+               bool(fast_linear), bool(int8_decode), bool(int8_encode), bool(decode_fusions))
         vae = _VAE_CACHE.get(key)
         if vae is None:
             weights = _resolve_weights(vae_name, weights_path)
@@ -156,6 +162,7 @@ class H3VAEPyOptLoader:
                 fast_linear=bool(fast_linear),
                 int8_decode=bool(int8_decode),
                 int8_encode=bool(int8_encode),
+                decode_fusions=bool(decode_fusions),
                 log_calls=bool(log_calls),
             )
             vae = build_comfy_vae(runtime)
@@ -173,9 +180,10 @@ class H3VAEPyOptLoader:
                 if (
                     getattr(runtime, "int8_decode", False)
                     or getattr(runtime, "int8_encode", False)
+                    or getattr(runtime, "decode_fusions", False)
                 ):
                     raise RuntimeError(
-                        "explicit INT8 VAE warmup/compile failed; no fallback was applied"
+                        "explicit optimized VAE warmup/compile failed; no fallback was applied"
                     ) from exc
                 logger.warning("[H3VAE-PyOpt] warmup failed (%s: %s); the first "
                                "request will pay the compile cost",

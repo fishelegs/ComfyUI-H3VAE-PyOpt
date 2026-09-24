@@ -83,12 +83,14 @@ def run_pyopt(args, z, x01):
         decoder_tile_size=args.decoder_tile, encoder_tile_size=args.encoder_tile,
         tile_batch=args.tile_batch,
         fast_linear=args.fast_linear,
+        decode_fusions=args.decode_fusions,
+        int8_decode=args.int8_decode,
         encoder_staged_batch=args.staged_batch, compile_decoder=not args.no_compile,
         compile_encoder=not args.no_compile, log_calls=False,
     ).eval()
     x_comfy = x01.float().mul(2).sub(1).half()
-    decode, decoded = time_cuda(lambda: runtime.decode(z), args.warmup, args.runs)
-    encode, encoded = time_cuda(lambda: runtime.encode(x_comfy), args.warmup, args.runs)
+    decode, decoded = time_cuda(lambda runtime=runtime: runtime.decode(z), args.warmup, args.runs)
+    encode, encoded = time_cuda(lambda runtime=runtime, x=x_comfy: runtime.encode(x), args.warmup, args.runs)
     result = {"decode": decode, "encode": encode,
               "torch_peak_allocated_bytes": torch.cuda.max_memory_allocated(),
               "decoded_shape": list(decoded.shape), "encoded_shape": list(encoded.shape)}
@@ -112,8 +114,8 @@ def run_trt(args, z, x01):
         TensorRTRunner(args.encoder_engine, "pixel_tile", "moments_tile"),
         args.model_code_dir, args.decoder_tile, args.encoder_tile,
     )
-    decode, decoded = time_cuda(lambda: vae.decode(z), args.warmup, args.runs)
-    encode, encoded = time_cuda(lambda: vae.encode(x01), args.warmup, args.runs)
+    decode, decoded = time_cuda(lambda vae=vae: vae.decode(z), args.warmup, args.runs)
+    encode, encoded = time_cuda(lambda vae=vae: vae.encode(x01), args.warmup, args.runs)
     result = {"decode": decode, "encode": encode, "tensorrt": trt.__version__,
               "torch_peak_allocated_bytes": torch.cuda.max_memory_allocated(),
               "decoded_shape": list(decoded.shape), "encoded_shape": list(encoded.shape)}
@@ -144,6 +146,10 @@ def main():
     parser.add_argument("--no-compile", action="store_true")
     parser.add_argument("--fast-linear", action="store_true",
                         help="experimental comfy-kitchen FP16 decoder linear kernels")
+    parser.add_argument("--decode-fusions", action="store_true",
+                        help="opt-in decode fusions; use batch8 FP16 or batch4 INT8")
+    parser.add_argument("--int8-decode", action="store_true",
+                        help="mixed-precision INT8 decoder; encoder stays FP16")
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--runs", type=int, default=7)
     parser.add_argument("--seed", type=int, default=20260916)
@@ -184,7 +190,9 @@ def main():
                          "staged_batch": args.staged_batch,
                          "warmup": args.warmup, "runs": args.runs,
                          "seed": args.seed, "compile": not args.no_compile,
-                         "fast_linear": args.fast_linear},
+                         "fast_linear": args.fast_linear,
+                         "decode_fusions": args.decode_fusions,
+                         "int8_decode": args.int8_decode},
               "artifacts_sha256": {str(path): digest(path) for path in required[1:]},
               "note": "PyOpt accepts [-1,1] pixels; TRT accepts [0,1]. Both derive from x01."}
     torch.cuda.reset_peak_memory_stats()

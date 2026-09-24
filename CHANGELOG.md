@@ -7,6 +7,23 @@ Versioning for release tags.
 
 ## Unreleased
 
+### Added
+
+- Opt-in `decode_fusions` on the existing Loader and runtime, preserving all
+  previous defaults: FP16 GEMM/SwiGLU fusion with FP32 accumulation, or INT8
+  activation/norm fusion plus QKV and attention-output quantization (144 linears).
+- Exact FP32 pixel finalization fusion, explicit unsupported-configuration guards,
+  cache-key separation, and FP16/INT8 minimal API workflows.
+- Latest decode timing and 992-frame quality evidence, historical competitor /
+  v0.2.0 comparison CSV, benchmark flags, and Comfy wrapper/offload checks.
+
+### Notes
+
+- Measured batch settings: FP16 8, INT8 4; not automatically selected or universal
+  recommendations. Fusions currently require FP16 CUDA SM80+, compiled decoder,
+  FP32 normalization, `fast_linear=false`, and `int8_encode=false`.
+- INT8 remains experimental and lossy. Other GPU models and Windows are untested.
+
 ## 0.2.0 - 2026-09-22
 
 ### Added

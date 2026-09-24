@@ -1,0 +1,9 @@
+Implementation,Decode_seconds,Precision,Decoder_tile,Decoder_batch,Height,Width,Frames,GPU,Source
+ComfyUI 387f98a default,15.021,FP16,256,,768,1344,124,RTX PRO 5000 72GB,Historical latest-fast report
+ComfyUI 387f98a fast,12.440,FP16 with FP16 accumulation,256,,768,1344,124,RTX PRO 5000 72GB,Historical latest-fast report
+TRT locally rebuilt same-weight engine,11.966,FP16,256,,768,1344,124,RTX PRO 5000 72GB,Historical same-tile report
+TRT original repository engine,13.768,FP16,368,,768,1344,124,RTX PRO 5000 72GB,Historical different-tile aggregate
+PyOpt FP16 v0.2.0,11.477,FP16,256,2,768,1344,124,RTX PRO 5000 72GB,v0.2.0 README
+PyOpt FP16 latest fusions,10.923379,FP16,256,8,768,1344,124,RTX PRO 5000 72GB,2026-09-24 validated opt-in profile unreleased
+PyOpt INT8 v0.2.0,8.278,INT8 mixed precision 72 linears,256,2,768,1344,124,RTX PRO 5000 72GB,v0.2.0 README
+PyOpt INT8 latest fusions,6.666817,INT8 mixed precision 144 linears,256,4,768,1344,124,RTX PRO 5000 72GB,2026-09-24 validated opt-in profile unreleased

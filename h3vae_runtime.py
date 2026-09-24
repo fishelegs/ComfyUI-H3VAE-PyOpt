@@ -47,6 +47,33 @@ DECODER_COMPILE_MODE = "max-autotune-no-cudagraphs"
 _OPT_DIR = Path(__file__).resolve().parent / "opt"
 
 
+def _validate_decode_fusions_options(*, enabled, device, dtype, fast_linear,
+                                     compile_decoder, int8_encode=False,
+                                     cuda_available=None, capability=None, hip=None):
+    """Fail before loading weights; opt-in fusions never silently fall back."""
+    if not enabled:
+        return
+    if fast_linear:
+        raise ValueError("decode_fusions and fast_linear are mutually exclusive")
+    if int8_encode:
+        raise ValueError("decode_fusions currently requires int8_encode=false")
+    if not compile_decoder:
+        raise ValueError("decode_fusions requires compile_decoder=true")
+    if dtype != torch.float16:
+        raise RuntimeError("decode_fusions requires dtype=fp16")
+    if torch.device(device).type != "cuda":
+        raise RuntimeError("decode_fusions requires a NVIDIA CUDA device")
+    if (torch.version.hip if hip is None else hip) is not None:
+        raise RuntimeError("decode_fusions does not support ROCm")
+    if not (torch.cuda.is_available() if cuda_available is None else cuda_available):
+        raise RuntimeError("decode_fusions requires an available CUDA GPU")
+    capability = torch.cuda.get_device_capability(device) if capability is None else capability
+    if capability < (8, 0):
+        raise RuntimeError("decode_fusions requires NVIDIA SM80+")
+    if os.environ.get("MINIMAX_H3_VAE_DECODER_VIT_FP32_NORM", "1").lower() not in ("1", "true", "yes", "on"):
+        raise ValueError("decode_fusions requires FP32 decoder normalization")
+
+
 def _validate_int8_decode_options(
     *,
     enabled: bool,
@@ -266,10 +293,15 @@ class H3VAEPyOptRuntime(torch.nn.Module):
                  qk_rows: int = 8, encoder_staged_batch: int = 4,
                  log_calls: bool = True, encoder_tile_size: int = 0,
                  fast_linear: bool = False, int8_decode: bool = False,
-                 int8_encode: bool = False):
+                 int8_encode: bool = False, decode_fusions: bool = False):
         super().__init__()
         int8_decode = bool(int8_decode)
         int8_encode = bool(int8_encode)
+        _validate_decode_fusions_options(
+            enabled=bool(decode_fusions), device=device, dtype=dtype,
+            fast_linear=bool(fast_linear), compile_decoder=bool(compile_decoder),
+            int8_encode=int8_encode,
+        )
         _validate_int8_decode_options(
             enabled=int8_decode,
             fast_linear=bool(fast_linear),
@@ -333,6 +365,13 @@ class H3VAEPyOptRuntime(torch.nn.Module):
                 "[H3VAE-PyOpt] experimental comfy-kitchen INT8 FFNs: %d",
                 count,
             )
+        if decode_fusions:
+            if int8_decode:
+                from opt.int8_attention_out import from_raw_decoder
+                new_dec = from_raw_decoder(new_dec, warps=8)
+            else:
+                from opt.fp16_swiglu_gemm import clone_fp16_decoder
+                new_dec = clone_fp16_decoder(new_dec, (128, 64, 64, 4, 2))
         if compile_decoder:
             new_dec = torch.compile(new_dec, mode=DECODER_COMPILE_MODE, dynamic=False)
         core.decoder = new_dec
@@ -373,6 +412,7 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         self.fast_linear = bool(fast_linear)
         self.int8_decode = int8_decode
         self.int8_encode = int8_encode
+        self.decode_fusions = bool(decode_fusions)
         self.int8_encoder_metadata = int8_encoder_metadata
 
         # ---------------- normalization constants ----------------
@@ -394,10 +434,10 @@ class H3VAEPyOptRuntime(torch.nn.Module):
         logger.info(
             "[H3VAE-PyOpt] runtime ready: decoder_tile=%d encoder_tile=%s "
             "tile_batch=%d compile_dec=%s compile_enc=%s staged_batch=%d "
-            "fast_linear=%s int8_decode=%s int8_encode=%s sdpa=%s",
+            "fast_linear=%s int8_decode=%s int8_encode=%s decode_fusions=%s sdpa=%s",
             core.decoder_tile_size, self.encoder_tile_size or "auto", tile_batch, compile_decoder,
             compile_encoder, self.encoder_staged_batch,
-            self.fast_linear, self.int8_decode, self.int8_encode,
+            self.fast_linear, self.int8_decode, self.int8_encode, self.decode_fusions,
             os.environ.get("MINIMAX_H3_TORCH_SDPA_BACKEND", "auto"))
 
     # ------------------------------------------------------------------
@@ -497,12 +537,21 @@ class H3VAEPyOptRuntime(torch.nn.Module):
             dec = self.core.decode_base(zn, frame_num=self._frames_from_tokens(t))
 
         # raw decoder output -> float32 pixels in [0,1] (matches core _finalize_pixels)
-        pixels = dec.float()
-        pixels = pixels * self._img_std + self._img_mean
-        pixels = pixels.clamp_(0.0, 1.0)
+        if getattr(self, "decode_fusions", False):
+            from opt.fp16_finalize import finalize_pixels
+            direct = (output_buffer is not None and output_buffer.shape == dec.shape
+                      and output_buffer.dtype == torch.float32
+                      and output_buffer.device == dec.device and output_buffer.is_contiguous())
+            pixels = finalize_pixels(dec, self._img_std, self._img_mean,
+                                     output_buffer if direct else None)
+        else:
+            pixels = dec.float()
+            pixels = pixels * self._img_std + self._img_mean
+            pixels = pixels.clamp_(0.0, 1.0)
 
         if output_buffer is not None:
-            output_buffer.copy_(pixels)
+            if pixels is not output_buffer:
+                output_buffer.copy_(pixels)
             out = output_buffer
         else:
             out = pixels

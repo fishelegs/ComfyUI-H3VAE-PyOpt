@@ -51,6 +51,13 @@ compared.
 
 ## Performance report checklist
 
+For the opt-in `decode_fusions` profiles, see [decode-fusion validation](decode_fusions.md).
+`bench_pyopt_vs_trt.py --pyopt-only --decode-fusions` exercises the current runtime;
+add `--int8-decode` for its 144-linear INT8 path. Use explicit batch settings.
+`bench_decode_profiles_comfy.py` independently validates wrapper/device-offload
+behavior, not perceptual quality. The default INT8 and `--fp16` profiles need
+separate processes and output paths.
+
 Performance-related changes should report enough information for another
 maintainer or user to reproduce the result:
 

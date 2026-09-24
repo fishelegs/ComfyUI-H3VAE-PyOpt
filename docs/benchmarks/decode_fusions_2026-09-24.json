@@ -1,0 +1,86 @@
+{
+  "date": "2026-09-24",
+  "status": "validated opt-in profiles, unreleased",
+  "runtime_base": "v0.2.0 (00d905faf7f779a513db83070d0b70229cdd0728)",
+  "weights_sha256": "7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522",
+  "environment": {
+    "gpu": "RTX PRO 5000 72GB (user-confirmed)",
+    "driver_gpu_name": "NVIDIA Graphics Device",
+    "compute_capability": "12.0",
+    "driver": "580.82.07",
+    "os": "Linux 5.4.241",
+    "python": "3.12.14",
+    "torch": "2.11.0+cu130",
+    "cuda": "13.0",
+    "triton": "3.6.0",
+    "comfy_kitchen": "0.2.34",
+    "background_gpu_work": true,
+    "comfy_sdk_revision_for_integration": "c1716a458d7978d37ec28608b7587887de5ee3f7"
+  },
+  "protocol": {
+    "seed": 20260924,
+    "warmup": 2,
+    "runs": 5,
+    "timing": "CUDA Event full runtime decode, fixed random latent",
+    "included": ["dynamic quantization", "output finalization"],
+    "excluded": ["loading", "compilation", "CPU copies", "media I/O", "quality metrics"],
+    "decoder_tile": 256,
+    "dtype": "float16",
+    "allow_fp16_accumulation": false,
+    "sdpa": "auto",
+    "compile_mode": "max-autotune-no-cudagraphs",
+    "warning": "FP16 and INT8 rows originate from separate paired experiments, not one all-profile A/B. No new encode timing."
+  },
+  "timing": [
+    {
+      "profile": "fp16_fusions", "shape_hwt": [672, 672, 124], "tile_batch": 8,
+      "mean_ms": 6203.84609375, "stdev_ms": 9.324657545883774,
+      "samples_ms": [6193.31689453125, 6197.10888671875, 6204.03955078125, 6207.59912109375, 6217.166015625]
+    },
+    {
+      "profile": "fp16_fusions", "shape_hwt": [768, 1344, 124], "tile_batch": 8,
+      "mean_ms": 10923.3794921875, "stdev_ms": 12.10888561810388,
+      "samples_ms": [10907.396484375, 10914.4091796875, 10928.6630859375, 10929.392578125, 10937.0361328125],
+      "paired_previous_research_candidate": {
+        "description": "same fused GEMM, batch2, eager finalization; not release",
+        "mean_ms": 11275.0693359375,
+        "samples_ms": [11246.8232421875, 11281.1826171875, 11277.365234375, 11283.7978515625, 11286.177734375]
+      }
+    },
+    {
+      "profile": "int8_fusions", "shape_hwt": [768, 1344, 124], "tile_batch": 4,
+      "int8_decoder_linears": 144,
+      "mean_ms": 6666.8173828125, "stdev_ms": 3.6374599303827493,
+      "samples_ms": [6667.37109375, 6662.2724609375, 6665.87255859375, 6672.3583984375, 6666.21240234375],
+      "paired_previous_research_candidate": {
+        "description": "same 144 INT8 linears, batch2, eager finalization; not release",
+        "mean_ms": 6710.1552734375,
+        "samples_ms": [6705.56201171875, 6706.29833984375, 6710.19580078125, 6716.12353515625, 6712.5966796875]
+      }
+    }
+  ],
+  "quality": {
+    "videos": 8, "frames": 992,
+    "shapes_hwt": [[768, 1376, 124], [768, 1344, 124]],
+    "videos_per_shape": 4,
+    "encoder": "unchanged FP16, tile256, staged batch4",
+    "method": "mean of per-frame PSNR on uncompressed RGB [0,1]; no resize/crop/frame drop",
+    "fp16_vs_source": {"mean_psnr_db": 35.109656019, "min_psnr_db": 32.709367582, "frames_below_30db": 0},
+    "int8_vs_source": {"mean_psnr_db": 34.93959261012091, "min_psnr_db": 32.58689593832605, "frames_below_30db": 0},
+    "fp16_vs_preceding_fp16_candidate": {"mean_psnr_db": 81.807202979, "min_psnr_db": 80.455767558},
+    "int8_vs_preceding_int8_candidate": {"mean_psnr_db": 62.17626907556728, "min_psnr_db": 54.33090905228561},
+    "independent_per_frame_audit": "2976 records for each of the FP16 and INT8 suites",
+    "caveat": "not proof of bitwise equivalence, visual losslessness or temporal quality"
+  },
+  "production_integration": {
+    "profiles": ["fp16_fusions", "int8_fusions"],
+    "shape_hwt": [672, 672, 124], "comfy_image_dtype": "float32",
+    "actual_encoded_latent_tested": true,
+    "compiled_encoder_and_decoder": true,
+    "wrapper_vs_direct_max_abs": 0,
+    "offload_reload_max_abs": 0,
+    "same_batch_finalization_finite_bits_exact": true,
+    "int8_weight_and_fp32_scale_state_preserved": true,
+    "status": "passed"
+  }
+}
