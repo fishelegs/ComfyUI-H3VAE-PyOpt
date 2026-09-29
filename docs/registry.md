@@ -7,7 +7,7 @@ The repository is configured for ComfyUI Registry publication.
 - Publisher ID: `fishelegs`
 - Node ID: `h3vae-pyopt`
 - Display name: `ComfyUI-H3VAE-PyOpt`
-- Version: `0.1.0`
+- Version: `0.2.0`
 
 The node ID is intentionally shorter than the GitHub repository name because
 ComfyUI's Registry guidance recommends not including `ComfyUI` in
