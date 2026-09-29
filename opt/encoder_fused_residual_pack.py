@@ -17,10 +17,13 @@ def _residual_pack(X, R, Bias, Y, C: tl.constexpr, D: tl.constexpr,
                    BLOCK: tl.constexpr):
     i = tl.program_id(0)*BLOCK + tl.arange(0, BLOCK)
     total: tl.constexpr = C*(D+2)*(H+1)*(W+1)
-    c = i % C; q = i // C
+    c = i % C
+    q = i // C
     t = q // ((H+1)*(W+1)) - 2
-    h = q // (W+1) % (H+1); w = q % (W+1)
-    h = tl.where(h == H, H-2, h); w = tl.where(w == W, W-2, w)
+    h = q // (W+1) % (H+1)
+    w = q % (W+1)
+    h = tl.where(h == H, H-2, h)
+    w = tl.where(w == W, W-2, w)
     valid = (i < total) & (t >= 0) & (t < D)
     x = tl.load(X+t*XD+c*XC+h*XH+w*XW, valid, other=0).to(tl.float32)
     r = tl.load(R+t*RD+c*RC+h*RH+w*RW, valid, other=0).to(tl.float32)
@@ -57,7 +60,8 @@ class ResidualDownsampleBlock(BiasFusedResidualBlock):
         conv = downsample.conv
         if self.shortcut is not None or conv.padding != (1, 0, 0) or conv.stride != (2, 2, 2) or conv.pad_mode != 'reflect' or conv.pad_mode_t != 'constant' or not conv.causal or conv.spatial_parallel:
             raise ValueError('Expected stage1 final identity-shortcut block and causal reflect downsample')
-        self.down_weight = conv.weight; self.down_bias = conv.bias
+        self.down_weight = conv.weight
+        self.down_bias = conv.bias
 
     def forward(self, x, zq=None):
         if zq is not None: raise ValueError('Unconditional inference only')
