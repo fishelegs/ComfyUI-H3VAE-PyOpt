@@ -18,6 +18,16 @@ MiniMax H3 视频 VAE 的 PyTorch 加速实现与 ComfyUI 插件。默认使用�
 
 以下结果均在 **NVIDIA RTX PRO 5000 72GB** 上测得。性能数字均为预热后的稳态时间，不含加载、首次编译和 engine 初始化。
 
+### Decode 耗时图
+
+下图仅比较 decoder 的稳态耗时，均按从慢到快排列。第一张是此前的 FP16 参照，包括 ComfyUI 和 TensorRT 的独立基准；第二张显示 v0.2.0 的 FP16 与仅启用 INT8 decoder 的同轮 A/B，并列出 v0.1.0 时期的 FP16 历史参照。BF16 尚未验证，因此不将 FP16 数据标为 BF16。
+
+![FP16 decoder 耗时历史对比](docs/images/h3vae_fp16_decode_comparison.svg)
+
+![v0.2.0 INT8 decoder 耗时对比](docs/images/h3vae_int8_decode_comparison.svg)
+
+v0.2.0 同轮测试的 decoder 耗时由 **11.477 s 降至 8.278 s（−27.9%）**。历史竞品和 v0.1.0 时期数字并未在本轮 INT8 实验中重测，不据此计算跨批次加速比。测试条件与画质结果见 [INT8 实验](docs/experimental_int8.md)、[ComfyUI 对照](docs/h3_latest_fast_ab_2026-09-18.md)和 [TensorRT 同 tile 对照](docs/h3_trt_256_same_tile_benchmark_2026-09-18.md)。
+
 ### 默认 FP16 与可选 INT8 decoder
 
 这是本项目建议用户优先比较的两种配置。测试输入为 768×1344×124，encoder/decoder tile 均为 `256`，staged batch `4`、decode batch `2`；2 次预热、3 次交错 CUDA Event 测量。INT8 路径只量化 decoder 的 72 个 FFN Linear；其他 decoder 算子保留原有浮点精度，完整 encoder 沿用 FP16 基线。
