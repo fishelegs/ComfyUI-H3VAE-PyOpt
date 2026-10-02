@@ -49,6 +49,7 @@ def pipelined_conv3d_kernel():
         BLOCK_N: tl.constexpr,
         BLOCK_K: tl.constexpr,
         HAS_BIAS: tl.constexpr,
+        SKIP_CAUSAL_ZEROS: tl.constexpr = False,
     ):
         pid_m = tl.program_id(0)
         pid_n = tl.program_id(1)
@@ -68,7 +69,18 @@ def pipelined_conv3d_kernel():
 
         accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.int32)
         k_total = KERNEL_D * KERNEL_H * KERNEL_W * channels
-        for start in range(0, k_total, BLOCK_K):
+        k_begin = 0
+        if SKIP_CAUSAL_ZEROS:
+            # Only the causal norm producer guarantees two leading zero planes.
+            # Each M block must stay within one frame, so its omitted taps are
+            # uniform. Skipping integer zero products preserves accumulation.
+            tl.static_assert(KERNEL_D == 3 and KERNEL_H == 3 and KERNEL_W == 3)
+            tl.static_assert(stride_d == 1 and stride_h == 1 and stride_w == 1)
+            tl.static_assert((out_height * out_width) % BLOCK_M == 0)
+            tl.static_assert((KERNEL_H * KERNEL_W * channels) % BLOCK_K == 0)
+            block_t = (pid_m * BLOCK_M // (out_height * out_width)) % out_depth
+            k_begin = tl.maximum(0, 2 - block_t) * KERNEL_H * KERNEL_W * channels
+        for start in range(k_begin, k_total, BLOCK_K):
             k = start + tl.arange(0, BLOCK_K)
             c_offsets = k % channels
             kw = (k // channels) % KERNEL_W

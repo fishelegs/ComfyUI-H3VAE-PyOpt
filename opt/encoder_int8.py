@@ -515,8 +515,14 @@ def _conv3d_from_quantized(
     config: Int8Conv3DConfig,
     bias: torch.Tensor | None,
     tile_variant: str,
+    causal_prefix_zero: bool = False,
 ) -> torch.Tensor:
-    """Internal launch for validated, channels-last INT8 producer outputs."""
+    """Launch validated channels-last INT8 inputs.
+
+    Only a producer that guarantees two leading zero temporal planes may set
+    causal_prefix_zero. Unsupported loop geometries keep the complete INT8
+    reduction. Generic quantized inputs always retain the default False.
+    """
     output_shape = _valid_output_shape(tuple(qx.shape), config)
     output = torch.empty(
         output_shape,
@@ -531,6 +537,15 @@ def _conv3d_from_quantized(
     else:
         _, conv_kernel = _triton_kernels()
     block_m, block_n, block_k = _TILE_VARIANTS[tile_variant]
+    causal_options = {}
+    if pipeline4:
+        causal_options["SKIP_CAUSAL_ZEROS"] = bool(
+            causal_prefix_zero
+            and config.kernel_size == (3, 3, 3)
+            and config.stride == (1, 1, 1)
+            and (output_shape[3] * output_shape[4]) % block_m == 0
+            and (9 * config.in_channels) % block_k == 0
+        )
     grid = (
         triton_cdiv(output_shape[0] * output_shape[2] * output_shape[3] * output_shape[4], block_m),
         triton_cdiv(output_shape[1], block_n),
@@ -568,6 +583,7 @@ def _conv3d_from_quantized(
         HAS_BIAS=has_bias,
         num_warps=4,
         num_stages=4 if pipeline4 else 2,
+        **causal_options,
     )
     return output
 

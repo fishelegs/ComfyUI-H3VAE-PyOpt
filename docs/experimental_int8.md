@@ -38,6 +38,18 @@ been measured; CPU/ROCm are rejected and Windows is unvalidated. Unsupported
 configurations fail explicitly without silently labeling an FP16 fallback
 as INT8. `fast_linear` and `int8_decode` are mutually exclusive.
 
+## Causal-zero convolution follow-up (unreleased, 2026-10-02)
+
+The SM120 fused norm producer guarantees two leading zero temporal planes.
+For aligned convolution blocks, the encoder now skips products from those
+planes while preserving INT32 accumulation, FP32 scales and FP16 rounding.
+A same-graph paired full-video comparison measured **8.682963 → 8.458108 s
+(−2.59%)**, with unchanged peak allocated memory. Eight videos retained
+bitwise-equal latents; one full video's RGB was also checked exactly.
+Generic convolution inputs retain the full reduction. FP16 defaults and
+original INT8 quality loss remain unchanged. See
+[implementation, Nsight and validation](int8_causal_zero_2026-10-02.md).
+
 ## Recompute producer follow-up (unreleased, 2026-10-02)
 
 The latest SM120 producer preserves norm statistics and FP16 rounding but

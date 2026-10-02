@@ -196,6 +196,8 @@ def int8_norm_conv3d(
         qx, scale, qweight, weight_scale,
         config=Int8Conv3DConfig(x.shape[1], qweight.shape[0], (3, 3, 3), (1, 1, 1)),
         bias=bias, tile_variant="128x128x64_pipeline4",
+        # quantized_temporal_norm_pad writes exactly two causal zero planes.
+        causal_prefix_zero=True,
     )
 
 

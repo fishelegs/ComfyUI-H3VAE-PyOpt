@@ -87,6 +87,31 @@ class NormProducerGpuTests(unittest.TestCase):
                 actual = compiled(x, weight, bias, pre_bias, 1e-6, qw, ws, cb)
                 self.assertTrue(torch.equal(expected, actual))
 
+    @torch.inference_mode()
+    def test_compiled_causal_zero_path_on_aligned_short_and_full_clips(self):
+        # Separate wrapper limits compilation variants from the existing odd-
+        # shape test while covering the now-optimized producer/conv boundary.
+        def call(x, weight, bias, pre_bias, qw, ws, conv_bias):
+            return int8_norm_conv3d(x, weight, bias, pre_bias, 1e-6, qw, ws, conv_bias)
+
+        compiled = torch.compile(call, fullgraph=True)
+        cases = [(128, 1, False, False), (128, 2, True, True), (256, 17, True, False)]
+        for c, d, with_pre_bias, with_conv_bias in cases:
+            torch.manual_seed(45 + d)
+            x = torch.randn((1, c, d, 8, 16), device='cuda', dtype=torch.float16)
+            weight = torch.randn(c, device='cuda', dtype=torch.float16)
+            bias = torch.randn_like(weight)
+            pre_bias = bias if with_pre_bias else None
+            conv = torch.randn((256, c, 3, 3, 3), device='cuda', dtype=torch.float16) / 64
+            qw, ws, config = prepare_int8_weight(conv)
+            cb = torch.randn(256, device='cuda', dtype=torch.float16) if with_conv_bias else None
+            expected = int8_valid_conv3d(
+                self.old_pack(x, weight, bias, pre_bias), qw, ws,
+                config=config, bias=cb, tile_variant='128x128x64_pipeline4',
+            )
+            actual = compiled(x, weight, bias, pre_bias, qw, ws, cb)
+            self.assertTrue(torch.equal(expected, actual), (c, d))
+
     def test_rejects_unvalidated_shape_and_vector_dtype(self):
         for shape in [(2, 128, 1, 3, 3), (1, 64, 1, 3, 3), (1, 128, 1, 1, 3)]:
             x = torch.empty(shape, device='cuda', dtype=torch.float16)

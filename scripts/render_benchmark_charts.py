@@ -122,13 +122,42 @@ def chart(
     plt.close(fig)
 
 
+def render_current_comparisons(preview_dir):
+    """One fastest archived configuration per backend; no old PyOpt bars."""
+    data = json.loads((EVIDENCE / "current_competitor_comparison_2026-10-02.json").read_text())
+    for phase in ("encode", "decode"):
+        rows = sorted(data[phase], key=lambda row: row["seconds"], reverse=True)
+        pyopt = next(row for row in rows if row["implementation"] == "PyOpt")
+        chart(
+            f"h3vae_current_{phase}_comparison",
+            f"H3 VAE {phase}: fastest recorded configurations",
+            "768 × 1344 × 124  |  Tile 256  |  One configuration per implementation  |  Independent experiments",
+            f"PyOpt INT8: {pyopt['seconds']:.3f} s  ·  Lowest recorded latency in this comparison",
+            [row["label"] for row in rows],
+            [row["seconds"] for row in rows],
+            [TEAL if row["implementation"] == "PyOpt" else GRAY for row in rows],
+            [
+                "PyOpt uses mixed INT8; references use FP16. ComfyUI --fast enables FP16 accumulation.",
+                f"ComfyUI 387f98a / TensorRT 11.2.1.2: 2026-09-18. PyOpt: {pyopt['date']}.",
+                "Inputs, stacks and batches differ; historical references were not rerun. No paired speedup ratio claimed.",
+                "Encode and decode winners use separate PyOpt modes; these times are not a combined pipeline result.",
+            ],
+            xmax=17 if phase == "encode" else 15,
+            preview_dir=preview_dir,
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--preview-dir", type=Path)
+    parser.add_argument("--current-only", action="store_true", help="Render only the current competitor comparison charts")
     args = parser.parse_args()
     if args.preview_dir:
         args.preview_dir.mkdir(parents=True, exist_ok=True)
     IMAGES.mkdir(parents=True, exist_ok=True)
+    render_current_comparisons(args.preview_dir)
+    if args.current_only:
+        return
     enc = json.loads((EVIDENCE / "encoder_int8_optimized_2026-10-02.json").read_text())
     timing = next(s["timing"] for s in enc["samples"] if "timing" in s)
     secs = {k: v["mean_cuda_event_ms"] / 1000 for k, v in timing.items()}
