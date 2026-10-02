@@ -35,6 +35,7 @@ _TILE_VARIANTS = {
     "128x64x64": (128, 64, 64),
     "128x64x128": (128, 64, 128),
     "128x128x64": (128, 128, 64),
+    "128x128x64_pipeline4": (128, 128, 64),
 }
 
 
@@ -499,14 +500,36 @@ def int8_valid_conv3d(
 
     x = x.contiguous(memory_format=torch.channels_last_3d)
     qx, activation_scale = quantize_activation_tensor(x)
-    output_shape = _valid_output_shape(tuple(x.shape), config)
+    return _conv3d_from_quantized(
+        qx, activation_scale, qweight, weight_scale,
+        config=config, bias=bias, tile_variant=tile_variant,
+    )
+
+
+def _conv3d_from_quantized(
+    qx: torch.Tensor,
+    activation_scale: torch.Tensor,
+    qweight: torch.Tensor,
+    weight_scale: torch.Tensor,
+    *,
+    config: Int8Conv3DConfig,
+    bias: torch.Tensor | None,
+    tile_variant: str,
+) -> torch.Tensor:
+    """Internal launch for validated, channels-last INT8 producer outputs."""
+    output_shape = _valid_output_shape(tuple(qx.shape), config)
     output = torch.empty(
         output_shape,
         dtype=torch.float16,
-        device=x.device,
+        device=qx.device,
         memory_format=torch.channels_last_3d,
     )
-    _, conv_kernel = _triton_kernels()
+    pipeline4 = tile_variant == "128x128x64_pipeline4"
+    if pipeline4:
+        from opt.encoder_int8_pipeline import pipelined_conv3d_kernel
+        conv_kernel = pipelined_conv3d_kernel()
+    else:
+        _, conv_kernel = _triton_kernels()
     block_m, block_n, block_k = _TILE_VARIANTS[tile_variant]
     grid = (
         triton_cdiv(output_shape[0] * output_shape[2] * output_shape[3] * output_shape[4], block_m),
@@ -514,7 +537,7 @@ def int8_valid_conv3d(
     )
     has_bias = bias is not None
     if bias is None:
-        bias = torch.empty((1,), dtype=torch.float16, device=x.device)
+        bias = torch.empty((1,), dtype=torch.float16, device=qx.device)
     conv_kernel[grid](
         qx,
         qweight,
@@ -522,16 +545,16 @@ def int8_valid_conv3d(
         weight_scale,
         bias,
         output,
-        x.shape[0],
-        x.shape[1],
-        x.shape[2],
-        x.shape[3],
-        x.shape[4],
+        qx.shape[0],
+        qx.shape[1],
+        qx.shape[2],
+        qx.shape[3],
+        qx.shape[4],
         output.shape[1],
         output.shape[2],
         output.shape[3],
         output.shape[4],
-        *x.stride(),
+        *qx.stride(),
         *output.stride(),
         config.stride[0],
         config.stride[1],
@@ -544,7 +567,7 @@ def int8_valid_conv3d(
         BLOCK_K=block_k,
         HAS_BIAS=has_bias,
         num_warps=4,
-        num_stages=2,
+        num_stages=4 if pipeline4 else 2,
     )
     return output
 

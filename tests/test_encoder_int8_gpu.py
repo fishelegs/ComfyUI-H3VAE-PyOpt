@@ -106,6 +106,12 @@ class EncoderInt8GpuTests(unittest.TestCase):
             )
             self.assertTrue(torch.equal(original, candidate))
             self.assertTrue(torch.isfinite(candidate).all())
+            pipelined = int8_valid_conv3d(
+                x, qw, ws, config=config, bias=bias,
+                tile_variant="128x128x64_pipeline4",
+            )
+            self.assertTrue(torch.equal(original, pipelined))
+            self.assertTrue(pipelined.is_contiguous(memory_format=torch.channels_last_3d))
 
 
 if __name__ == "__main__":

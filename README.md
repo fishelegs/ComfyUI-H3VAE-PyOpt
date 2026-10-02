@@ -10,15 +10,15 @@
 
 | 模式 | 适合谁 | 已测结果（768×1344×124） |
 | --- | --- | --- |
-| **FP16 默认** | 优先使用经过验证的浮点路径 | 本轮 encode 对照为 11.931 s；v0.2.0 decode 为 11.477 s（不同轮次，分开报告） |
-| **INT8 encoder（最新优化）** | 愿意接受 encoder 量化误差、希望降低 encode 延迟 | Encode **10.121 s**，比同轮 FP16 耗时低 **15.17%**、比旧 INT8 低 **19.32%**；源重建平均 PSNR 34.486 dB，FP16 为 35.110 dB |
+| **FP16 默认** | 优先使用经过验证的浮点路径 | 第一轮 encode 对照为 11.931 s；v0.2.0 decode 为 11.477 s（不同轮次，分开报告） |
+| **INT8 encoder（最新优化）** | 愿意接受 encoder 量化误差、希望降低 encode 延迟 | Encode **9.138 s**；norm/absmax 融合比上一轮流水线版本再低 **3.87%**。保留原 INT8 精度取舍，[测量与限制](docs/int8_norm_producer_2026-10-02.md) |
 | **FP16 encode + INT8 decoder** | 优先减少 decoder 耗时，并检查自己的素材画质 | v0.2.0 decode **8.278 s**；最新融合配置 **6.667 s**（不同轮次与配置）；融合版源重建平均 PSNR 34.940 dB |
 
-数字来自 RTX PRO 5000 72GB 的预热后实测，性能与画质均受硬件、素材和配置影响。最新优化已在 main，尚未发布为 release。INT8 encode 需 `decode_fusions=false`；最新 decoder 融合需 `decode_fusions=true` 且 `int8_encode=false`，**10.121 s encode 与 6.667 s decode 不能组合为一个已测模式**。详见[性能与画质](#性能)。
+数字来自 RTX PRO 5000 72GB 的预热后实测，性能与画质均受硬件、素材和配置影响。性能表包含尚未发布为 release 的开发结果。INT8 encode 需 `decode_fusions=false`；最新 decoder 融合需 `decode_fusions=true` 且 `int8_encode=false`，**9.138 s encode 与 6.667 s decode 不能组合为一个已测模式**。详见[性能与画质](#性能)。
 
 ### 为什么选择 PyOpt？
 
-**已测优势：优化 INT8 encoder 比同轮 FP16 耗时低 15.17%；INT8 decoder 的 v0.2.0 同轮降幅为 27.9%，新融合配置另测得 6.667 s。** 同时沿用 ComfyUI 原有 VAE 节点，日常运行无需构建和分发 TensorRT engine。
+**已测优势：第一轮优化 INT8 encoder 比同轮 FP16 耗时低 15.17%；INT8 decoder 的 v0.2.0 同轮降幅为 27.9%，新融合配置另测得 6.667 s。** 同时沿用 ComfyUI 原有 VAE 节点，日常运行无需构建和分发 TensorRT engine。
 
 | Decode 对比（768×1344×124） | 参照 → PyOpt | 耗时降低 | 证据范围 |
 | --- | ---: | ---: | --- |
@@ -29,7 +29,7 @@
 
 所有数字均来自 RTX PRO 5000 72GB，表示预热后的 **decode 耗时降低**，不代表整个视频生成流程的加速倍数。各行是独立实验，不能串联百分比；INT8 尚未与当前 ComfyUI / TensorRT 完成统一复测。
 
-**怎么选：**默认 FP16 作为浮点基线。关注 encode 延迟可试 `int8_encode=true`、`decode_fusions=false`：本轮优化在 8 段、992 帧上与旧 INT8 的 latent 和重建 RGB 逐位一致，但相对 FP16 的源重建 PSNR 仍低约 **0.623 dB**。关注 decode 延迟可保持 FP16 encoder，尝试 INT8 decoder 或下方融合配置。各模式的质量数据分别报告；本轮 encode 优化未降低完整路径峰值显存，也未测冷启动收益。[统一复测方案与待补证据](docs/benchmarks/unified-comparison.md)。
+**怎么选：**默认 FP16 作为浮点基线。关注 encode 延迟可试 `int8_encode=true`、`decode_fusions=false`：最新优化在 8 段、992 帧上与上一版 INT8 的 latent 逐位一致，并另对一段完整视频复查了重建 RGB 一致，但相对 FP16 的源重建 PSNR 仍低约 **0.623 dB**。关注 decode 延迟可保持 FP16 encoder，尝试 INT8 decoder 或下方融合配置。各模式的质量数据分别报告；本轮 encode 优化未降低完整路径峰值显存，也未测冷启动收益。[统一复测方案与待补证据](docs/benchmarks/unified-comparison.md)。
 
 **快速导航：**[安装与配置](#快速开始) · [性能与画质](#性能) · [节点用法](#comfyui-用法) · [复现基准](#直接测试) · [兼容性](docs/compatibility.md)
 
@@ -68,15 +68,15 @@ export H3_VAE_WEIGHTS_PATH=/path/to/minimax_h3_video_vae_fp16.safetensors
 
 ### Encode / decode 耗时图
 
-Encoder 图来自 **2026-10-02 同轮 A/B**，decoder 两图包含标注日期的历史参照及 **2026-09-24 融合配置**。横轴均从零开始，单位为秒、越低越好；不同日期、batch 和配置的行不能直接当作同轮加速率。
+Encoder 图来自 **2026-10-02 最新 norm/absmax 融合同轮 A/B**，decoder 两图包含标注日期的历史参照及 **2026-09-24 融合配置**。横轴均从零开始，单位为秒、越低越好；不同日期、batch 和配置的行不能直接当作同轮加速率。
 
-![INT8 encoder 完整视频同轮 A/B：旧 INT8 12.545 秒，FP16 11.931 秒，优化 INT8 10.121 秒](docs/images/h3vae_int8_encode_comparison.svg)
+![INT8 norm/absmax 融合：完整编码从 9.506 秒降至 9.138 秒](docs/images/h3vae_int8_encode_norm_producer.svg)
 
 ![FP16 decoder 历史参照及最新融合配置：融合版 batch8 为 10.923 秒](docs/images/h3vae_fp16_decode_comparison.svg)
 
 ![INT8 decoder 分轮次对比：v0.2.0 同轮 8.278 秒，最新融合配置 batch4 为 6.667 秒](docs/images/h3vae_int8_decode_comparison.svg)
 
-Encode 图含动态量化，2 次预热、5 次轮换测量；8 段视频的新旧 INT8 输出完全一致。Decode 融合版为 144 个 INT8 Linear、batch4，保持 FP16 encoder；它与历史 72 个 Linear、batch2 的 8.278 s 配置不同。历史竞品未在本轮重测，不据此计算新的跨批次加速率。[Encoder 证据](docs/encoder_int8_optimization_2026-10-02.md) · [Decode 融合证据](docs/decode_fusions.md) · [图表生成脚本](scripts/render_benchmark_charts.py)。
+Encode 图含动态量化，2 次预热、各 6 次交错测量；8 段视频 latent 逐位一致，另查一段完整视频 RGB 一致。Decode 融合版为 144 个 INT8 Linear、batch4，保持 FP16 encoder；它与历史 72 个 Linear、batch2 的 8.278 s 配置不同。历史竞品未在本轮重测，不据此计算新的跨批次加速率。[最新 Encoder 证据](docs/int8_norm_producer_2026-10-02.md) · [Decode 融合证据](docs/decode_fusions.md) · [图表生成脚本](scripts/render_benchmark_charts.py)。
 
 ### 最新 decode：FP16 / INT8 / ComfyUI / TensorRT
 
@@ -140,6 +140,25 @@ Encode 图含动态量化，2 次预热、5 次轮换测量；8 段视频的新�
 对 2026-09-17 最新 ComfyUI [`387f98a`](https://github.com/Comfy-Org/ComfyUI/commit/387f98aa2822f684b8597959a52a467d88cc4806) 再测 768×1344×124：默认 **28.370 s**，`--fast fp16_accumulation` **24.499 s**。本项目默认 runtime 为 **23.428 s**；可选 `fast_linear` 模式为 **23.029 s**（decode 11.062 / encode 11.967 s），比官方 `--fast` 合计低约 **6.0%**。`fast_linear` 只作用于 decoder，需 comfy-kitchen 0.2.34，且会改变数值；同输入相对本项目默认 decode 的像素 PSNR 约 **61.2 dB**。它默认关闭，不需要开启 ComfyUI 全局 `--fast`。[测试口径与精度细节](docs/h3_latest_fast_ab_2026-09-18.md)。
 
 ### INT8 encoder：最新性能与画质结论
+
+**最新 norm/absmax 融合（2026-10-02）：** 在原 norm/SiLU/padding 写出 FP16 数据时
+顺带计算 absmax，减少动态量化的一次大张量扫描。同轮完整 encode **9.506 → 9.138 s
+（−3.87%）**，各 6 次交错测量。峰值 allocated 仅增加 **0.60 MiB**；8 段视频 latent
+及另查的一段完整视频 RGB 逐位一致。只在 SM120 的 INT8 自动路径启用，默认仍为 FP16。
+Decoder 的多种真实 GEMM 回放未找到稳定收益，未更换实现。
+[本轮实现、失败实验与复现](docs/int8_norm_producer_2026-10-02.md)。
+
+**Nsight 第二轮优化（2026-10-02）：** 当前 SM120 自动启用卷积归约流水线。
+同进程三组 ABBA/BAAB、各 6 次完整 encode 为 **10.120 → 9.505 s（−6.07%）**；
+独立 1376 宽视频复测 **10.050 → 9.441 s**。8 段视频 latent 逐位一致，另对一段完整视频
+确认重建 RGB 一致；默认仍为 FP16。融合 decode 的主要热点是 INT8 GEMM（65.1%），
+本轮未采纳新的 decoder 改动。[Nsight 报告、失败实验与复现](docs/int8_nsys_optimization_2026-10-02.md)。
+
+![Nsight 第二轮编码优化：10.120 秒降至 9.505 秒](docs/images/h3vae_int8_encode_pipeline.svg)
+
+下面保留**第一轮 tile/量化优化**的同轮 FP16 对照和源重建画质记录；不跨轮计算加速率。
+
+![INT8 encoder 完整视频同轮 A/B：旧 INT8 12.545 秒，FP16 11.931 秒，优化 INT8 10.121 秒](docs/images/h3vae_int8_encode_comparison.svg)
 
 `int8_encode=true` 使 prefix stages0/1 的 8 个热点卷积执行真实 **INT8×INT8→INT32**，其余算子保持原精度。2026-10-02 的优化采用更大的卷积 tile 和两级 absmax/连续量化，保持原量化数值、padding 与 FP32 scale。
 

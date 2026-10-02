@@ -38,6 +38,29 @@ been measured; CPU/ROCm are rejected and Windows is unvalidated. Unsupported
 configurations fail explicitly without silently labeling an FP16 fallback
 as INT8. `fast_linear` and `int8_decode` are mutually exclusive.
 
+## Norm/absmax producer follow-up (unreleased, 2026-10-02)
+
+On SM120, the INT8 encoder now computes partial activation absmax while
+packing the existing FP16 norm/SiLU/padded output. This removes a separate
+full-tensor scan without changing norm statistics, rounding, scale or padding.
+A same-process six-run paired full-video comparison against the four-stage
+pipeline measured **9.506353 → 9.138146 s (−3.87%)**. Peak allocated memory
+increased by only **632,832 bytes** after releasing the FP16 scratch before
+convolution. Eight videos retained bitwise-equal latents, and one complete
+video's reconstructed RGB was rechecked exactly. Original INT8 quality loss
+remains. Decoder GEMM alternatives did not yield a stable gain and were not
+adopted. See [implementation and evidence](int8_norm_producer_2026-10-02.md).
+
+## Nsight-guided follow-up (unreleased, 2026-10-02)
+
+SM120 now automatically selects a flattened four-stage INT8 convolution
+pipeline. Against the already optimized `4d79fd5` baseline, a six-run paired
+full-video comparison measured **10.120132 → 9.505431 s (−6.07%)**. Eight
+videos retained bitwise-equal latents; one full video's decoded RGB was also
+rechecked exactly. Other architectures retain the previous auto schedule.
+Decoder kernels were profiled but not changed. See the
+[profile, validation and limitations](int8_nsys_optimization_2026-10-02.md).
+
 ## Updated encoder implementation (unreleased, 2026-10-02)
 
 The encoder now uses a 128×128×64 convolution tile for both prefix widths

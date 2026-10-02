@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg role="img" aria-labelledby="chart-title chart-description" xmlns:xlink="http://www.w3.org/1999/xlink" width="1008pt" height="576pt" viewBox="0 0 1008 576" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <title id="chart-title">INT8 encode: Nsight-guided pipeline optimization</title>
+ <desc id="chart-description">2026-10-02 follow-up  |  768 × 1344 × 124  |  Tile 256 / staged batch 4  |  6 runs per variant. 6.07% lower full-encode latency vs optimized INT8 baseline. INT8: tile + quantization: 10.120132 seconds; INT8: four-stage pipeline: 9.505431 seconds. Same-process ABBA / BAAB / ABBA blocks; dynamic quantization included. Background GPU work retained. 8 videos / 992 frames: bitwise-equal latents. One full video also rechecked for bitwise-equal RGB. New schedule auto-selected only on SM120. Existing INT8 quantization loss remains. Encoder only; no new decoder change. Separate experiment from the earlier FP16 comparison.</desc>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>ComfyUI-H3VAE-PyOpt benchmark charts</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 576
+L 1008 576
+L 1008 0
+L 0 0
+z
+" style="fill: #f4f7fb"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 317.52 408.96
+L 927.36 408.96
+L 927.36 144
+L 317.52 144
+z
+" style="fill: #f4f7fb"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <path d="M 317.52 408.96
+L 317.52 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_2"/>
+     <g id="text_1">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="317.52" y="426.558437" transform="rotate(-0 317.52 426.558437)">0</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_3">
+      <path d="M 419.16 408.96
+L 419.16 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_4"/>
+     <g id="text_2">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="419.16" y="426.558437" transform="rotate(-0 419.16 426.558437)">2</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_5">
+      <path d="M 520.8 408.96
+L 520.8 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_6"/>
+     <g id="text_3">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="520.8" y="426.558437" transform="rotate(-0 520.8 426.558437)">4</text>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_7">
+      <path d="M 622.44 408.96
+L 622.44 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_8"/>
+     <g id="text_4">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="622.44" y="426.558437" transform="rotate(-0 622.44 426.558437)">6</text>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_9">
+      <path d="M 724.08 408.96
+L 724.08 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_10"/>
+     <g id="text_5">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="724.08" y="426.558437" transform="rotate(-0 724.08 426.558437)">8</text>
+     </g>
+    </g>
+    <g id="xtick_6">
+     <g id="line2d_11">
+      <path d="M 825.72 408.96
+L 825.72 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_12"/>
+     <g id="text_6">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="825.72" y="426.558437" transform="rotate(-0 825.72 426.558437)">10</text>
+     </g>
+    </g>
+    <g id="xtick_7">
+     <g id="line2d_13">
+      <path d="M 927.36 408.96
+L 927.36 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_14"/>
+     <g id="text_7">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="927.36" y="426.558437" transform="rotate(-0 927.36 426.558437)">12</text>
+     </g>
+    </g>
+    <g id="text_8">
+     <text style="fill: #607789; font: 11px 'DejaVu Sans'; text-anchor: middle" x="622.44" y="449.996406" transform="rotate(-0 622.44 449.996406)">Steady-state latency (seconds)  ·  Lower is better</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_15"/>
+     <g id="text_9">
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="204.138042" transform="rotate(-0 307.52 204.138042)">INT8: tile + quantization</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_16"/>
+     <g id="text_10">
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="357.560161" transform="rotate(-0 307.52 357.560161)">INT8: four-stage pipeline</text>
+     </g>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 317.52 156.043636
+L 831.825092 156.043636
+L 831.825092 243.494244
+L 317.52 243.494244
+z
+" clip-path="url(#p190c376cc0)" style="fill: #3979b5"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 317.52 309.465756
+L 800.585995 309.465756
+L 800.585995 396.916364
+L 317.52 396.916364
+z
+" clip-path="url(#p190c376cc0)" style="fill: #008b80"/>
+   </g>
+   <g id="text_11">
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="839.448092" y="203.356128" transform="rotate(-0 839.448092 203.356128)">10.120 s</text>
+   </g>
+   <g id="text_12">
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="808.208995" y="356.778247" transform="rotate(-0 808.208995 356.778247)">9.505 s</text>
+   </g>
+  </g>
+  <g id="text_13">
+   <text style="fill: #19344a; font: 700 24px 'DejaVu Sans'; text-anchor: start" x="45.36" y="40.32" transform="rotate(-0 45.36 40.32)">INT8 encode: Nsight-guided pipeline optimization</text>
+  </g>
+  <g id="text_14">
+   <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="67.392" transform="rotate(-0 45.36 67.392)">2026-10-02 follow-up  |  768 × 1344 × 124  |  Tile 256 / staged batch 4  |  6 runs per variant</text>
+  </g>
+  <g id="text_15">
+   <text style="fill: #008b80; font: 700 15px 'DejaVu Sans'; text-anchor: start" x="45.36" y="106.56" transform="rotate(-0 45.36 106.56)">6.07% lower full-encode latency vs optimized INT8 baseline</text>
+  </g>
+  <g id="text_16">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="483.84" transform="rotate(-0 45.36 483.84)">Same-process ABBA / BAAB / ABBA blocks; dynamic quantization included. Background GPU work retained.</text>
+  </g>
+  <g id="text_17">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="501.696" transform="rotate(-0 45.36 501.696)">8 videos / 992 frames: bitwise-equal latents. One full video also rechecked for bitwise-equal RGB.</text>
+  </g>
+  <g id="text_18">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="519.552" transform="rotate(-0 45.36 519.552)">New schedule auto-selected only on SM120. Existing INT8 quantization loss remains.</text>
+  </g>
+  <g id="text_19">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="537.408" transform="rotate(-0 45.36 537.408)">Encoder only; no new decoder change. Separate experiment from the earlier FP16 comparison.</text>
+  </g>
+  <g id="text_20">
+   <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: start" x="45.36" y="561.6" transform="rotate(-0 45.36 561.6)">ComfyUI-H3VAE-PyOpt  ·  Measured on RTX PRO 5000 72GB / SM120</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p190c376cc0">
+   <rect x="317.52" y="144" width="609.84" height="264.96"/>
+  </clipPath>
+ </defs>
+</svg>

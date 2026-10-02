@@ -24,6 +24,7 @@ from opt.encoder_int8_integration import (  # noqa: E402
     _int8_valid_conv3d_integration_fake,
     _check_encoder_platform,
     _resolve_tile_variant,
+    _int8_norm_conv3d_fake,
     install_int8_encoder_prefix,
 )
 
@@ -165,9 +166,38 @@ class EncoderInt8IntegrationCpuTest(unittest.TestCase):
         self.assertTrue(any(key.endswith("qweight") for key in state_keys))
         self.assertTrue(any(key.endswith("weight_scale") for key in state_keys))
 
+    def test_norm_fusion_fake_shape_and_cpu_wrapper_guard(self):
+        source = _ToyConv()
+        wrapper = Int8FusedValidConv3d(source, apply_bias=False)
+        self.assertFalse(wrapper.fuse_norm)
+        with self.assertRaisesRegex(RuntimeError, "not enabled"):
+            wrapper.forward_norm(torch.empty(1), None, None, 1e-6)
+        wrapper.fuse_norm = True
+        with self.assertRaisesRegex(RuntimeError, "FP16 activations"):
+            wrapper.forward_norm(torch.empty(1), None, None, 1e-6)
+        with self.assertRaisesRegex(RuntimeError, "same device"):
+            wrapper.forward_norm(torch.empty(1, dtype=torch.float16, device="meta"), None, None, 1e-6)
+        x = torch.empty((1, 128, 17, 13, 19), dtype=torch.float16)
+        qw = torch.empty((256, 128 * 27), dtype=torch.int8)
+        y = _int8_norm_conv3d_fake(x, None, None, None, 1e-6, qw, None, None)
+        self.assertEqual(y.shape, (1, 256, 17, 13, 19))
+        self.assertEqual(y.dtype, torch.float16)
+        self.assertTrue(y.is_contiguous(memory_format=torch.channels_last_3d))
+
     def test_stage_aware_tile_policy(self):
         self.assertEqual(_resolve_tile_variant(128, "auto"), "128x128x64")
         self.assertEqual(_resolve_tile_variant(256, None), "128x128x64")
+        for capability in ((8, 0), (8, 9), (9, 0), (10, 0), (12, 1)):
+            self.assertEqual(_resolve_tile_variant(128, "auto", capability), "128x128x64")
+        self.assertEqual(
+            _resolve_tile_variant(128, "auto", (12, 0)), "128x128x64_pipeline4"
+        )
+        self.assertEqual(
+            _resolve_tile_variant(256, None, (12, 0)), "128x128x64_pipeline4"
+        )
+        self.assertEqual(
+            _resolve_tile_variant(128, "128x64x64", (12, 0)), "128x64x64"
+        )
         with self.assertRaisesRegex(ValueError, "only supports input channels"):
             _resolve_tile_variant(4, "auto")
 

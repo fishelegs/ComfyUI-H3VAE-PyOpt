@@ -65,12 +65,21 @@ class ResidualDownsampleBlock(BiasFusedResidualBlock):
 
     def forward(self, x, zq=None):
         if zq is not None: raise ValueError('Unconditional inference only')
-        first_input = self.first(x)
-        h = (self.int8_first(first_input) if self.int8_first is not None else
-             F.conv3d(first_input, self.first.weight, None, stride=self.first.stride))
-        h = bias_temporal_norm_pack(h, self.first.bias, self.second.norm_weight, self.second.norm_bias, self.second.eps)
-        second_input = h
-        h = (self.int8_second(second_input) if self.int8_second is not None else
-             F.conv3d(second_input, self.second.weight, None, stride=self.second.stride))
+        if self.int8_first is not None and self.int8_first.fuse_norm:
+            h = self.int8_first.forward_norm(
+                x, self.first.norm_weight, self.first.norm_bias, self.first.eps,
+            )
+            h = self.int8_second.forward_norm(
+                h, self.second.norm_weight, self.second.norm_bias, self.second.eps,
+                pre_bias=self.first.bias,
+            )
+        else:
+            first_input = self.first(x)
+            h = (self.int8_first(first_input) if self.int8_first is not None else
+                 F.conv3d(first_input, self.first.weight, None, stride=self.first.stride))
+            h = bias_temporal_norm_pack(h, self.first.bias, self.second.norm_weight, self.second.norm_bias, self.second.eps)
+            second_input = h
+            h = (self.int8_second(second_input) if self.int8_second is not None else
+                 F.conv3d(second_input, self.second.weight, None, stride=self.second.stride))
         h = residual_downsample_pack(h, x, self.second.bias)
         return F.conv3d(h, self.down_weight, self.down_bias, stride=(2, 2, 2))

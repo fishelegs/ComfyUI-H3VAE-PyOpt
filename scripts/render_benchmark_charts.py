@@ -157,6 +157,46 @@ def main():
         preview_dir=args.preview_dir,
     )
 
+    followup = json.loads((EVIDENCE / "int8_nsys_pipeline_2026-10-02.json").read_text())
+    paired = followup["encode_timing"]["means_seconds"]
+    chart(
+        "h3vae_int8_encode_pipeline",
+        "INT8 encode: Nsight-guided pipeline optimization",
+        "2026-10-02 follow-up  |  768 × 1344 × 124  |  Tile 256 / staged batch 4  |  6 runs per variant",
+        f"{followup['encode_timing']['latency_reduction_percent']:.2f}% lower full-encode latency vs optimized INT8 baseline",
+        ["INT8: tile + quantization", "INT8: four-stage pipeline"],
+        [paired["baseline"], paired["candidate"]],
+        [BLUE, TEAL],
+        [
+            "Same-process ABBA / BAAB / ABBA blocks; dynamic quantization included. Background GPU work retained.",
+            "8 videos / 992 frames: bitwise-equal latents. One full video also rechecked for bitwise-equal RGB.",
+            "New schedule auto-selected only on SM120. Existing INT8 quantization loss remains.",
+            "Encoder only; no new decoder change. Separate experiment from the earlier FP16 comparison.",
+        ],
+        xmax=12,
+        preview_dir=args.preview_dir,
+    )
+
+    producer = json.loads((EVIDENCE / "int8_norm_producer_2026-10-02.json").read_text())
+    paired = producer["encode_timing"]["means_seconds"]
+    chart(
+        "h3vae_int8_encode_norm_producer",
+        "INT8 encode: reuse norm output absmax",
+        "2026-10-02 paired experiment  |  768 × 1344 × 124  |  Tile 256 / staged batch 4  |  6 runs per variant",
+        f"{producer['encode_timing']['latency_reduction_percent']:.2f}% lower full-encode latency vs four-stage pipeline baseline",
+        ["INT8: four-stage pipeline", "INT8: pipeline + norm absmax"],
+        [paired["baseline"], paired["candidate"]],
+        [BLUE, TEAL],
+        [
+            "Same-process ABBA / BAAB / ABBA; same weights, layouts and compile options; dynamic quantization included.",
+            "8 videos / 992 frames: bitwise-equal latents; one 124-frame video's RGB also rechecked exactly.",
+            "Measured peak allocated memory increases by 0.60 MiB. Auto-enabled on SM120 only.",
+            "Existing INT8 quality loss remains. Decoder GEMM candidates did not provide a stable improvement.",
+        ],
+        xmax=12,
+        preview_dir=args.preview_dir,
+    )
+
     rows = list(csv.DictReader((EVIDENCE / "decode_comparison_2026-09-24.csv").open()))
     csv_values = {r["Implementation"]: float(r["Decode_seconds"]) for r in rows}
     fusion = json.loads((EVIDENCE / "decode_fusions_2026-09-24.json").read_text())

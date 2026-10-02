@@ -43,7 +43,7 @@ def _partial_bias(X, PreBias, P, Q, C: tl.constexpr, H: tl.constexpr, W: tl.cons
 def _normalize_pack_bias(X, PreBias, Weight, Bias, S, Y,
                          C: tl.constexpr, D: tl.constexpr, H: tl.constexpr, W: tl.constexpr,
                          SD: tl.constexpr, SC: tl.constexpr, SH: tl.constexpr, SW: tl.constexpr,
-                         G: tl.constexpr, BLOCK: tl.constexpr):
+                         G: tl.constexpr, BLOCK: tl.constexpr, Maxima=None, WRITE_MAX: tl.constexpr=False):
     idx = tl.program_id(0)*BLOCK + tl.arange(0, BLOCK)
     total: tl.constexpr = C*(D+2)*(H+2)*(W+2)
     c = idx % C
@@ -65,6 +65,11 @@ def _normalize_pack_bias(X, PreBias, Weight, Bias, S, Y,
     z = (((v-mean)*rstd)*gamma+beta).to(tl.float16).to(tl.float32)
     z = (z/(1.+tl.exp(-z))).to(tl.float16)
     tl.store(Y+idx, tl.where(valid, z, 0.), idx < total)
+    if WRITE_MAX:
+        # Reduce the values after both FP16 rounding points and padding.
+        # The INT8 producer consumes these maxima without scanning Y again.
+        values = tl.where(valid, z, 0.).to(tl.float32)
+        tl.store(Maxima + tl.program_id(0), tl.max(tl.abs(values), 0))
 
 
 def fused_bias_temporal_norm_pad(x, pre_bias, weight, bias, eps):
@@ -116,11 +121,20 @@ class BiasFusedResidualBlock(torch.nn.Module):
     def forward(self, x, zq=None):
         if zq is not None:
             raise ValueError('Unconditional inference only')
-        first_input = self.first(x)
-        h = (self.int8_first(first_input) if self.int8_first is not None else
-             F.conv3d(first_input, self.first.weight, None, stride=self.first.stride))
-        h = bias_temporal_norm_pack(h, self.first.bias, self.second.norm_weight, self.second.norm_bias, self.second.eps)
-        second_input = h
-        h = (self.int8_second(second_input) if self.int8_second is not None else
-             F.conv3d(second_input, self.second.weight, self.second.bias, stride=self.second.stride))
+        if self.int8_first is not None and self.int8_first.fuse_norm:
+            h = self.int8_first.forward_norm(
+                x, self.first.norm_weight, self.first.norm_bias, self.first.eps,
+            )
+            h = self.int8_second.forward_norm(
+                h, self.second.norm_weight, self.second.norm_bias, self.second.eps,
+                pre_bias=self.first.bias,
+            )
+        else:
+            first_input = self.first(x)
+            h = (self.int8_first(first_input) if self.int8_first is not None else
+                 F.conv3d(first_input, self.first.weight, None, stride=self.first.stride))
+            h = bias_temporal_norm_pack(h, self.first.bias, self.second.norm_weight, self.second.norm_bias, self.second.eps)
+            second_input = h
+            h = (self.int8_second(second_input) if self.int8_second is not None else
+                 F.conv3d(second_input, self.second.weight, self.second.bias, stride=self.second.stride))
         return (self.shortcut(x) if self.shortcut is not None else x) + h

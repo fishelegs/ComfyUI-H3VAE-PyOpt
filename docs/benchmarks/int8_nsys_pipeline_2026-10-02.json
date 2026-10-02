@@ -1,0 +1,5481 @@
+{
+  "baseline_commit": "4d79fd592ecc1ed6d2c08817edb17a8509df5a4b",
+  "date": "2026-10-02",
+  "scope": "Full VAE encode; INT8 fused decoder baseline profiling only. No generation-pipeline speedup claim.",
+  "settings": {
+    "seed": 20261002,
+    "frames": 124,
+    "height": 768,
+    "width": 1344,
+    "encoder_tile": 256,
+    "staged_batch": 4,
+    "encoder_benchmark_decode_batch": 2,
+    "decoder_profile_batch": 4,
+    "warmup_per_variant": 2,
+    "paired_blocks": [
+      "ABBA",
+      "BAAB",
+      "ABBA"
+    ],
+    "samples_per_variant": 6,
+    "quantization_included": true,
+    "media_compile_loading_excluded": true,
+    "background_gpu_work_preserved": true,
+    "cudnn_benchmark": true,
+    "cudnn_benchmark_limit": 5
+  },
+  "environment": {
+    "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+    "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+    "torch": "2.11.0+cu130",
+    "torch_cuda": "13.0",
+    "torch_hip": null,
+    "triton": "3.6.0",
+    "comfy_kitchen_version": "0.2.34",
+    "comfy_kitchen_file": "__init__.py",
+    "sdpa_backend_env": "auto",
+    "fp32_norm_env": "1",
+    "allow_fp16_accumulation": false,
+    "gpu_before_runtime": {
+      "available": true,
+      "device_index": 0,
+      "name": "NVIDIA Graphics Device",
+      "capability": [
+        12,
+        0
+      ],
+      "memory_allocated_bytes": 6009563136,
+      "memory_reserved_bytes": 7482638336,
+      "nvidia_smi": "83, 8305, 73415"
+    }
+  },
+  "encode_timing": {
+    "means_seconds": {
+      "baseline": 10.120131673177083,
+      "candidate": 9.505430826822916
+    },
+    "latency_reduction_percent": 6.074040004671099,
+    "raw": {
+      "blocks": [
+        [
+          {
+            "mode": "baseline",
+            "ms": 10134.6044921875,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "candidate",
+            "ms": 9509.447265625,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "candidate",
+            "ms": 9503.5927734375,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "baseline",
+            "ms": 10118.84765625,
+            "peak_allocated": 7251533312
+          }
+        ],
+        [
+          {
+            "mode": "candidate",
+            "ms": 9506.0400390625,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "baseline",
+            "ms": 10115.7626953125,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "baseline",
+            "ms": 10122.0126953125,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "candidate",
+            "ms": 9505.4248046875,
+            "peak_allocated": 7251533312
+          }
+        ],
+        [
+          {
+            "mode": "baseline",
+            "ms": 10116.3125,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "candidate",
+            "ms": 9503.740234375,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "candidate",
+            "ms": 9504.33984375,
+            "peak_allocated": 7251533312
+          },
+          {
+            "mode": "baseline",
+            "ms": 10113.25,
+            "peak_allocated": 7251533312
+          }
+        ]
+      ],
+      "kernel_equal_checks": 8,
+      "input_shape": [
+        1,
+        3,
+        124,
+        768,
+        1344
+      ],
+      "input_stride": [
+        383975424,
+        127991808,
+        1032192,
+        1344,
+        1
+      ],
+      "latents_equal": true,
+      "calls": {
+        "baseline": 16128,
+        "candidate": 16128
+      }
+    }
+  },
+  "holdout": {
+    "width": 1376,
+    "sample": "00007",
+    "means_seconds": {
+      "baseline": 10.05017626953125,
+      "candidate": 9.44120361328125
+    },
+    "latency_reduction_percent": 6.0593231393980655
+  },
+  "quality": {
+    "videos": [
+      {
+        "sample": "MiniMax_H3_00007_.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1376
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0
+      },
+      {
+        "sample": "MiniMax_H3_00008_.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1376
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0
+      },
+      {
+        "sample": "MiniMax_H3_00009_.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1376
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0
+      },
+      {
+        "sample": "MiniMax_H3_00010_.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1376
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0
+      },
+      {
+        "sample": "MiniMax_H3_00013_20steps_seed42.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0
+      },
+      {
+        "sample": "MiniMax_H3_00014_20steps_seed43.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0
+      },
+      {
+        "sample": "MiniMax_H3_00015_50steps_seed43.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0,
+        "rgb_equal": true,
+        "rgb_max_abs": 0.0
+      },
+      {
+        "sample": "MiniMax_H3_00016_50steps_seed42.mp4",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "latent_equal": true,
+        "latent_max_abs": 0.0
+      }
+    ],
+    "metadata": {
+      "enabled": true,
+      "count": 8,
+      "policy": {
+        "stages": [
+          0,
+          1
+        ],
+        "blocks_per_stage": 2,
+        "convolutions_per_block": [
+          "first",
+          "second"
+        ],
+        "quantized_conv_count": 8,
+        "kernel": [
+          3,
+          3,
+          3
+        ],
+        "tile_variants_by_input_channels": {
+          "128": "128x128x64",
+          "256": "128x128x64"
+        },
+        "excluded": [
+          "conv_in",
+          "conv_out",
+          "downsample",
+          "nin_shortcut",
+          "encoder suffix",
+          "quant_conv"
+        ]
+      },
+      "tile_variant": "stage-aware-input-channels",
+      "tile_variants": [
+        "128x128x64_pipeline4"
+      ],
+      "convolutions": [
+        {
+          "path": "stages.0.block.0.first",
+          "weight_shape": [
+            128,
+            128,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 128,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": false,
+          "tile_variant": "128x128x64_pipeline4"
+        },
+        {
+          "path": "stages.0.block.0.second",
+          "weight_shape": [
+            128,
+            128,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 128,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": true,
+          "tile_variant": "128x128x64_pipeline4"
+        },
+        {
+          "path": "stages.0.block.1.first",
+          "weight_shape": [
+            128,
+            128,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 128,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": false,
+          "tile_variant": "128x128x64_pipeline4"
+        },
+        {
+          "path": "stages.0.block.1.second",
+          "weight_shape": [
+            128,
+            128,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 128,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": true,
+          "tile_variant": "128x128x64_pipeline4"
+        },
+        {
+          "path": "stages.1.block.0.first",
+          "weight_shape": [
+            256,
+            128,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 128,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": false,
+          "tile_variant": "128x128x64_pipeline4"
+        },
+        {
+          "path": "stages.1.block.0.second",
+          "weight_shape": [
+            256,
+            256,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 256,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": true,
+          "tile_variant": "128x128x64_pipeline4"
+        },
+        {
+          "path": "stages.1.block.1.first",
+          "weight_shape": [
+            256,
+            256,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 256,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": false,
+          "tile_variant": "128x128x64_pipeline4"
+        },
+        {
+          "path": "stages.1.block.1.second",
+          "weight_shape": [
+            256,
+            256,
+            3,
+            3,
+            3
+          ],
+          "input_channels": 256,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "apply_bias": false,
+          "tile_variant": "128x128x64_pipeline4"
+        }
+      ]
+    },
+    "holdout": [
+      {
+        "mode": "candidate",
+        "ms": 9431.0146484375
+      },
+      {
+        "mode": "baseline",
+        "ms": 10048.357421875
+      },
+      {
+        "mode": "baseline",
+        "ms": 10051.9951171875
+      },
+      {
+        "mode": "candidate",
+        "ms": 9451.392578125
+      }
+    ],
+    "calls": {
+      "baseline": 17920,
+      "candidate": 17920
+    }
+  },
+  "profile_before": {
+    "encode": {
+      "nvtx_duration_s": 10.052169559,
+      "kernel_count": 21610,
+      "kernel_seconds": 9.975217365,
+      "activity_union_s": 9.984682507,
+      "no_activity_s": 0.067487052,
+      "copies": [
+        {
+          "table": "CUPTI_ACTIVITY_KIND_MEMCPY",
+          "count": 448,
+          "duration_ns": 6317231,
+          "bytes": 4255383552
+        },
+        {
+          "table": "CUPTI_ACTIVITY_KIND_MEMSET",
+          "count": 728,
+          "duration_ns": 3147911,
+          "bytes": 4546633728
+        }
+      ],
+      "kernels": [
+        {
+          "name": "implicit_conv3d_kernel",
+          "count": 1792,
+          "total_ns": 4630532062,
+          "resources": [
+            {
+              "gridX": 8704,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16384
+            },
+            {
+              "gridX": 8704,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 254,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16384
+            },
+            {
+              "gridX": 2176,
+              "gridY": 2,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16384
+            },
+            {
+              "gridX": 2176,
+              "gridY": 2,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 254,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16384
+            }
+          ],
+          "percent_kernel_time": 46.420362510065466
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize256x128x32_stage3_warpsize4x2x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 1120,
+          "total_ns": 1304072511,
+          "resources": [
+            {
+              "gridX": 1,
+              "gridY": 4352,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 1,
+              "gridY": 1216,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 2,
+              "gridY": 1088,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 2,
+              "gridY": 144,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 2,
+              "gridY": 576,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            }
+          ],
+          "percent_kernel_time": 13.073123755434075
+        },
+        {
+          "name": "quantize_contiguous",
+          "count": 1792,
+          "total_ns": 636423038,
+          "resources": [
+            {
+              "gridX": 158090,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 27,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 40138,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 27,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 80275,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 27,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 6.380041804733144
+        },
+        {
+          "name": "partial_absmax",
+          "count": 1792,
+          "total_ns": 440472210,
+          "resources": [
+            {
+              "gridX": 2048,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 94,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            }
+          ],
+          "percent_kernel_time": 4.415665282096838
+        },
+        {
+          "name": "_normalize_pack_bias",
+          "count": 896,
+          "total_ns": 417921811,
+          "resources": [
+            {
+              "gridX": 158090,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 80275,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 4.189601045350253
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x128x64_stage3_warpsize2x2x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 504,
+          "total_ns": 404664849,
+          "resources": [
+            {
+              "gridX": 2,
+              "gridY": 160,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 98304
+            },
+            {
+              "gridX": 4,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 98304
+            },
+            {
+              "gridX": 8,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 98304
+            }
+          ],
+          "percent_kernel_time": 4.056702066662184
+        },
+        {
+          "name": "_normalize_pack",
+          "count": 896,
+          "total_ns": 385024981,
+          "resources": [
+            {
+              "gridX": 158090,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 40138,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 80275,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 38,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 3.8598154497458412
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x128x32_stage4_warpsize2x2x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 280,
+          "total_ns": 309272748,
+          "resources": [
+            {
+              "gridX": 4,
+              "gridY": 160,
+              "gridZ": 4,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 244,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 65536
+            },
+            {
+              "gridX": 4,
+              "gridY": 40,
+              "gridZ": 4,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 244,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 65536
+            }
+          ],
+          "percent_kernel_time": 3.100411115703041
+        },
+        {
+          "name": "_partial_bias",
+          "count": 1344,
+          "total_ns": 220709182,
+          "resources": [
+            {
+              "gridX": 512,
+              "gridY": 2,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 512
+            },
+            {
+              "gridX": 128,
+              "gridY": 4,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 32,
+              "gridY": 4,
+              "gridZ": 36,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 8,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 16,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 64
+            }
+          ],
+          "percent_kernel_time": 2.212575164270618
+        },
+        {
+          "name": "_partial",
+          "count": 1400,
+          "total_ns": 220247651,
+          "resources": [
+            {
+              "gridX": 512,
+              "gridY": 2,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 512
+            },
+            {
+              "gridX": 128,
+              "gridY": 2,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 512
+            },
+            {
+              "gridX": 128,
+              "gridY": 4,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 32,
+              "gridY": 4,
+              "gridZ": 36,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 8,
+              "gridY": 4,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 8,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 16,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 64
+            }
+          ],
+          "percent_kernel_time": 2.2079483878996156
+        },
+        {
+          "name": "triton_poi_fused_add_constant_pad_nd_convolution_reflection_pad3d_2",
+          "count": 224,
+          "total_ns": 211378328,
+          "resources": [
+            {
+              "gridX": 278528,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 2.119034806616467
+        },
+        {
+          "name": "triton_poi_fused_add_reflection_pad3d_3",
+          "count": 224,
+          "total_ns": 202112183,
+          "resources": [
+            {
+              "gridX": 280709,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 2.026143146606009
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_convolution_reflection_pad3d_temporal_norm_pack_1",
+          "count": 224,
+          "total_ns": 133117473,
+          "resources": [
+            {
+              "gridX": 278528,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 1.3344819278532083
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_slice_6",
+          "count": 224,
+          "total_ns": 111762609,
+          "resources": [
+            {
+              "gridX": 69632,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 28,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 1.1204027432238315
+        },
+        {
+          "name": "_residual_pack",
+          "count": 224,
+          "total_ns": 105402338,
+          "resources": [
+            {
+              "gridX": 79045,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 1.0566420173441504
+        },
+        {
+          "name": "_normalize_pack_batched",
+          "count": 952,
+          "total_ns": 50463193,
+          "resources": [
+            {
+              "gridX": 47916,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 8092,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 16184,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4536,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 9072,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 9072,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 39,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.5058856479364547
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_slice_5",
+          "count": 224,
+          "total_ns": 28682837,
+          "resources": [
+            {
+              "gridX": 34816,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 22,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.2875409722963967
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_4",
+          "count": 224,
+          "total_ns": 24627636,
+          "resources": [
+            {
+              "gridX": 38912,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.24688821404945896
+        },
+        {
+          "name": "elementwise_kernel",
+          "count": 410,
+          "total_ns": 21577770,
+          "resources": [
+            {
+              "gridX": 47616,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 95232,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 95232,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 20,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4608,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 47616,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 52224,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 278,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 278,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 611,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 222,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 222,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 666,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 382,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 417,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 555,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 333,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 333,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 420,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 458,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 888,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 2914,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 3206,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4662,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 13986,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 13986,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 20,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.21631378255184516
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_1",
+          "count": 56,
+          "total_ns": 18727585,
+          "resources": [
+            {
+              "gridX": 16,
+              "gridY": 595,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 37,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 8192
+            }
+          ],
+          "percent_kernel_time": 0.18774112197002737
+        },
+        {
+          "name": "vectorized_elementwise_kernel",
+          "count": 264,
+          "total_ns": 16904637,
+          "resources": [
+            {
+              "gridX": 23808,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 36,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 23808,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 139,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 111,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 167,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.16946635227532209
+        },
+        {
+          "name": "_merge",
+          "count": 2744,
+          "total_ns": 14691907,
+          "resources": [
+            {
+              "gridX": 32,
+              "gridY": 17,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 30,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            },
+            {
+              "gridX": 32,
+              "gridY": 17,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            },
+            {
+              "gridX": 32,
+              "gridY": 36,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 22,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 32,
+              "gridY": 20,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.1472840787565134
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_indexed_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x32x32_stage4_warpsize4x1x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 56,
+          "total_ns": 14306266,
+          "resources": [
+            {
+              "gridX": 2,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 110,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 43008
+            }
+          ],
+          "percent_kernel_time": 0.14341808781226492
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_reflection_pad3d_2",
+          "count": 56,
+          "total_ns": 13643414,
+          "resources": [
+            {
+              "gridX": 182,
+              "gridY": 64,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 38,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.13677309978096902
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_0",
+          "count": 56,
+          "total_ns": 10241586,
+          "resources": [
+            {
+              "gridX": 73728,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.10267030406710341
+        },
+        {
+          "name": "nhwcAddPaddingKernel",
+          "count": 448,
+          "total_ns": 4781356,
+          "resources": [
+            {
+              "gridX": 220,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 768,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 34,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.047932348990973594
+        },
+        {
+          "name": "Kernel2",
+          "count": 112,
+          "total_ns": 3749956,
+          "resources": [
+            {
+              "gridX": 320,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 222,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 320,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 226,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 65536
+            }
+          ],
+          "percent_kernel_time": 0.03759272467743363
+        },
+        {
+          "name": "triton_poi_fused_convolution_7",
+          "count": 224,
+          "total_ns": 3465733,
+          "resources": [
+            {
+              "gridX": 9216,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.03474343338281732
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_6",
+          "count": 56,
+          "total_ns": 3407911,
+          "resources": [
+            {
+              "gridX": 16,
+              "gridY": 681,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 35,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 2048
+            }
+          ],
+          "percent_kernel_time": 0.03416377684116761
+        },
+        {
+          "name": "merge_scale",
+          "count": 1792,
+          "total_ns": 2919495,
+          "resources": [
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 23,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            }
+          ],
+          "percent_kernel_time": 0.029267482533700158
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_reflection_pad3d_0",
+          "count": 224,
+          "total_ns": 2100608,
+          "resources": [
+            {
+              "gridX": 3706,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 38,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.021058267936800993
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_5",
+          "count": 56,
+          "total_ns": 2043621,
+          "resources": [
+            {
+              "gridX": 20480,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.02048698214006287
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_reflection_pad3d_7",
+          "count": 56,
+          "total_ns": 1609860,
+          "resources": [
+            {
+              "gridX": 239,
+              "gridY": 64,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 25,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.01613859569264634
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_11",
+          "count": 56,
+          "total_ns": 906753,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.00909005755785854
+        },
+        {
+          "name": "triton_poi_fused_add_batched_temporal_norm_pack_convolution_12",
+          "count": 56,
+          "total_ns": 878594,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.008807767969876213
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_9",
+          "count": 112,
+          "total_ns": 607104,
+          "resources": [
+            {
+              "gridX": 2560,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.006086123016528372
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_convolution_reflection_pad3d_3",
+          "count": 56,
+          "total_ns": 458497,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0045963609936834696
+        },
+        {
+          "name": "triton_poi_fused_reflection_pad3d_4",
+          "count": 56,
+          "total_ns": 414848,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 25,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0041587865689581395
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_convolution_reflection_pad3d_8",
+          "count": 56,
+          "total_ns": 277792,
+          "resources": [
+            {
+              "gridX": 2560,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0027848215215308244
+        },
+        {
+          "name": "triton_poi_fused_reflection_pad3d_10",
+          "count": 56,
+          "total_ns": 237536,
+          "resources": [
+            {
+              "gridX": 2560,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 25,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0023812613931947137
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x32x64_stage1_warpsize4x1x1_g1_tensor16x8x16_alignc4_execute_kernel__5x_cudnn",
+          "count": 56,
+          "total_ns": 155008,
+          "resources": [
+            {
+              "gridX": 2,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 148,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 4096
+            }
+          ],
+          "percent_kernel_time": 0.001553931050604229
+        },
+        {
+          "name": "triton_poi_fused_convolution_13",
+          "count": 112,
+          "total_ns": 152768,
+          "resources": [
+            {
+              "gridX": 240,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0015314753995839367
+        },
+        {
+          "name": "elementwise_kernel_with_index",
+          "count": 45,
+          "total_ns": 43808,
+          "resources": [
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.00043916837495400283
+        },
+        {
+          "name": "unrolled_elementwise_kernel",
+          "count": 3,
+          "total_ns": 25312,
+          "resources": [
+            {
+              "gridX": 13986,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0002537488565293033
+        }
+      ]
+    },
+    "decode": {
+      "nvtx_duration_s": 6.627224079,
+      "kernel_count": 25426,
+      "kernel_seconds": 6.542011124,
+      "activity_union_s": 6.544453597,
+      "no_activity_s": 0.082770482,
+      "copies": [
+        {
+          "table": "CUPTI_ACTIVITY_KIND_MEMSET",
+          "count": 3528,
+          "duration_ns": 2442473,
+          "bytes": 1806336
+        }
+      ],
+      "kernels": [
+        {
+          "name": "Kernel2",
+          "count": 7105,
+          "total_ns": 4258427917,
+          "resources": [
+            {
+              "gridX": 224,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 64,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 9216
+            },
+            {
+              "gridX": 57,
+              "gridY": 24,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 224,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 440,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 254,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 57,
+              "gridY": 64,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 224,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            }
+          ],
+          "percent_kernel_time": 65.09355970639588
+        },
+        {
+          "name": "flash_fwd_kernel",
+          "count": 1764,
+          "total_ns": 1154092783,
+          "resources": [
+            {
+              "gridX": 15,
+              "gridY": 4,
+              "gridZ": 32,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 49152
+            }
+          ],
+          "percent_kernel_time": 17.64125375400386
+        },
+        {
+          "name": "quant",
+          "count": 1764,
+          "total_ns": 540614065,
+          "resources": [
+            {
+              "gridX": 7188,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 512,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 64
+            }
+          ],
+          "percent_kernel_time": 8.26372891688773
+        },
+        {
+          "name": "_qk_rope",
+          "count": 1764,
+          "total_ns": 148163198,
+          "resources": [
+            {
+              "gridX": 28752,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 34,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 2048
+            }
+          ],
+          "percent_kernel_time": 2.2647958738016967
+        },
+        {
+          "name": "quantize_int8_rowwise_kernel",
+          "count": 3528,
+          "total_ns": 136815269,
+          "resources": [
+            {
+              "gridX": 7188,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 17,
+              "staticSharedMemory": 48,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 2.091333481505098
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_8",
+          "count": 1715,
+          "total_ns": 109011480,
+          "resources": [
+            {
+              "gridX": 7188,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 512,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 64
+            }
+          ],
+          "percent_kernel_time": 1.6663297865709958
+        },
+        {
+          "name": "kernel",
+          "count": 1764,
+          "total_ns": 100370653,
+          "resources": [
+            {
+              "gridX": 7188,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 34,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 32
+            }
+          ],
+          "percent_kernel_time": 1.5342476663144238
+        },
+        {
+          "name": "triton_poi_fused_int8_linear_nan_to_num_transpose_view_7",
+          "count": 1764,
+          "total_ns": 35028108,
+          "resources": [
+            {
+              "gridX": 14376,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.5354333298440291
+        },
+        {
+          "name": "elementwise_kernel",
+          "count": 1770,
+          "total_ns": 22202770,
+          "resources": [
+            {
+              "gridX": 6993,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 84,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 336,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 3360,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 3360,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 7392,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 2688,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 2688,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 8064,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4620,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 5040,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 6720,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4032,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4032,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 5082,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 5544,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 10752,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 35280,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 38808,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 56448,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 102816,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 30240,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 30240,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 72576,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.3393875305186656
+        },
+        {
+          "name": "triton_tem_fused_add_addmm_mul_native_layer_norm_t_view_10",
+          "count": 49,
+          "total_ns": 22154195,
+          "resources": [
+            {
+              "gridX": 1368,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 222,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 32768
+            }
+          ],
+          "percent_kernel_time": 0.338645021845426
+        },
+        {
+          "name": "run",
+          "count": 1,
+          "total_ns": 2552998,
+          "resources": [
+            {
+              "gridX": 374976,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 4096
+            }
+          ],
+          "percent_kernel_time": 0.039024666140265035
+        },
+        {
+          "name": "vectorized_elementwise_kernel",
+          "count": 1284,
+          "total_ns": 2396425,
+          "resources": [
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 1680,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 1344,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 2016,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 15120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.036631319552614075
+        },
+        {
+          "name": "triton_poi_fused_arange_cat_cos_div_expand_mul_qk_rope_repeat_sin_stack_sub_unsqueeze_view_zeros_6",
+          "count": 441,
+          "total_ns": 2344741,
+          "resources": [
+            {
+              "gridX": 674,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.035841287267123274
+        },
+        {
+          "name": "triton_red_fused_add_mul_native_layer_norm_9",
+          "count": 49,
+          "total_ns": 1918786,
+          "resources": [
+            {
+              "gridX": 7188,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 38,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 96
+            }
+          ],
+          "percent_kernel_time": 0.02933021610068421
+        },
+        {
+          "name": "triton_poi_fused_clone_permute_slice_view_11",
+          "count": 49,
+          "total_ns": 1866531,
+          "resources": [
+            {
+              "gridX": 43008,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.02853145561236438
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_4",
+          "count": 49,
+          "total_ns": 1420769,
+          "resources": [
+            {
+              "gridX": 3594,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 512,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 4096
+            }
+          ],
+          "percent_kernel_time": 0.021717618222747613
+        },
+        {
+          "name": "triton_poi_fused_cat_expand_view_zeros_like_1",
+          "count": 49,
+          "total_ns": 1175394,
+          "resources": [
+            {
+              "gridX": 28672,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.017966860308261376
+        },
+        {
+          "name": "triton_tem_fused_addmm_permute_t_view_0",
+          "count": 49,
+          "total_ns": 937634,
+          "resources": [
+            {
+              "gridX": 1792,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 58,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 20480
+            }
+          ],
+          "percent_kernel_time": 0.014332503907860979
+        },
+        {
+          "name": "elementwise_kernel_with_index",
+          "count": 321,
+          "total_ns": 296000,
+          "resources": [
+            {
+              "gridX": 2,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.004524602517322164
+        },
+        {
+          "name": "triton_poi_fused_cat_expand_view_zeros_like_2",
+          "count": 49,
+          "total_ns": 99008,
+          "resources": [
+            {
+              "gridX": 512,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0015134183987670028
+        },
+        {
+          "name": "triton_poi_fused_arange_cat_div_expand_mul_stack_sub_unsqueeze_view_zeros_5",
+          "count": 49,
+          "total_ns": 74976,
+          "resources": [
+            {
+              "gridX": 169,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 22,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0011460695889822519
+        },
+        {
+          "name": "triton_poi_fused_zeros_like_3",
+          "count": 49,
+          "total_ns": 47424,
+          "resources": [
+            {
+              "gridX": 32,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.000724914695207724
+        }
+      ]
+    }
+  },
+  "experiments": {
+    "conv_specialization": [
+      {
+        "c": 128,
+        "h": 258,
+        "variants": {
+          "baseline": {
+            "compile_first_s": 0.006492470856755972,
+            "equal": true,
+            "max_abs": 0.0,
+            "samples_ms": [
+              3.8932480812072754,
+              3.5351359844207764,
+              3.528064012527466,
+              3.5332798957824707,
+              3.54150390625,
+              3.555583953857422,
+              3.54419207572937,
+              3.538815975189209,
+              3.5517759323120117,
+              3.550175905227661,
+              3.549056053161621,
+              3.5407679080963135
+            ],
+            "mean_ms": 3.5717999736467996
+          },
+          "special": {
+            "compile_first_s": 0.5894719609059393,
+            "equal": true,
+            "max_abs": 0.0,
+            "samples_ms": [
+              3.539776086807251,
+              3.539263963699341,
+              3.5320639610290527,
+              3.536223888397217,
+              3.5407679080963135,
+              3.5461440086364746,
+              3.5412800312042236,
+              3.5384318828582764,
+              3.19814395904541,
+              3.5536000728607178,
+              3.544735908508301,
+              3.5399041175842285
+            ],
+            "mean_ms": 3.5125279823939004
+          },
+          "flat": {
+            "compile_first_s": 0.5423119110055268,
+            "equal": true,
+            "max_abs": 0.0,
+            "samples_ms": [
+              3.462239980697632,
+              3.462656021118164,
+              3.445888042449951,
+              3.4586238861083984,
+              3.4587199687957764,
+              3.4706239700317383,
+              3.4660160541534424,
+              3.4562880992889404,
+              3.463520050048828,
+              3.460416078567505,
+              3.460063934326172,
+              3.4611198902130127
+            ],
+            "mean_ms": 3.4605146646499634
+          }
+        }
+      },
+      {
+        "c": 256,
+        "h": 130,
+        "variants": {
+          "baseline": {
+            "compile_first_s": 0.006226575933396816,
+            "equal": true,
+            "max_abs": 0.0,
+            "samples_ms": [
+              3.0607359409332275,
+              3.0506880283355713,
+              3.066783905029297,
+              3.059551954269409,
+              3.0626559257507324,
+              3.0635199546813965,
+              3.060703992843628,
+              3.062688112258911,
+              2.7661120891571045,
+              3.063199996948242,
+              3.065376043319702,
+              3.0679359436035156
+            ],
+            "mean_ms": 3.0374959905942283
+          },
+          "special": {
+            "compile_first_s": 0.43714862829074264,
+            "equal": true,
+            "max_abs": 0.0,
+            "samples_ms": [
+              3.0966079235076904,
+              3.0945920944213867,
+              3.0794239044189453,
+              3.0870399475097656,
+              3.0907840728759766,
+              3.086400032043457,
+              3.0974080562591553,
+              3.096031904220581,
+              3.101248025894165,
+              3.093791961669922,
+              3.0945279598236084,
+              3.0964479446411133
+            ],
+            "mean_ms": 3.0928586522738137
+          },
+          "flat": {
+            "compile_first_s": 0.351703979074955,
+            "equal": true,
+            "max_abs": 0.0,
+            "samples_ms": [
+              3.0436480045318604,
+              3.0415680408477783,
+              3.0273919105529785,
+              3.045759916305542,
+              3.050112009048462,
+              3.0522239208221436,
+              3.0433919429779053,
+              3.041088104248047,
+              3.0497279167175293,
+              3.048192024230957,
+              3.050112009048462,
+              3.043936014175415
+            ],
+            "mean_ms": 3.04476265112559
+          }
+        }
+      }
+    ],
+    "conv_pipeline_schedules": [
+      {
+        "c": 128,
+        "variants": {
+          "baseline_128_128_64_4_2": {
+            "equal": true,
+            "registers": 254,
+            "spills": 0,
+            "shared": 16384,
+            "samples_ms": [
+              2.9180479049682617,
+              2.7227840423583984,
+              2.7259840965270996,
+              2.7273919582366943,
+              2.736032009124756,
+              2.7408320903778076,
+              2.7417919635772705,
+              2.731679916381836,
+              2.7410879135131836,
+              2.7378880977630615,
+              2.7362239360809326,
+              2.7346560955047607,
+              2.734528064727783,
+              2.738976001739502,
+              2.7416000366210938
+            ],
+            "mean_ms": 2.7473002751668294
+          },
+          "flat_128_128_64_4_3": {
+            "equal": true,
+            "registers": 254,
+            "spills": 0,
+            "shared": 32768,
+            "samples_ms": [
+              2.360192060470581,
+              2.3602240085601807,
+              2.0940160751342773,
+              2.358975887298584,
+              2.095616102218628,
+              2.093440055847168,
+              2.441215991973877,
+              2.4451839923858643,
+              2.4507839679718018,
+              2.4597439765930176,
+              2.4629440307617188,
+              2.462656021118164,
+              2.4576640129089355,
+              2.466655969619751,
+              2.4672958850860596
+            ],
+            "mean_ms": 2.365107202529907
+          },
+          "flat_128_128_64_4_4": {
+            "equal": true,
+            "registers": 254,
+            "spills": 0,
+            "shared": 49152,
+            "samples_ms": [
+              2.0919361114501953,
+              2.0915839672088623,
+              2.0871360301971436,
+              2.09334397315979,
+              2.089632034301758,
+              2.0937600135803223,
+              2.4444479942321777,
+              2.4567360877990723,
+              2.4543039798736572,
+              2.4660799503326416,
+              2.4735360145568848,
+              2.4698879718780518,
+              2.4700160026550293,
+              2.467008113861084,
+              2.47273588180542
+            ],
+            "mean_ms": 2.3148096084594725
+          },
+          "flat_64_128_64_4_3": {
+            "equal": true,
+            "registers": 118,
+            "spills": 0,
+            "shared": 24576,
+            "samples_ms": [
+              2.9055678844451904,
+              3.2511680126190186,
+              3.2310080528259277,
+              3.2295360565185547,
+              3.2311999797821045,
+              3.2337279319763184,
+              3.2268478870391846,
+              3.226367950439453,
+              3.228543996810913,
+              3.2257919311523438,
+              3.227231979370117,
+              3.2281599044799805,
+              2.877311944961548,
+              3.2242560386657715,
+              3.2285759449005127
+            ],
+            "mean_ms": 3.1850196997324627
+          },
+          "flat_128_128_128_8_3": {
+            "equal": true,
+            "registers": 168,
+            "spills": 0,
+            "shared": 65536,
+            "samples_ms": [
+              2.678015947341919,
+              2.6300160884857178,
+              2.62774395942688,
+              2.6255359649658203,
+              2.632767915725708,
+              2.6436800956726074,
+              2.335263967514038,
+              2.643104076385498,
+              2.6413118839263916,
+              2.632767915725708,
+              2.6374080181121826,
+              2.6422719955444336,
+              2.678879976272583,
+              2.6479361057281494,
+              2.6433920860290527
+            ],
+            "mean_ms": 2.6226730664571125
+          },
+          "flat_256_128_64_8_3": {
+            "equal": true,
+            "registers": 255,
+            "spills": 0,
+            "shared": 49152,
+            "samples_ms": [
+              2.612704038619995,
+              2.6094720363616943,
+              2.6071040630340576,
+              2.6082561016082764,
+              2.614720106124878,
+              2.619328022003174,
+              2.62227201461792,
+              2.6191999912261963,
+              2.6112959384918213,
+              2.609600067138672,
+              2.6099839210510254,
+              2.6234240531921387,
+              2.6249918937683105,
+              2.622591972351074,
+              2.620448112487793
+            ],
+            "mean_ms": 2.6156928221384685
+          }
+        }
+      },
+      {
+        "c": 256,
+        "variants": {
+          "baseline_128_128_64_4_2": {
+            "equal": true,
+            "registers": 254,
+            "spills": 0,
+            "shared": 16384,
+            "samples_ms": [
+              2.8687679767608643,
+              2.6539199352264404,
+              2.6624960899353027,
+              2.6640000343322754,
+              2.663167953491211,
+              2.6631999015808105,
+              2.6612799167633057,
+              2.698784112930298,
+              2.6733760833740234,
+              2.6701760292053223,
+              2.672895908355713,
+              2.656224012374878,
+              2.6585919857025146,
+              2.6965761184692383,
+              2.6721599102020264
+            ],
+            "mean_ms": 2.6823743979136148
+          },
+          "flat_128_128_64_4_3": {
+            "equal": true,
+            "registers": 254,
+            "spills": 0,
+            "shared": 32768,
+            "samples_ms": [
+              2.358975887298584,
+              2.358112096786499,
+              2.0954880714416504,
+              2.355743885040283,
+              2.3569600582122803,
+              2.3587839603424072,
+              2.357919931411743,
+              2.4378879070281982,
+              2.440671920776367,
+              2.442784070968628,
+              2.4437758922576904,
+              2.44486403465271,
+              2.450239896774292,
+              2.4466240406036377,
+              2.4498560428619385
+            ],
+            "mean_ms": 2.386579179763794
+          },
+          "flat_128_128_64_4_4": {
+            "equal": true,
+            "registers": 254,
+            "spills": 0,
+            "shared": 49152,
+            "samples_ms": [
+              2.0939838886260986,
+              2.0914559364318848,
+              2.0814080238342285,
+              2.081536054611206,
+              2.089279890060425,
+              2.083359956741333,
+              2.0795838832855225,
+              2.0936319828033447,
+              2.357343912124634,
+              2.357599973678589,
+              2.3577919006347656,
+              2.357759952545166,
+              2.3584959506988525,
+              2.358464002609253,
+              2.358304023742676
+            ],
+            "mean_ms": 2.2133332888285318
+          },
+          "flat_64_128_64_4_3": {
+            "equal": true,
+            "registers": 118,
+            "spills": 0,
+            "shared": 24576,
+            "samples_ms": [
+              3.299776077270508,
+              3.2933120727539062,
+              3.2716801166534424,
+              3.2749440670013428,
+              3.2795519828796387,
+              3.2788479328155518,
+              3.267712116241455,
+              3.275775909423828,
+              3.281951904296875,
+              3.2747840881347656,
+              3.276639938354492,
+              3.2822399139404297,
+              3.2768640518188477,
+              3.277087926864624,
+              3.2755520343780518
+            ],
+            "mean_ms": 3.2791146755218508
+          },
+          "flat_128_128_128_8_3": {
+            "equal": true,
+            "registers": 163,
+            "spills": 0,
+            "shared": 65536,
+            "samples_ms": [
+              2.6095681190490723,
+              2.3055360317230225,
+              2.598655939102173,
+              2.611488103866577,
+              2.6157119274139404,
+              2.608959913253784,
+              2.6125121116638184,
+              2.6171200275421143,
+              2.6091198921203613,
+              2.618880033493042,
+              2.6155200004577637,
+              2.6091840267181396,
+              2.6173439025878906,
+              2.621920108795166,
+              2.616096019744873
+            ],
+            "mean_ms": 2.592507743835449
+          },
+          "flat_256_128_64_8_3": {
+            "equal": true,
+            "registers": 255,
+            "spills": 0,
+            "shared": 49152,
+            "samples_ms": [
+              2.5072319507598877,
+              2.5024640560150146,
+              2.5099198818206787,
+              2.4987521171569824,
+              2.5199038982391357,
+              2.499392032623291,
+              2.503040075302124,
+              2.1944639682769775,
+              2.5158400535583496,
+              2.506592035293579,
+              2.5000319480895996,
+              2.510175943374634,
+              2.5066239833831787,
+              2.1939520835876465,
+              2.5080959796905518
+            ],
+            "mean_ms": 2.465098667144775
+          }
+        }
+      }
+    ],
+    "swiglu_warps": {
+      "4": {
+        "q_equal": true,
+        "scale_equal": true,
+        "samples_ms": [
+          0.29100799560546875,
+          0.2850239872932434,
+          0.28883200883865356,
+          0.28489598631858826,
+          0.28944000601768494,
+          0.28563201427459717,
+          0.29094401001930237,
+          0.2890560030937195,
+          0.2914240062236786,
+          0.28889599442481995,
+          0.29078400135040283,
+          0.28966400027275085,
+          0.2868160009384155,
+          0.2873600125312805,
+          0.29123198986053467,
+          0.2895680069923401,
+          0.28755199909210205,
+          0.28729599714279175,
+          0.2868480086326599,
+          0.2873919904232025,
+          0.2868799865245819,
+          0.2871040105819702,
+          0.29100799560546875,
+          0.28748801350593567,
+          0.2877120077610016,
+          0.2874239981174469,
+          0.28969600796699524,
+          0.28729599714279175,
+          0.29129600524902344,
+          0.2911680042743683
+        ],
+        "mean_ms": 0.2885578682025274
+      },
+      "8": {
+        "q_equal": true,
+        "scale_equal": true,
+        "samples_ms": [
+          0.2887679934501648,
+          0.28944000601768494,
+          0.28726398944854736,
+          0.2908479869365692,
+          0.29363200068473816,
+          0.289247989654541,
+          0.28886398673057556,
+          0.28944000601768494,
+          0.2916800081729889,
+          0.2908160090446472,
+          0.29100799560546875,
+          0.2871359884738922,
+          0.28748801350593567,
+          0.28755199909210205,
+          0.2917119860649109,
+          0.28723201155662537,
+          0.289247989654541,
+          0.2876800000667572,
+          0.290912002325058,
+          0.2950400114059448,
+          0.2895039916038513,
+          0.289247989654541,
+          0.28937599062919617,
+          0.29315200448036194,
+          0.29123198986053467,
+          0.2868480086326599,
+          0.29097598791122437,
+          0.28748801350593567,
+          0.2889600098133087,
+          0.2908160090446472
+        ],
+        "mean_ms": 0.289753598968188
+      },
+      "16": {
+        "q_equal": true,
+        "scale_equal": true,
+        "samples_ms": [
+          0.45187199115753174,
+          0.28972798585891724,
+          0.28886398673057556,
+          0.2873600125312805,
+          0.29148799180984497,
+          0.2887679934501648,
+          0.29366400837898254,
+          0.289247989654541,
+          0.28963199257850647,
+          0.29315200448036194,
+          0.293503999710083,
+          0.2895359992980957,
+          0.29363200068473816,
+          0.29126399755477905,
+          0.29340800642967224,
+          0.29283198714256287,
+          0.2933120131492615,
+          0.2868480086326599,
+          0.2889919877052307,
+          0.2914240062236786,
+          0.29123198986053467,
+          0.2937279939651489,
+          0.2911359965801239,
+          0.297760009765625,
+          0.2895680069923401,
+          0.28697600960731506,
+          0.2869119942188263,
+          0.2935360074043274,
+          0.2876800000667572,
+          0.3277760148048401
+        ],
+        "mean_ms": 0.2974943995475769
+      }
+    },
+    "quantization_block": [
+      {
+        "c": 128,
+        "variants": {
+          "1024_4": {
+            "q_equal": true,
+            "regs": 27,
+            "samples_ms": [
+              0.6341440081596375,
+              0.47808000445365906,
+              0.4711360037326813,
+              0.4731200039386749,
+              0.47180798649787903,
+              0.473471999168396,
+              0.47539201378822327,
+              0.47148799896240234,
+              0.4781759977340698,
+              0.47567999362945557,
+              0.4731520116329193,
+              0.46588799357414246,
+              0.4761280119419098,
+              0.47577598690986633,
+              0.47567999362945557,
+              0.47203201055526733,
+              0.4713279902935028,
+              0.46700799465179443,
+              0.4716480076313019,
+              0.4780159890651703,
+              0.46697598695755005,
+              0.4652160108089447,
+              0.4713920056819916,
+              0.4689919948577881,
+              0.46908798813819885
+            ],
+            "mean_ms": 0.4788326394557953
+          },
+          "4096_4": {
+            "q_equal": true,
+            "regs": 40,
+            "samples_ms": [
+              0.4670400023460388,
+              0.4651840031147003,
+              0.46556800603866577,
+              0.4658240079879761,
+              0.46537598967552185,
+              0.4633919894695282,
+              0.46326398849487305,
+              0.46723198890686035,
+              0.4697920083999634,
+              0.4651840031147003,
+              0.46560001373291016,
+              0.469215989112854,
+              0.4673280119895935,
+              0.46515199542045593,
+              0.4636160135269165,
+              0.4677119851112366,
+              0.4694719910621643,
+              0.46751999855041504,
+              0.46748799085617065,
+              0.45897600054740906,
+              0.45958399772644043,
+              0.4612480103969574,
+              0.4596160054206848,
+              0.46163201332092285,
+              0.459199994802475
+            ],
+            "mean_ms": 0.4648486399650574
+          },
+          "8192_4": {
+            "q_equal": true,
+            "regs": 42,
+            "samples_ms": [
+              0.4593600034713745,
+              0.46112000942230225,
+              0.46112000942230225,
+              0.46118399500846863,
+              0.4588159918785095,
+              0.46169599890708923,
+              0.46118399500846863,
+              0.46143999695777893,
+              0.459199994802475,
+              0.45923200249671936,
+              0.4615679979324341,
+              0.4607680141925812,
+              0.46169599890708923,
+              0.4617919921875,
+              0.4591040015220642,
+              0.4609279930591583,
+              0.46323201060295105,
+              0.4596799910068512,
+              0.4574719965457916,
+              0.45494401454925537,
+              0.45468801259994507,
+              0.45283201336860657,
+              0.45763200521469116,
+              0.4551039934158325,
+              0.457504004240036
+            ],
+            "mean_ms": 0.459331841468811
+          },
+          "4096_8": {
+            "q_equal": true,
+            "regs": 40,
+            "samples_ms": [
+              0.47600001096725464,
+              0.4697920083999634,
+              0.4731520116329193,
+              0.47123199701309204,
+              0.46777600049972534,
+              0.4736959934234619,
+              0.4689919948577881,
+              0.4678399860858917,
+              0.4710400104522705,
+              0.4698239862918854,
+              0.47203201055526733,
+              0.47724801301956177,
+              0.4657599925994873,
+              0.47123199701309204,
+              0.46956801414489746,
+              0.4674240052700043,
+              0.4758400022983551,
+              0.4755200147628784,
+              0.4715520143508911,
+              0.4710719883441925,
+              0.46492800116539,
+              0.46377599239349365,
+              0.4692800045013428,
+              0.4675840139389038,
+              0.4692479968070984
+            ],
+            "mean_ms": 0.4704563224315643
+          }
+        }
+      },
+      {
+        "c": 256,
+        "variants": {
+          "1024_4": {
+            "q_equal": true,
+            "regs": 27,
+            "samples_ms": [
+              0.43833601474761963,
+              0.2295999974012375,
+              0.2335679978132248,
+              0.2319680005311966,
+              0.23180800676345825,
+              0.23391999304294586,
+              0.2319359928369522,
+              0.25228801369667053,
+              0.25276800990104675,
+              0.23180800676345825,
+              0.2322559952735901,
+              0.23136000335216522,
+              0.22784000635147095,
+              0.23231999576091766,
+              0.2341119945049286,
+              0.23350399732589722,
+              0.23001599311828613,
+              0.23148800432682037,
+              0.2337920069694519,
+              0.23024000227451324,
+              0.2295680046081543,
+              0.22934399545192719,
+              0.23187200725078583,
+              0.22969600558280945,
+              0.2335360050201416
+            ],
+            "mean_ms": 0.2415577620267868
+          },
+          "4096_4": {
+            "q_equal": true,
+            "regs": 40,
+            "samples_ms": [
+              0.2261119931936264,
+              0.22604799270629883,
+              0.2231680005788803,
+              0.2234559953212738,
+              0.2258239984512329,
+              0.2280000001192093,
+              0.22524799406528473,
+              0.24617600440979004,
+              0.2468159943819046,
+              0.24831999838352203,
+              0.22364799678325653,
+              0.22579200565814972,
+              0.2253440022468567,
+              0.22620800137519836,
+              0.22809599339962006,
+              0.22752000391483307,
+              0.22537599503993988,
+              0.22809599339962006,
+              0.22732800245285034,
+              0.22617599368095398,
+              0.2258239984512329,
+              0.22364799678325653,
+              0.22547200322151184,
+              0.22575999796390533,
+              0.22966399788856506
+            ],
+            "mean_ms": 0.22852479815483093
+          },
+          "8192_4": {
+            "q_equal": true,
+            "regs": 42,
+            "samples_ms": [
+              0.22387200593948364,
+              0.2282560020685196,
+              0.22604799270629883,
+              0.22620800137519836,
+              0.2258560061454773,
+              0.22569599747657776,
+              0.22416000068187714,
+              0.24886399507522583,
+              0.24844799935817719,
+              0.24764800071716309,
+              0.22623999416828156,
+              0.22406400740146637,
+              0.22806400060653687,
+              0.22784000635147095,
+              0.2279359996318817,
+              0.2261119931936264,
+              0.22521600127220154,
+              0.22739200294017792,
+              0.2261119931936264,
+              0.22598400712013245,
+              0.2255679965019226,
+              0.22620800137519836,
+              0.22521600127220154,
+              0.22604799270629883,
+              0.2279680073261261
+            ],
+            "mean_ms": 0.22884096026420594
+          },
+          "4096_8": {
+            "q_equal": true,
+            "regs": 40,
+            "samples_ms": [
+              0.22991999983787537,
+              0.2280000001192093,
+              0.23343999683856964,
+              0.23004800081253052,
+              0.22809599339962006,
+              0.2280000001192093,
+              0.23024000227451324,
+              0.25440001487731934,
+              0.24879999458789825,
+              0.2465279996395111,
+              0.22761599719524384,
+              0.22963200509548187,
+              0.2274239957332611,
+              0.2319680005311966,
+              0.22940799593925476,
+              0.22815999388694763,
+              0.2295999974012375,
+              0.22998400032520294,
+              0.22944000363349915,
+              0.22617599368095398,
+              0.22806400060653687,
+              0.2276799976825714,
+              0.23190400004386902,
+              0.23014399409294128,
+              0.23024000227451324
+            ],
+            "mean_ms": 0.2317964792251587
+          }
+        }
+      }
+    ]
+  },
+  "aca_plan_check": {
+    "decision": "screen",
+    "reasons": [],
+    "family_matches": [],
+    "exact_contract_matches": [],
+    "fingerprint": "e7976b03273ac9d99c7c410a7ed66a1ba063eac82cec6eb2456b55eb7f26415f",
+    "optimistic_saved_seconds": 0.6945798093000001,
+    "estimate_is_not_measured_gain": true
+  },
+  "ncu": {
+    "status": "ERR_NVGPUCTRPERM",
+    "hardware_counters_collected": false,
+    "driver_profiling_admin_only": true
+  },
+  "validation": {
+    "gpu_tests_passed": 4,
+    "cpu_public_tests_passed": 80,
+    "cpu_public_tests_skipped": 4,
+    "comfy_smoke": {
+      "status": "ok",
+      "input": {
+        "wrapper_input_shape_thwc": [
+          17,
+          256,
+          256,
+          3
+        ],
+        "wrapper_input_dtype": "torch.float32",
+        "wrapper_input_range": [
+          2.980232238769531e-07,
+          0.9999999403953552
+        ],
+        "raw_normalized_shape_bcthw": [
+          1,
+          3,
+          17,
+          256,
+          256
+        ],
+        "raw_normalized_dtype": "torch.float16",
+        "raw_normalized_contract": "same torch.float32 Comfy IMAGE movedim(-1,1)->movedim(1,0)->unsqueeze(0), process_input (* 2 - 1), then cast FP16"
+      },
+      "compatibility_matches": true,
+      "before_after_offload": {
+        "raw_encode_before_vs_after": {
+          "shape_match": true,
+          "reference_shape": [
+            1,
+            24,
+            2,
+            16,
+            16
+          ],
+          "candidate_shape": [
+            1,
+            24,
+            2,
+            16,
+            16
+          ],
+          "reference_finite": true,
+          "candidate_finite": true,
+          "finite": true,
+          "rmse": 0.0,
+          "max_abs": 0.0,
+          "mae": 0.0
+        },
+        "wrapper_encode_before_vs_after": {
+          "shape_match": true,
+          "reference_shape": [
+            1,
+            24,
+            2,
+            16,
+            16
+          ],
+          "candidate_shape": [
+            1,
+            24,
+            2,
+            16,
+            16
+          ],
+          "reference_finite": true,
+          "candidate_finite": true,
+          "finite": true,
+          "rmse": 0.0,
+          "max_abs": 0.0,
+          "mae": 0.0
+        },
+        "raw_decode_before_vs_after": {
+          "shape_match": true,
+          "reference_shape": [
+            1,
+            3,
+            5,
+            256,
+            256
+          ],
+          "candidate_shape": [
+            1,
+            3,
+            5,
+            256,
+            256
+          ],
+          "reference_finite": true,
+          "candidate_finite": true,
+          "finite": true,
+          "rmse": 0.0,
+          "max_abs": 0.0,
+          "mae": 0.0
+        },
+        "wrapper_decode_before_vs_after": {
+          "shape_match": true,
+          "reference_shape": [
+            1,
+            3,
+            5,
+            256,
+            256
+          ],
+          "candidate_shape": [
+            1,
+            3,
+            5,
+            256,
+            256
+          ],
+          "reference_finite": true,
+          "candidate_finite": true,
+          "finite": true,
+          "rmse": 0.0,
+          "max_abs": 0.0,
+          "mae": 0.0
+        }
+      }
+    }
+  },
+  "notes": [
+    "Quality: 8 videos / 992 frames latent equality; full RGB equality explicitly rechecked on one 124-frame video.",
+    "Three timing blocks on one video and one separate-width holdout do not meet ACA S4 recommendation of >=6 blocks/3 seeds; no stability guarantee.",
+    "Microbenchmarks use synthetic encoder values at captured shapes; SwiGLU replay uses captured real data. All raw samples including outliers retained.",
+    "NCU permission failure prevents measured roofline, bandwidth, occupancy or stall attribution.",
+    "No additional quantization block/warp changes adopted: benefits too small for full-runtime promotion."
+  ],
+  "profile_after_runtime": {
+    "mode": "encode",
+    "environment": {
+      "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+      "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+      "torch": "2.11.0+cu130",
+      "torch_cuda": "13.0",
+      "torch_hip": null,
+      "triton": "3.6.0",
+      "comfy_kitchen_version": "0.2.34",
+      "comfy_kitchen_file": "__init__.py",
+      "sdpa_backend_env": "auto",
+      "fp32_norm_env": "1",
+      "allow_fp16_accumulation": false,
+      "gpu_before_runtime": {
+        "available": true,
+        "device_index": 0,
+        "name": "NVIDIA Graphics Device",
+        "capability": [
+          12,
+          0
+        ],
+        "memory_allocated_bytes": 0,
+        "memory_reserved_bytes": 0,
+        "nvidia_smi": "85, 736, 73415"
+      }
+    },
+    "commit": "4d79fd592ecc1ed6d2c08817edb17a8509df5a4b",
+    "input_shape": [
+      1,
+      3,
+      124,
+      768,
+      1344
+    ],
+    "input_stride": [
+      383975424,
+      127991808,
+      1032192,
+      1344,
+      1
+    ],
+    "settings": {
+      "mode": "encode",
+      "model_code_dir": "video_vae",
+      "weights": "minimax_h3_video_vae_fp16.safetensors",
+      "video": "../samples/MiniMax_H3_00015_50steps_seed43.mp4",
+      "output": "encode_after.json",
+      "warmup": 2,
+      "seed": 20261002,
+      "encoder_tile": 256,
+      "decoder_tile": 256,
+      "encoder_staged_batch": 4,
+      "tile_batch": 2
+    },
+    "warmups_and_reference": [
+      {
+        "cuda_ms": 13107.7607421875,
+        "wall_s": 13.107931886799634
+      },
+      {
+        "cuda_ms": 9444.1396484375,
+        "wall_s": 9.444373853970319
+      },
+      {
+        "cuda_ms": 9474.4091796875,
+        "wall_s": 9.474518368951976
+      }
+    ],
+    "profile_wall_s": 9.519509977195412,
+    "output_shape": [
+      1,
+      24,
+      37,
+      48,
+      84
+    ],
+    "finite": true,
+    "peak_allocated_bytes": 7237211648
+  },
+  "profile_after": {
+    "encode_after": {
+      "nvtx_duration_s": 9.519534855,
+      "kernel_count": 21610,
+      "kernel_seconds": 9.44131772,
+      "activity_union_s": 9.451595985,
+      "no_activity_s": 0.06793887,
+      "copies": [
+        {
+          "table": "CUPTI_ACTIVITY_KIND_MEMCPY",
+          "count": 448,
+          "duration_ns": 7101073,
+          "bytes": 4255383552
+        },
+        {
+          "table": "CUPTI_ACTIVITY_KIND_MEMSET",
+          "count": 728,
+          "duration_ns": 3177192,
+          "bytes": 4546633728
+        }
+      ],
+      "kernels": [
+        {
+          "name": "implicit_conv3d_kernel",
+          "count": 1792,
+          "total_ns": 4037392862,
+          "resources": [
+            {
+              "gridX": 8704,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 254,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 49152
+            },
+            {
+              "gridX": 2176,
+              "gridY": 2,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 254,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 49152
+            }
+          ],
+          "percent_kernel_time": 42.76302293531967
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize256x128x32_stage3_warpsize4x2x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 1120,
+          "total_ns": 1312795818,
+          "resources": [
+            {
+              "gridX": 1,
+              "gridY": 4352,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 1,
+              "gridY": 1216,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 2,
+              "gridY": 1088,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 2,
+              "gridY": 144,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 2,
+              "gridY": 576,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 234,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            }
+          ],
+          "percent_kernel_time": 13.904794404059098
+        },
+        {
+          "name": "quantize_contiguous",
+          "count": 1792,
+          "total_ns": 640566347,
+          "resources": [
+            {
+              "gridX": 158090,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 27,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 40138,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 27,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 80275,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 27,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 6.784713384266873
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x128x32_stage4_warpsize2x2x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 504,
+          "total_ns": 601035856,
+          "resources": [
+            {
+              "gridX": 4,
+              "gridY": 160,
+              "gridZ": 4,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 244,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 65536
+            },
+            {
+              "gridX": 4,
+              "gridY": 40,
+              "gridZ": 4,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 244,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 65536
+            },
+            {
+              "gridX": 8,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 244,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 65536
+            }
+          ],
+          "percent_kernel_time": 6.366016628450038
+        },
+        {
+          "name": "partial_absmax",
+          "count": 1792,
+          "total_ns": 453995774,
+          "resources": [
+            {
+              "gridX": 2048,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 94,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            }
+          ],
+          "percent_kernel_time": 4.808606038522343
+        },
+        {
+          "name": "_normalize_pack_bias",
+          "count": 896,
+          "total_ns": 420278436,
+          "resources": [
+            {
+              "gridX": 158090,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 80275,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 4.451480698607397
+        },
+        {
+          "name": "_normalize_pack",
+          "count": 896,
+          "total_ns": 405740267,
+          "resources": [
+            {
+              "gridX": 158090,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 40138,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 80275,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 38,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 4.297496165609391
+        },
+        {
+          "name": "_partial_bias",
+          "count": 1344,
+          "total_ns": 222516248,
+          "resources": [
+            {
+              "gridX": 512,
+              "gridY": 2,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 512
+            },
+            {
+              "gridX": 128,
+              "gridY": 4,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 32,
+              "gridY": 4,
+              "gridZ": 36,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 8,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 16,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 64
+            }
+          ],
+          "percent_kernel_time": 2.3568346559149584
+        },
+        {
+          "name": "_partial",
+          "count": 1400,
+          "total_ns": 215128894,
+          "resources": [
+            {
+              "gridX": 512,
+              "gridY": 2,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 512
+            },
+            {
+              "gridX": 128,
+              "gridY": 2,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 53,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 512
+            },
+            {
+              "gridX": 128,
+              "gridY": 4,
+              "gridZ": 17,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 32,
+              "gridY": 4,
+              "gridZ": 36,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 8,
+              "gridY": 4,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 256
+            },
+            {
+              "gridX": 8,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 8,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 128
+            },
+            {
+              "gridX": 2,
+              "gridY": 16,
+              "gridZ": 20,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 52,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 64
+            }
+          ],
+          "percent_kernel_time": 2.278589709403403
+        },
+        {
+          "name": "triton_poi_fused_add_reflection_pad3d_3",
+          "count": 224,
+          "total_ns": 210517706,
+          "resources": [
+            {
+              "gridX": 280709,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 2.2297491964924574
+        },
+        {
+          "name": "triton_poi_fused_add_constant_pad_nd_convolution_reflection_pad3d_2",
+          "count": 224,
+          "total_ns": 210372788,
+          "resources": [
+            {
+              "gridX": 278528,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 2.228214262447255
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_convolution_reflection_pad3d_temporal_norm_pack_1",
+          "count": 224,
+          "total_ns": 132414537,
+          "resources": [
+            {
+              "gridX": 278528,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 1.4025005928939334
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x128x64_stage3_warpsize2x2x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 280,
+          "total_ns": 122141913,
+          "resources": [
+            {
+              "gridX": 2,
+              "gridY": 160,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 98304
+            },
+            {
+              "gridX": 4,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 255,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 98304
+            }
+          ],
+          "percent_kernel_time": 1.2936956113791285
+        },
+        {
+          "name": "_residual_pack",
+          "count": 224,
+          "total_ns": 110456003,
+          "resources": [
+            {
+              "gridX": 79045,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 1.1699214693942108
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_slice_6",
+          "count": 224,
+          "total_ns": 106130657,
+          "resources": [
+            {
+              "gridX": 69632,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 28,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 1.1241085211567268
+        },
+        {
+          "name": "_normalize_pack_batched",
+          "count": 952,
+          "total_ns": 45374131,
+          "resources": [
+            {
+              "gridX": 47916,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 8092,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 16184,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4536,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 9072,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 9072,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 39,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.4805910821524604
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_slice_5",
+          "count": 224,
+          "total_ns": 29190965,
+          "resources": [
+            {
+              "gridX": 34816,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 22,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.30918316558888137
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_4",
+          "count": 224,
+          "total_ns": 25391668,
+          "resources": [
+            {
+              "gridX": 38912,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.2689419925590641
+        },
+        {
+          "name": "elementwise_kernel",
+          "count": 410,
+          "total_ns": 24429454,
+          "resources": [
+            {
+              "gridX": 47616,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 95232,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 95232,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 20,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4608,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 47616,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 52224,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 278,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 278,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 611,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 222,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 222,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 666,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 382,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 417,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 555,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 333,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 333,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 420,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 458,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 888,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 2914,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 3206,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 4662,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 13986,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 13986,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 20,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.2587504702680422
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_1",
+          "count": 56,
+          "total_ns": 18119330,
+          "resources": [
+            {
+              "gridX": 16,
+              "gridY": 595,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 37,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 8192
+            }
+          ],
+          "percent_kernel_time": 0.1919152658279569
+        },
+        {
+          "name": "_merge",
+          "count": 2744,
+          "total_ns": 15773349,
+          "resources": [
+            {
+              "gridX": 32,
+              "gridY": 17,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 30,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            },
+            {
+              "gridX": 32,
+              "gridY": 17,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            },
+            {
+              "gridX": 32,
+              "gridY": 36,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 22,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 32,
+              "gridY": 20,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 21,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.1670672406944483
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_reflection_pad3d_2",
+          "count": 56,
+          "total_ns": 15227173,
+          "resources": [
+            {
+              "gridX": 182,
+              "gridY": 64,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 38,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.1612822854985967
+        },
+        {
+          "name": "vectorized_elementwise_kernel",
+          "count": 264,
+          "total_ns": 14688382,
+          "resources": [
+            {
+              "gridX": 23808,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 36,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 23808,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 139,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 111,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 167,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 40,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.1555755503162963
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_indexed_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x32x32_stage4_warpsize4x1x1_g1_tensor16x8x16_execute_kernel__5x_cudnn",
+          "count": 56,
+          "total_ns": 11349206,
+          "resources": [
+            {
+              "gridX": 2,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 110,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 43008
+            }
+          ],
+          "percent_kernel_time": 0.12020786013755716
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_0",
+          "count": 56,
+          "total_ns": 11189782,
+          "resources": [
+            {
+              "gridX": 73728,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.11851928228510035
+        },
+        {
+          "name": "nhwcAddPaddingKernel",
+          "count": 448,
+          "total_ns": 4834217,
+          "resources": [
+            {
+              "gridX": 220,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 768,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 34,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.051202778503676924
+        },
+        {
+          "name": "Kernel2",
+          "count": 112,
+          "total_ns": 4460133,
+          "resources": [
+            {
+              "gridX": 320,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 222,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 73728
+            },
+            {
+              "gridX": 320,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 226,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 65536
+            }
+          ],
+          "percent_kernel_time": 0.047240577346019025
+        },
+        {
+          "name": "triton_poi_fused_convolution_7",
+          "count": 224,
+          "total_ns": 3504101,
+          "resources": [
+            {
+              "gridX": 9216,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.03711453320310462
+        },
+        {
+          "name": "merge_scale",
+          "count": 1792,
+          "total_ns": 2956835,
+          "resources": [
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 23,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 16
+            }
+          ],
+          "percent_kernel_time": 0.03131803300863812
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_6",
+          "count": 56,
+          "total_ns": 2713604,
+          "resources": [
+            {
+              "gridX": 16,
+              "gridY": 681,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 35,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 2048
+            }
+          ],
+          "percent_kernel_time": 0.028741793047083262
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_5",
+          "count": 56,
+          "total_ns": 2387971,
+          "resources": [
+            {
+              "gridX": 20480,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 256,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 18,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.02529277237372751
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_reflection_pad3d_0",
+          "count": 224,
+          "total_ns": 2130947,
+          "resources": [
+            {
+              "gridX": 3706,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 38,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.02257044051685616
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_reflection_pad3d_7",
+          "count": 56,
+          "total_ns": 1614275,
+          "resources": [
+            {
+              "gridX": 239,
+              "gridY": 64,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 25,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.017097984072502966
+        },
+        {
+          "name": "triton_poi_fused_add_batched_temporal_norm_pack_convolution_12",
+          "count": 56,
+          "total_ns": 1161601,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.012303377922970694
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_reflection_pad3d_11",
+          "count": 56,
+          "total_ns": 928610,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.009835597397944575
+        },
+        {
+          "name": "triton_poi_fused_add_convolution_9",
+          "count": 112,
+          "total_ns": 615491,
+          "resources": [
+            {
+              "gridX": 2560,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 26,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.006519121782081072
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_convolution_reflection_pad3d_3",
+          "count": 56,
+          "total_ns": 468706,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.004964412954847578
+        },
+        {
+          "name": "triton_poi_fused_reflection_pad3d_4",
+          "count": 56,
+          "total_ns": 418849,
+          "resources": [
+            {
+              "gridX": 5120,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 25,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0044363404815064315
+        },
+        {
+          "name": "triton_poi_fused_constant_pad_nd_convolution_reflection_pad3d_8",
+          "count": 56,
+          "total_ns": 283072,
+          "resources": [
+            {
+              "gridX": 2560,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0029982255485413323
+        },
+        {
+          "name": "triton_poi_fused_reflection_pad3d_10",
+          "count": 56,
+          "total_ns": 241537,
+          "resources": [
+            {
+              "gridX": 2560,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 25,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0025582975508634826
+        },
+        {
+          "name": "sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f16f16_f16f32_f32_nhwckrsc_nhwc_tilesize128x32x64_stage1_warpsize4x1x1_g1_tensor16x8x16_alignc4_execute_kernel__5x_cudnn",
+          "count": 56,
+          "total_ns": 155648,
+          "resources": [
+            {
+              "gridX": 2,
+              "gridY": 40,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 148,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 4096
+            }
+          ],
+          "percent_kernel_time": 0.0016485834352368348
+        },
+        {
+          "name": "triton_poi_fused_convolution_13",
+          "count": 112,
+          "total_ns": 155233,
+          "resources": [
+            {
+              "gridX": 240,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0016441878623697033
+        },
+        {
+          "name": "elementwise_kernel_with_index",
+          "count": 45,
+          "total_ns": 43936,
+          "resources": [
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 64,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 16,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.0004653587698561213
+        },
+        {
+          "name": "unrolled_elementwise_kernel",
+          "count": 3,
+          "total_ns": 25408,
+          "resources": [
+            {
+              "gridX": 13986,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            },
+            {
+              "gridX": 1,
+              "gridY": 1,
+              "gridZ": 1,
+              "blockX": 128,
+              "blockY": 1,
+              "blockZ": 1,
+              "registersPerThread": 32,
+              "staticSharedMemory": 0,
+              "dynamicSharedMemory": 0
+            }
+          ],
+          "percent_kernel_time": 0.00026911497688693396
+        }
+      ]
+    }
+  },
+  "source_sha256": {
+    "opt/encoder_int8.py": "7aff674cfc947831268a1fe23ee57109eee7bfb48a90141656288dc3dd2e896c",
+    "opt/encoder_int8_pipeline.py": "2a1964b9d5274f7ac11a6fc794091dc0b271696c65f6a87eef2d92a29bd27fe1",
+    "opt/encoder_int8_integration.py": "2941ef78ab4e37b88c1e50cd0d9a67b82302e05e0f9cdbec799c5c6a3a2e03d6",
+    "bench_int8_profile.py": "a171ffacc66af94efdb31cc46bda03764326b0d915ef7ae5245d1b1d6bbf2d9a",
+    "bench_encoder_int8_optimization.py": "114c03717d27ee4fc50dc18b446aade28d5496a61479979277c8225aab4ed00c"
+  },
+  "weights_sha256": "7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522",
+  "experiment_history": {
+    "experiments": [
+      {
+        "family": "implicit_conv_address_pipeline",
+        "status": "adopted_vae_stage",
+        "reason": "Full encode paired latency -6.07%; eight-video latent equality; SM120 auto only",
+        "evidence": [
+          "encode_ab.json",
+          "quality.json",
+          "trace_summary.json",
+          "trace_after.json"
+        ]
+      },
+      {
+        "family": "decoder_swiglu_warps",
+        "status": "not_adopted_small_signal",
+        "reason": "Exact q/scales but no meaningful steady-state improvement over 16 warps",
+        "evidence": [
+          "swiglu_replay.json"
+        ]
+      },
+      {
+        "family": "encoder_quant_block_size",
+        "status": "not_adopted_small_signal",
+        "reason": "Exact q but small local signal below full-run promotion budget",
+        "evidence": [
+          "quant_replay.json"
+        ]
+      }
+    ],
+    "costs": {
+      "compile_first_seconds": "recorded per variant in conv_replay.json",
+      "engineering_wall_seconds": null,
+      "exclusive_gpu_seconds": null,
+      "unknown_costs_not_estimated": true
+    }
+  }
+}

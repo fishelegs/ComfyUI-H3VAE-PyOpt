@@ -2,11 +2,12 @@
 
 The production policy in this module is intentionally narrow: only the two
 residual blocks in encoder prefix stages 0 and 1 are replaced, covering eight
-3x3x3 convolutions.  Their norm/padding wrappers remain in place and still
-produce already-padded tensors; the INT8 kernel therefore receives a valid
-convolution input and cannot silently change causal or reflect-padding
-semantics.  Downsample convolutions, shortcuts, ``conv_in``/``conv_out``, and
-the suffix retain their original H3 precision and execution paths.
+3x3x3 convolutions. On SM120 the norm/padding producer also computes
+activation absmax; other paths retain separate norm and quantization calls.
+Both produce the same already-padded INT8 tensor for valid convolution,
+preserving causal and reflect-padding semantics. Downsample convolutions,
+shortcuts, ``conv_in``/``conv_out``, and the suffix retain their original H3
+precision and execution paths.
 
 This module is opt-in and is not imported by the default runtime.  The kernel
 implementation lives in ``encoder_int8.py``; this file only owns the module
@@ -23,6 +24,7 @@ from torch import nn
 from opt.encoder_int8 import (
     Int8Conv3DConfig,
     int8_valid_conv3d,
+    _conv3d_from_quantized,
     prepare_int8_weight,
 )
 
@@ -37,6 +39,8 @@ INT8_ENCODER_POLICY = {
         128: "128x128x64",
         256: "128x128x64",
     },
+    "sm120_auto_tile_variant": "128x128x64_pipeline4",
+    "sm120_auto_norm_absmax_fusion": True,
     "excluded": (
         "conv_in",
         "conv_out",
@@ -51,6 +55,7 @@ INT8_ENCODER_POLICY = {
 def _resolve_tile_variant(
     input_channels: int,
     requested: str | None,
+    capability: tuple[int, int] | None = None,
 ) -> str:
     """Select the validated Triton tile for a source convolution.
 
@@ -61,6 +66,10 @@ def _resolve_tile_variant(
 
     if requested not in (None, "auto"):
         return str(requested)
+    # Only automatically select the new schedule on the measured architecture.
+    # Explicit tile requests and CPU-only construction retain their contract.
+    if capability == (12, 0) and input_channels in (128, 256):
+        return INT8_ENCODER_POLICY["sm120_auto_tile_variant"]
     try:
         return INT8_ENCODER_POLICY["tile_variants_by_input_channels"][
             int(input_channels)
@@ -160,6 +169,44 @@ def _int8_valid_conv3d_integration_fake(
     )
 
 
+@torch.library.custom_op(
+    "h3vae_encoder::int8_norm_conv3d", mutates_args=(), device_types="cuda",
+)
+def int8_norm_conv3d(
+    x: torch.Tensor,
+    norm_weight: torch.Tensor,
+    norm_bias: torch.Tensor,
+    pre_bias: torch.Tensor | None,
+    eps: float,
+    qweight: torch.Tensor,
+    weight_scale: torch.Tensor,
+    bias: torch.Tensor | None,
+) -> torch.Tensor:
+    """GroupNorm/SiLU/padding/quantization and valid INT8 convolution.
+
+    Preserve both FP16 rounding points while reusing the producer's absmax.
+    Scratch FP16 output is released before the convolution output allocation.
+    """
+    from opt.encoder_int8_norm import quantized_temporal_norm_pad
+
+    qx, scale = quantized_temporal_norm_pad(
+        x, norm_weight, norm_bias, eps, pre_bias=pre_bias,
+    )
+    return _conv3d_from_quantized(
+        qx, scale, qweight, weight_scale,
+        config=Int8Conv3DConfig(x.shape[1], qweight.shape[0], (3, 3, 3), (1, 1, 1)),
+        bias=bias, tile_variant="128x128x64_pipeline4",
+    )
+
+
+@int8_norm_conv3d.register_fake
+def _int8_norm_conv3d_fake(x, norm_weight, norm_bias, pre_bias, eps, qweight, weight_scale, bias):
+    return torch.empty(
+        (x.shape[0], qweight.shape[0], *x.shape[2:]),
+        device=x.device, dtype=x.dtype, memory_format=torch.channels_last_3d,
+    )
+
+
 class Int8FusedValidConv3d(nn.Module):
     """Static-weight INT8 wrapper for an already-padded fused Conv3d call."""
 
@@ -214,6 +261,7 @@ class Int8FusedValidConv3d(nn.Module):
         self.config = config
         self.apply_bias = bool(apply_bias)
         self.tile_variant = str(tile_variant)
+        self.fuse_norm = False
 
     def _apply(self, fn, recurse=True):
         # ComfyUI may call module.to(device, dtype).  FP32 scales are part of
@@ -230,6 +278,20 @@ class Int8FusedValidConv3d(nn.Module):
             device=self.bias.device, dtype=torch.float16
         )
         return result
+
+    def forward_norm(self, x, norm_weight, norm_bias, eps, pre_bias=None):
+        if not self.fuse_norm:
+            raise RuntimeError("INT8 norm fusion is not enabled for this convolution")
+        if x.dtype != torch.float16:
+            raise RuntimeError("INT8 encoder convolution requires FP16 activations")
+        if x.device != self.qweight.device:
+            raise RuntimeError(
+                "INT8 encoder activation and qweight must be on the same device"
+            )
+        return int8_norm_conv3d(
+            x, norm_weight, norm_bias, pre_bias, eps,
+            self.qweight, self.weight_scale, self.bias if self.apply_bias else None,
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if x.dtype != torch.float16:
@@ -345,12 +407,19 @@ def install_int8_encoder_prefix(
                 )
                 name = f"stages.{stage_index}.block.{block_index}.{field}"
                 selected_tile = _resolve_tile_variant(
-                    int(source.weight.shape[1]), tile_variant
+                    int(source.weight.shape[1]), tile_variant,
+                    (torch.cuda.get_device_capability(source.weight.device)
+                     if source.weight.device.type == "cuda" else None),
                 )
                 wrapper = Int8FusedValidConv3d(
                     source,
                     apply_bias=apply_bias,
                     tile_variant=selected_tile,
+                )
+                wrapper.fuse_norm = (
+                    tile_variant in (None, "auto")
+                    and selected_tile == "128x128x64_pipeline4"
+                    and wrapper.config.stride == (1, 1, 1)
                 )
                 pending.append(
                     (block, field, wrapper)
@@ -362,6 +431,7 @@ def install_int8_encoder_prefix(
                     "stride": list(wrapper.config.stride),
                     "apply_bias": apply_bias,
                     "tile_variant": selected_tile,
+                    "fuse_norm": wrapper.fuse_norm,
                 }
                 # Keep metadata separate from module mutation so a failed
                 # validation cannot leave a partially installed prefix.

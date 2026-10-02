@@ -40,8 +40,9 @@ def write_json(path, value):
 
 
 class Dispatch:
-    def __init__(self, baseline):
+    def __init__(self, baseline, baseline_tile_variant=None):
         self.baseline = baseline
+        self.baseline_tile_variant = baseline_tile_variant
         self.mode = "optimized"
         self.calls = Counter()
         self.checked = {}
@@ -53,7 +54,8 @@ class Dispatch:
         kwargs["tile_variant"] = (
             "128x128x64"
             if tile_only
-            else {128: "128x64x64", 256: "128x64x128"}[kwargs["config"].in_channels]
+            else self.baseline_tile_variant
+            or {128: "128x64x64", 256: "128x64x128"}[kwargs["config"].in_channels]
         )
         return self.baseline.int8_valid_conv3d(x, qw, ws, **kwargs)
 
@@ -87,6 +89,10 @@ def parse_args():
     parser.add_argument("--model-code-dir", type=Path, required=True)
     parser.add_argument("--weights", type=Path, required=True)
     parser.add_argument("--baseline-kernel-file", type=Path, required=True)
+    parser.add_argument(
+        "--baseline-tile-variant",
+        help="Override legacy stage tiles when comparing a newer baseline snapshot",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--runs", type=int, default=5)
@@ -116,7 +122,7 @@ def main():
     torch.backends.cudnn.benchmark = True
     torch.backends.cudnn.benchmark_limit = 5
     baseline = load_baseline(args.baseline_kernel_file)
-    dispatch = Dispatch(baseline)
+    dispatch = Dispatch(baseline, args.baseline_tile_variant)
     old_entry = integration.int8_valid_conv3d
     environment = base._environment()
     report = {
@@ -142,6 +148,12 @@ def main():
     print("Constructing compiled FP16 and INT8 runtimes", flush=True)
     fp16 = rt._make_runtime(args, int8_encode=False, int8_decode=False)
     int8 = rt._make_runtime(args, int8_encode=True, int8_decode=False)
+    # This benchmark dispatches the convolution-only boundary. Producer fusion
+    # uses a different graph; benchmark it with bench_encoder_int8_norm.py.
+    for module in int8.modules():
+        if isinstance(module, integration.Int8FusedValidConv3d):
+            module.fuse_norm = False
+
     report["int8_modules"] = int8.int8_encoder_metadata
     modes = ["fp16", "previous", "optimized"]
     if args.include_tile_only:

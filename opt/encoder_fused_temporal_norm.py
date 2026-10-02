@@ -53,7 +53,7 @@ def _merge(P,Q,S,H:tl.constexpr,W:tl.constexpr,C:tl.constexpr,G:tl.constexpr,
 @triton.jit
 def _normalize_pack(X,Weight,Bias,S,Y,C:tl.constexpr,D:tl.constexpr,H:tl.constexpr,W:tl.constexpr,
                     SD:tl.constexpr,SC:tl.constexpr,SH:tl.constexpr,SW:tl.constexpr,
-                    G:tl.constexpr,BLOCK:tl.constexpr):
+                    G:tl.constexpr,BLOCK:tl.constexpr, Maxima=None, WRITE_MAX:tl.constexpr=False):
     idx=tl.program_id(0)*BLOCK+tl.arange(0,BLOCK)
     total:tl.constexpr=C*(D+2)*(H+2)*(W+2)
     c=idx%C
@@ -73,6 +73,12 @@ def _normalize_pack(X,Weight,Bias,S,Y,C:tl.constexpr,D:tl.constexpr,H:tl.constex
     z=(((v-mean)*rstd)*gamma+beta).to(tl.float16).to(tl.float32)
     z=(z/(1.+tl.exp(-z))).to(tl.float16)
     tl.store(Y+idx,tl.where(valid,z,0.),idx<total)
+    if WRITE_MAX:
+        # Reduce the values after both FP16 rounding points and padding.
+        # The INT8 producer consumes these maxima without scanning Y again.
+        values = tl.where(valid, z, 0.).to(tl.float32)
+        tl.store(Maxima + tl.program_id(0), tl.max(tl.abs(values), 0))
+
 
 def fused_temporal_norm_pad(x,weight,bias,eps,config=(128,32,4)):
     b,c,d,h,w=x.shape
