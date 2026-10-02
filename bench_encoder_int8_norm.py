@@ -1,13 +1,15 @@
 """Paired full-video validation of INT8 encoder norm/absmax producer fusion.
 
 Both prefixes share immutable parameters, use the same INT8 convolution tile
-and compile options, and differ only in the norm producer boundary. Loading,
+and compile options, and differ only in the norm producer boundary. With --baseline-producer-file,
+both variants share one compiled graph and dispatch inside its opaque op. Loading,
 compilation and media I/O are excluded. Original checkpoints are read-only.
 """
 from __future__ import annotations
 
 import argparse
 import copy
+import importlib.util
 import json
 from pathlib import Path
 import statistics
@@ -17,6 +19,7 @@ import torch
 import bench_int8_vae as base
 from h3vae_runtime import H3VAEPyOptRuntime, ENCODER_COMPILE_OPTIONS
 from opt import encoder_int8_integration as integration
+from opt import encoder_int8_norm as producer
 
 
 def _clone_prefix(module):
@@ -40,6 +43,7 @@ def parse_args():
     parser.add_argument('--warmup', type=int, default=2)
     parser.add_argument('--blocks', type=int, default=3)
     parser.add_argument('--seed', type=int, default=20261002)
+    parser.add_argument('--baseline-producer-file', type=Path, help='Compare producer implementations inside the same compiled graph')
     parser.add_argument('--check-rgb', action='store_true')
     args = parser.parse_args()
     if args.warmup < 2 or args.blocks < 1:
@@ -66,14 +70,39 @@ def main():
     modules = [m for m in raw.modules() if isinstance(m, integration.Int8FusedValidConv3d)]
     if len(modules) != 8 or not all(m.fuse_norm for m in modules):
         raise RuntimeError('Expected eight SM120 norm-fused INT8 convolutions')
-    baseline = _clone_prefix(raw)
-    for module in baseline.modules():
-        if isinstance(module, integration.Int8FusedValidConv3d):
-            module.fuse_norm = False
-    prefixes = {
-        'baseline': torch.compile(baseline, options=ENCODER_COMPILE_OPTIONS, fullgraph=True, dynamic=False),
-        'candidate': runtime.prefix,
-    }
+    candidate_producer = producer.quantized_temporal_norm_pad
+    mode = 'candidate'
+    verify = False
+    checked = set()
+    if args.baseline_producer_file:
+        spec = importlib.util.spec_from_file_location('h3vae_baseline_producer', args.baseline_producer_file)
+        baseline_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(baseline_module)
+        old_producer = baseline_module.quantized_temporal_norm_pad
+        prefixes = {'baseline': runtime.prefix, 'candidate': runtime.prefix}
+
+        def dispatch(x, weight, bias, eps, *, pre_bias=None):
+            if mode == 'baseline':
+                return old_producer(x, weight, bias, eps, pre_bias=pre_bias)
+            q, scale = candidate_producer(x, weight, bias, eps, pre_bias=pre_bias)
+            key = (weight.data_ptr(), tuple(x.shape), pre_bias is not None)
+            if verify and key not in checked:
+                old_q, old_scale = old_producer(x, weight, bias, eps, pre_bias=pre_bias)
+                if not torch.equal(q, old_q) or not torch.equal(scale, old_scale):
+                    raise RuntimeError('Real-layer quantization changed')
+                checked.add(key)
+            return q, scale
+
+        producer.quantized_temporal_norm_pad = dispatch
+    else:
+        baseline = _clone_prefix(raw)
+        for module in baseline.modules():
+            if isinstance(module, integration.Int8FusedValidConv3d):
+                module.fuse_norm = False
+        prefixes = {
+            'baseline': torch.compile(baseline, options=ENCODER_COMPILE_OPTIONS, fullgraph=True, dynamic=False),
+            'candidate': runtime.prefix,
+        }
     hits = {'calls': 0, 'weights': set()}
     original = integration._conv3d_from_quantized
 
@@ -91,6 +120,7 @@ def main():
                            'decoder_tile': 256, 'tile_batch': 2, 'int8_decode': False},
         'sources': {str(p): base._sha256(p) for p in [
             Path('opt/encoder_int8.py'), Path('opt/encoder_int8_norm.py'),
+            Path('opt/encoder_int8_norm_recompute.py'),
             Path('opt/encoder_int8_pipeline.py'), Path('opt/encoder_int8_integration.py'),
             Path('opt/encoder_fused_temporal_norm.py'), Path('opt/encoder_fused_norm_bias.py'),
             Path('opt/encoder_fused_residual_pack.py'), Path('bench_encoder_int8_norm.py'),
@@ -100,6 +130,9 @@ def main():
                   'Peak allocated memory includes retained validation outputs, not isolated model VRAM.',
                   'Other GPU work was not stopped. Raw timing samples are retained.'],
     }
+    if args.baseline_producer_file:
+        report['baseline_producer_sha256'] = base._sha256(args.baseline_producer_file)
+        report['notes'][0] = 'Same compiled graph and immutable weights; only the opaque producer implementation changes.'
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -117,10 +150,12 @@ def main():
             item = {'sample': path.stem, 'shape': list(x.shape), 'stride': list(x.stride()), 'blocks': []}
             for mode in prefixes:
                 runtime.prefix = prefixes[mode]
+                verify = index == 0 and mode == 'candidate'
                 before = hits['calls']
                 latents[mode] = runtime.encode(x)
                 torch.cuda.synchronize()
                 item[mode + '_producer_calls'] = hits['calls'] - before
+            verify = False
             item['latent_error'] = base._tensor_error(latents['baseline'], latents['candidate'])
             item['latents_equal'] = torch.equal(latents['baseline'], latents['candidate'])
             if not item['latents_equal'] or item['candidate_producer_calls'] == 0:
@@ -167,6 +202,7 @@ def main():
                     del rgb0, rgb1
                 del y
             report['producer_weight_count'] = len(hits['weights'])
+            report['exact_producer_checks'] = len(checked)
             save()
             del latents, x
         if len(hits['weights']) != 8:
@@ -175,6 +211,7 @@ def main():
         save()
     finally:
         integration._conv3d_from_quantized = original
+        producer.quantized_temporal_norm_pad = candidate_producer
 
 
 if __name__ == '__main__':

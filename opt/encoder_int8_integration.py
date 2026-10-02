@@ -185,7 +185,7 @@ def int8_norm_conv3d(
     """GroupNorm/SiLU/padding/quantization and valid INT8 convolution.
 
     Preserve both FP16 rounding points while reusing the producer's absmax.
-    Scratch FP16 output is released before the convolution output allocation.
+    The two-pass producer avoids a full-sized FP16 activation scratch.
     """
     from opt.encoder_int8_norm import quantized_temporal_norm_pad
 

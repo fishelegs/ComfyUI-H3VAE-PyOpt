@@ -11,10 +11,10 @@
 | 模式 | 适合谁 | 已测结果（768×1344×124） |
 | --- | --- | --- |
 | **FP16 默认** | 优先使用经过验证的浮点路径 | 第一轮 encode 对照为 11.931 s；v0.2.0 decode 为 11.477 s（不同轮次，分开报告） |
-| **INT8 encoder（最新优化）** | 愿意接受 encoder 量化误差、希望降低 encode 延迟 | Encode **9.138 s**；norm/absmax 融合比上一轮流水线版本再低 **3.87%**。保留原 INT8 精度取舍，[测量与限制](docs/int8_norm_producer_2026-10-02.md) |
+| **INT8 encoder（最新优化）** | 愿意接受 encoder 量化误差、希望降低 encode 延迟 | Encode **8.684 s**；重算并直接写 INT8，比上一版再低 **4.99%**，峰值显存减少约 **37 MiB**。保留原 INT8 精度取舍，[测量与限制](docs/int8_norm_recompute_2026-10-02.md) |
 | **FP16 encode + INT8 decoder** | 优先减少 decoder 耗时，并检查自己的素材画质 | v0.2.0 decode **8.278 s**；最新融合配置 **6.667 s**（不同轮次与配置）；融合版源重建平均 PSNR 34.940 dB |
 
-数字来自 RTX PRO 5000 72GB 的预热后实测，性能与画质均受硬件、素材和配置影响。性能表包含尚未发布为 release 的开发结果。INT8 encode 需 `decode_fusions=false`；最新 decoder 融合需 `decode_fusions=true` 且 `int8_encode=false`，**9.138 s encode 与 6.667 s decode 不能组合为一个已测模式**。详见[性能与画质](#性能)。
+数字来自 RTX PRO 5000 72GB 的预热后实测，性能与画质均受硬件、素材和配置影响。性能表包含尚未发布为 release 的开发结果。INT8 encode 需 `decode_fusions=false`；最新 decoder 融合需 `decode_fusions=true` 且 `int8_encode=false`，**8.684 s encode 与 6.667 s decode 不能组合为一个已测模式**。详见[性能与画质](#性能)。
 
 ### 为什么选择 PyOpt？
 
@@ -29,7 +29,7 @@
 
 所有数字均来自 RTX PRO 5000 72GB，表示预热后的 **decode 耗时降低**，不代表整个视频生成流程的加速倍数。各行是独立实验，不能串联百分比；INT8 尚未与当前 ComfyUI / TensorRT 完成统一复测。
 
-**怎么选：**默认 FP16 作为浮点基线。关注 encode 延迟可试 `int8_encode=true`、`decode_fusions=false`：最新优化在 8 段、992 帧上与上一版 INT8 的 latent 逐位一致，并另对一段完整视频复查了重建 RGB 一致，但相对 FP16 的源重建 PSNR 仍低约 **0.623 dB**。关注 decode 延迟可保持 FP16 encoder，尝试 INT8 decoder 或下方融合配置。各模式的质量数据分别报告；本轮 encode 优化未降低完整路径峰值显存，也未测冷启动收益。[统一复测方案与待补证据](docs/benchmarks/unified-comparison.md)。
+**怎么选：**默认 FP16 作为浮点基线。关注 encode 延迟可试 `int8_encode=true`、`decode_fusions=false`：最新优化在 8 段、992 帧上与上一版 INT8 的 latent 逐位一致，并另对一段完整视频复查了重建 RGB 一致，但相对 FP16 的源重建 PSNR 仍低约 **0.623 dB**。关注 decode 延迟可保持 FP16 encoder，尝试 INT8 decoder 或下方融合配置。各模式的质量数据分别报告；最新 encode 对照的峰值 allocated 减少约 37 MiB；尚未测冷启动收益。[统一复测方案与待补证据](docs/benchmarks/unified-comparison.md)。
 
 **快速导航：**[安装与配置](#快速开始) · [性能与画质](#性能) · [节点用法](#comfyui-用法) · [复现基准](#直接测试) · [兼容性](docs/compatibility.md)
 
@@ -68,15 +68,15 @@ export H3_VAE_WEIGHTS_PATH=/path/to/minimax_h3_video_vae_fp16.safetensors
 
 ### Encode / decode 耗时图
 
-Encoder 图来自 **2026-10-02 最新 norm/absmax 融合同轮 A/B**，decoder 两图包含标注日期的历史参照及 **2026-09-24 融合配置**。横轴均从零开始，单位为秒、越低越好；不同日期、batch 和配置的行不能直接当作同轮加速率。
+Encoder 图来自 **2026-10-02 最新重算优化同轮 A/B**，decoder 两图包含标注日期的历史参照及 **2026-09-24 融合配置**。横轴均从零开始，单位为秒、越低越好；不同日期、batch 和配置的行不能直接当作同轮加速率。
 
-![INT8 norm/absmax 融合：完整编码从 9.506 秒降至 9.138 秒](docs/images/h3vae_int8_encode_norm_producer.svg)
+![INT8 重算并直接量化：完整编码从 9.140 秒降至 8.684 秒](docs/images/h3vae_int8_encode_norm_recompute.svg)
 
 ![FP16 decoder 历史参照及最新融合配置：融合版 batch8 为 10.923 秒](docs/images/h3vae_fp16_decode_comparison.svg)
 
 ![INT8 decoder 分轮次对比：v0.2.0 同轮 8.278 秒，最新融合配置 batch4 为 6.667 秒](docs/images/h3vae_int8_decode_comparison.svg)
 
-Encode 图含动态量化，2 次预热、各 6 次交错测量；8 段视频 latent 逐位一致，另查一段完整视频 RGB 一致。Decode 融合版为 144 个 INT8 Linear、batch4，保持 FP16 encoder；它与历史 72 个 Linear、batch2 的 8.278 s 配置不同。历史竞品未在本轮重测，不据此计算新的跨批次加速率。[最新 Encoder 证据](docs/int8_norm_producer_2026-10-02.md) · [Decode 融合证据](docs/decode_fusions.md) · [图表生成脚本](scripts/render_benchmark_charts.py)。
+Encode 图含动态量化，2 次预热、各 6 次交错测量；8 段视频 latent 逐位一致，另查一段完整视频 RGB 一致。Decode 融合版为 144 个 INT8 Linear、batch4，保持 FP16 encoder；它与历史 72 个 Linear、batch2 的 8.278 s 配置不同。历史竞品未在本轮重测，不据此计算新的跨批次加速率。[最新 Encoder 证据](docs/int8_norm_recompute_2026-10-02.md) · [Decode 融合证据](docs/decode_fusions.md) · [图表生成脚本](scripts/render_benchmark_charts.py)。
 
 ### 最新 decode：FP16 / INT8 / ComfyUI / TensorRT
 
@@ -141,7 +141,15 @@ Encode 图含动态量化，2 次预热、各 6 次交错测量；8 段视频 la
 
 ### INT8 encoder：最新性能与画质结论
 
-**最新 norm/absmax 融合（2026-10-02）：** 在原 norm/SiLU/padding 写出 FP16 数据时
+**最新重算优化（2026-10-02）：** 保持 norm/SiLU 的 FP16 舍入，第一遍只统计 absmax，
+第二遍重算并直接写 INT8，省掉完整 FP16 中间张量的读写。同进程各 6 次交错实测
+**9.140 → 8.684 s（−4.99%）**，峰值 allocated 减少 **37.37 MiB**。
+8 段视频 latent 及另查一段完整视频 RGB 逐位一致；只在 SM120 的 INT8 自动路径启用。
+[实现、原始计时与验证](docs/int8_norm_recompute_2026-10-02.md)。
+
+下面保留各轮独立 A/B，不将不同轮次的百分比串联。
+
+**上一轮 norm/absmax 融合（2026-10-02）：** 在原 norm/SiLU/padding 写出 FP16 数据时
 顺带计算 absmax，减少动态量化的一次大张量扫描。同轮完整 encode **9.506 → 9.138 s
 （−3.87%）**，各 6 次交错测量。峰值 allocated 仅增加 **0.60 MiB**；8 段视频 latent
 及另查的一段完整视频 RGB 逐位一致。只在 SM120 的 INT8 自动路径启用，默认仍为 FP16。

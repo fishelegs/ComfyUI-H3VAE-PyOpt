@@ -1,8 +1,9 @@
 """INT8 producer for the validated batch-one H3 encoder prefix.
 
 GroupNorm, FP16 rounding, SiLU and causal/reflect padding are unchanged.
-The pack kernel also reduces each output block's absmax; only these small
-FP32 partials are scanned to obtain the same per-tensor activation scale.
+Two normalization passes trade repeated arithmetic for less memory traffic:
+the first writes only partial absmax, the second writes INT8 directly.
+No full-sized normalized FP16 intermediate is allocated.
 CUDA/Triton imports remain lazy for CPU-only contract tests.
 """
 from __future__ import annotations
@@ -12,7 +13,7 @@ import torch
 from opt.encoder_int8 import _quantization_kernels
 
 
-def _norm_pack_with_maxima(x, weight, bias, eps, pre_bias=None):
+def _norm_statistics(x, weight, bias, eps, pre_bias=None):
     if x.ndim != 5 or x.device.type != "cuda":
         raise ValueError("INT8 norm producer requires a CUDA rank-5 input")
     b, c, d, h, w = x.shape
@@ -26,8 +27,8 @@ def _norm_pack_with_maxima(x, weight, bias, eps, pre_bias=None):
             raise ValueError("Expected contiguous FP16 channel vectors on input device")
 
     import triton
-    from encoder_fused_temporal_norm import _partial, _merge, _normalize_pack
-    from encoder_fused_norm_bias import _partial_bias, _normalize_pack_bias
+    from encoder_fused_temporal_norm import _partial, _merge
+    from encoder_fused_norm_bias import _partial_bias
 
     # Match the existing opaque norm's reduction order exactly.
     bs, bc, warps = 128, 64, 8
@@ -46,6 +47,18 @@ def _norm_pack_with_maxima(x, weight, bias, eps, pre_bias=None):
         p, q, stats, h, w, c, 32, nparts, bs, eps,
         triton.next_power_of_2(nparts), num_warps=4,
     )
+    return stats
+
+
+def _norm_pack_with_maxima(x, weight, bias, eps, pre_bias=None):
+    """Materialized reference producer retained for exact kernel validation."""
+    stats = _norm_statistics(x, weight, bias, eps, pre_bias)
+    import triton
+    from encoder_fused_temporal_norm import _normalize_pack
+    from encoder_fused_norm_bias import _normalize_pack_bias
+
+    b, c, d, h, w = x.shape
+    strides = (x.stride(2), x.stride(1), x.stride(3), x.stride(4))
     y = torch.empty(
         (b, c, d + 2, h + 2, w + 2), device=x.device,
         dtype=x.dtype, memory_format=torch.channels_last_3d,
@@ -62,22 +75,36 @@ def _norm_pack_with_maxima(x, weight, bias, eps, pre_bias=None):
 
 
 def quantized_temporal_norm_pad(x, weight, bias, eps, *, pre_bias=None):
-    """Return channels-last INT8 padded activations and their FP32 scale."""
-    y, maxima = _norm_pack_with_maxima(x, weight, bias, eps, pre_bias)
+    """Recompute rounded norm/SiLU values and write padded INT8 directly."""
+    stats = _norm_statistics(x, weight, bias, eps, pre_bias)
     import triton
-    reduce, scale, quantize = _quantization_kernels()
-    count = maxima.numel()
+    from opt.encoder_int8_norm_recompute import recompute_pack_kernel
+
+    b, c, d, h, w = x.shape
+    qy = torch.empty(
+        (b, c, d + 2, h + 2, w + 2), device=x.device,
+        dtype=torch.int8, memory_format=torch.channels_last_3d,
+    )
+    block = 4096
+    count = triton.cdiv(qy.numel(), block)
+    maxima = torch.empty((count,), device=x.device, dtype=torch.float32)
+    activation_scale = torch.empty((), device=x.device, dtype=torch.float32)
+    kernel = recompute_pack_kernel()
+    args = (
+        x, pre_bias if pre_bias is not None else bias, weight, bias, stats,
+        qy, maxima, activation_scale, c, d, h, w,
+        x.stride(2), x.stride(1), x.stride(3), x.stride(4), pre_bias is not None,
+    )
+    # Both passes preserve the original FP16 rounding points. Disable FMA
+    # contraction just as in the existing norm/pack implementation.
+    kernel[(count,)](*args, False, block, num_warps=4, enable_fp_fusion=False)
+    reduce, scale, _ = _quantization_kernels()
     nparts = triton.cdiv(count, 8192)
     partials = torch.empty((nparts,), device=x.device, dtype=torch.float32)
-    activation_scale = torch.empty((), device=x.device, dtype=torch.float32)
     reduce[(nparts,)](maxima, partials, count, GRID=nparts, BLOCK=8192, num_warps=4)
     scale[(1,)](
         partials, activation_scale, N=nparts,
         BLOCK=triton.next_power_of_2(nparts), num_warps=4,
     )
-    qy = torch.empty_like(y, dtype=torch.int8)
-    quantize[(triton.cdiv(y.numel(), 1024),)](
-        y, qy, activation_scale, y.numel(), BLOCK=1024, num_warps=4,
-    )
-    # Do not return/retain y: convolution needs only qy and activation_scale.
+    kernel[(count,)](*args, True, block, num_warps=4, enable_fp_fusion=False)
     return qy, activation_scale

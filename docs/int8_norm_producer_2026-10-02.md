@@ -10,6 +10,9 @@ Decoder 的四类真实 INT8 GEMM 已做调度、权重布局、分块和 cuBLAS
 未找到稳定收益，没有替换生产 decoder。不能将新的 encode 时间与融合 decoder
 时间相加：两者仍是不同的配置。
 
+后续在 `239d830` 上进一步去掉 FP16 中间写回，完整 encode 测得 **8.684 s**，
+详见[重算 producer 报告](int8_norm_recompute_2026-10-02.md)。本页保留上一轮独立实验。
+
 ## 测量合同
 
 沿用 ACA 0.3.1 的 Nsight Systems / Triton 优化方法：历史筛选、有限配置回放、
@@ -130,6 +133,8 @@ FlashAttention 占 17.6%，SwiGLU＋量化占 8.3%。因此本轮优先回放 GE
   不宣称整条视频生成流程的 S4 加速。
 
 ## 复现
+
+本页历史实验应在提交 `239d830` 上运行；最新重算实现的基线和命令见后续报告。
 
 ```bash
 python bench_encoder_int8_norm.py \

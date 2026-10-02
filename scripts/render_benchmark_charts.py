@@ -197,6 +197,26 @@ def main():
         preview_dir=args.preview_dir,
     )
 
+    recompute = json.loads((EVIDENCE / "int8_norm_recompute_2026-10-02.json").read_text())
+    paired = recompute["encode_timing"]["means_seconds"]
+    chart(
+        "h3vae_int8_encode_norm_recompute",
+        "INT8 encode: skip the FP16 activation scratch",
+        "2026-10-02 paired experiment  |  768 × 1344 × 124  |  Tile 256 / staged batch 4  |  6 runs per variant",
+        f"{recompute['encode_timing']['latency_reduction_percent']:.2f}% lower full-encode latency vs norm/absmax fusion baseline",
+        ["INT8: norm + absmax", "INT8: recompute + direct INT8"],
+        [paired["baseline"], paired["candidate"]],
+        [BLUE, TEAL],
+        [
+            "Same compiled graph, weights and input layout; ABBA / BAAB / ABBA; dynamic quantization included.",
+            "8 videos / 992 frames: bitwise-equal latents; one complete 124-frame video's RGB also rechecked exactly.",
+            f"Peak allocated memory is {recompute['encode_timing']['peak_saved_bytes'] / 2**20:.2f} MiB lower in this comparison.",
+            "Auto-enabled on SM120 only. Existing INT8 quality loss remains. Decoder implementation unchanged.",
+        ],
+        xmax=12,
+        preview_dir=args.preview_dir,
+    )
+
     rows = list(csv.DictReader((EVIDENCE / "decode_comparison_2026-09-24.csv").open()))
     csv_values = {r["Implementation"]: float(r["Decode_seconds"]) for r in rows}
     fusion = json.loads((EVIDENCE / "decode_fusions_2026-09-24.json").read_text())

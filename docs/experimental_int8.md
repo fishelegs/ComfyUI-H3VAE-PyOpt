@@ -38,6 +38,17 @@ been measured; CPU/ROCm are rejected and Windows is unvalidated. Unsupported
 configurations fail explicitly without silently labeling an FP16 fallback
 as INT8. `fast_linear` and `int8_decode` are mutually exclusive.
 
+## Recompute producer follow-up (unreleased, 2026-10-02)
+
+The latest SM120 producer preserves norm statistics and FP16 rounding but
+avoids materializing a full normalized FP16 tensor. The first pass computes
+only absmax; the second recomputes norm/SiLU/padding and writes INT8 directly.
+Against commit `239d830`, a same-graph paired full-video comparison measured
+**9.139973 → 8.683874 s (−4.99%)**, with peak allocated memory **37.37 MiB lower**.
+This is a separate experiment from the historical FP16 comparison. Original
+INT8 quality loss remains; decoder is unchanged. See
+[implementation and validation](int8_norm_recompute_2026-10-02.md).
+
 ## Norm/absmax producer follow-up (unreleased, 2026-10-02)
 
 On SM120, the INT8 encoder now computes partial activation absmax while
