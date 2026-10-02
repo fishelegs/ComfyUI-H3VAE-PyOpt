@@ -19,10 +19,12 @@ def _normalize_pack_batched(X, PreBias, Weight, Bias, S, Y,
                             HAS_BIAS:tl.constexpr,BLOCK:tl.constexpr):
     idx=tl.program_id(0)*BLOCK+tl.arange(0,BLOCK)
     total:tl.constexpr=B*C*(D+2)*(H+2)*(W+2)
-    c=idx%C;q=idx//C
+    c=idx%C
+    q=idx//C
     n=q//((D+2)*(H+2)*(W+2))
     t=q//((H+2)*(W+2))%(D+2)-2
-    h=q//(W+2)%(H+2)-1;w=q%(W+2)-1
+    h=q//(W+2)%(H+2)-1
+    w=q%(W+2)-1
     h=tl.where(h<0,-h,tl.where(h>=H,2*H-2-h,h))
     w=tl.where(w<0,-w,tl.where(w>=W,2*W-2-w,w))
     valid=(idx<total)&(t>=0)&(t<D)
@@ -34,7 +36,8 @@ def _normalize_pack_batched(X, PreBias, Weight, Bias, S, Y,
     stat=(frame*32+c//(C//32))*2
     mean=tl.load(S+stat,valid,other=0)
     rstd=tl.load(S+stat+1,valid,other=0)
-    gamma=tl.load(Weight+c).to(tl.float32);beta=tl.load(Bias+c).to(tl.float32)
+    gamma=tl.load(Weight+c).to(tl.float32)
+    beta=tl.load(Bias+c).to(tl.float32)
     z=(((v-mean)*rstd)*gamma+beta).to(tl.float16).to(tl.float32)
     z=(z/(1.+tl.exp(-z))).to(tl.float16)
     tl.store(Y+idx,tl.where(valid,z,0.),idx<total)

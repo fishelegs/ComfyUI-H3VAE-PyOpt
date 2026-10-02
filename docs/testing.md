@@ -11,6 +11,7 @@ It checks:
 
 - Python source compilation with `compileall`
 - critical Ruff failures: `E9`, `F63`, `F7`, and `F82`
+- Registry security syntax check for `E702` in `opt/`
 - CPU-only regression tests under `tests/`
 
 The CI job intentionally does **not** download MiniMax H3 model code or model

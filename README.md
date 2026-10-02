@@ -1,22 +1,79 @@
 # ComfyUI-H3VAE-PyOpt
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt/actions/workflows/ci.yml/badge.svg)](https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/fishelegs/ComfyUI-H3VAE-PyOpt)](https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-MiniMax H3 视频 VAE 的 PyTorch 加速实现与 ComfyUI 插件。默认使用经过验证的 **FP16 浮点路径**运行完整 VAE encode/decode；如果愿意用很小的画质差异换取更低延迟，可单独开启实验性的 **INT8 decoder**。两种模式都不需要 TensorRT 或预生成 engine。
+**MiniMax H3 视频 VAE 的 ComfyUI 替换式 Loader。**沿用原生 `VAE Encode` / `VAE Decode` 节点，使用经过验证的 FP16 PyTorch/Triton 路径；可独立开启实验性 INT8 decoder。日常运行不需要 TensorRT engine。
 
-- **默认 FP16，保持浮点基线**：`int8_encode=false`、`int8_decode=false`，不引入 INT8 量化误差，适合作为日常推荐配置。
-- **可选 decode 融合**：FP16 保持浮点计算；INT8 混合精度进一步降低延迟。768×1344×124 的最新 decode 实测分别为 **10.923 s / 6.667 s**，无需构建 engine。
-- **即插即用**：只替换 VAE Loader，继续使用 ComfyUI 原生 `VAE Encode` / `VAE Decode` 节点。
-- **比 ComfyUI 原生 VAE 更快**：相对 [ComfyUI 优化提交 `b2e31e8`](https://github.com/Comfy-Org/ComfyUI/commit/b2e31e89412a01a67be599571cc57ff74b242a82) 默认配置，672×672×124 的 encode+decode 耗时低 **40.75%**；768×1344×124 在相同 encoder tile 下低 **17.40%**。
-- **无需 TensorRT，也可超过同规格 TRT**：768×1344×124、encoder/decoder tile 均为 `256` 时，默认 FP16 runtime 为 **23.420 s**，相同权重在本机重新构建的 TRT 静态 engine 为 **26.237 s**，合计快 **10.74%**。
+*An optimized PyTorch/Triton VAE loader for MiniMax H3 in ComfyUI. The FP16 path is the default; INT8 decode is opt-in.*
+
+| 模式 | 适合谁 | 已测结果 |
+| --- | --- | --- |
+| **FP16 默认** | 优先使用经过验证的浮点路径 | 768×1344×124 的 decode 为 11.477 s |
+| **FP16 + INT8 decoder** | 愿意在自己的素材上检查画质、以换取更低延迟 | 同轮 decode 为 8.278 s（耗时 −27.9%）；内部 8 段视频的平均源重建 PSNR 为 34.963 dB，FP16 为 35.110 dB |
+
+数字来自 RTX PRO 5000 72GB 的预热后实测，仅适用于所述环境与设置；详细口径和质量边界见[性能与画质](#性能)。INT8 encoder 也可独立试验，但当前实测更慢，不作为加速建议。
+
+### 为什么选择 PyOpt？
+
+**已测优势：默认 FP16 的 decode 延迟低于历史 ComfyUI / TensorRT 对照；可选 INT8 decoder 在同轮测试中进一步降低 27.9%。** 同时沿用 ComfyUI 原有 VAE 节点，日常运行无需构建和分发 TensorRT engine。
+
+| Decode 对比（768×1344×124） | 参照 → PyOpt | 耗时降低 | 证据范围 |
+| --- | ---: | ---: | --- |
+| ComfyUI 默认 → PyOpt FP16 | 15.021 → 11.443 s | **23.8%** | [2026-09-18 历史对照](docs/h3_latest_fast_ab_2026-09-18.md)，ComfyUI `387f98a`；PyOpt 为上一轮同口径结果 |
+| ComfyUI `--fast fp16_accumulation` → PyOpt FP16 | 12.440 → 11.443 s | **8.0%** | 同上，各自独立进程测量 |
+| TensorRT → PyOpt FP16 | 11.966 → 11.437 s | **4.4%** | [2026-09-18 同 tile 对照](docs/h3_trt_256_same_tile_benchmark_2026-09-18.md)，双方 tile 256；软件栈不同 |
+| PyOpt FP16 → PyOpt INT8 decoder | 11.477 → 8.278 s | **27.9%** | [2026-09-22 同轮 A/B](docs/experimental_int8.md)，只开启 INT8 decode |
+
+所有数字均来自 RTX PRO 5000 72GB，表示预热后的 **decode 耗时降低**，不代表整个视频生成流程的加速倍数。各行是独立实验，不能串联百分比；INT8 尚未与当前 ComfyUI / TensorRT 完成统一复测。
+
+**怎么选：**优先稳定使用默认 FP16；追求更低 decode 延迟可试 INT8 decoder，并检查自己的真实视频。内部 992 帧测试的源重建平均 PSNR 从 35.110 降至 34.963 dB；尚无独立单模型峰值显存与冷启动对照，暂不宣称省显存或首次运行更快。[统一复测方案与待补证据](docs/benchmarks/unified-comparison.md)。
+
+**快速导航：**[安装与配置](#快速开始) · [性能与画质](#性能) · [节点用法](#comfyui-用法) · [复现基准](#直接测试) · [兼容性](docs/compatibility.md)
+
+本地尚未发布的 `decode_fusions=true` 配置及测量见下文最新 decode 表和[融合说明](docs/decode_fusions.md)。
 
 > [!IMPORTANT]
 > 当前经过验证并用于下列公开 benchmark 的浮点基线是 **FP16，不是 BF16**。这里的“浮点基线”表示没有额外的 INT8 量化；VAE encode→decode 本身是有损过程，因此本项目不使用“数学无损”表述。BF16 尚未接入和验证，不能将现有 FP16 数据标记为 BF16。
 
+## 快速开始
+
+需要 NVIDIA CUDA GPU、兼容的 PyTorch 与 Triton，以及与权重匹配的 MiniMax H3 `FL2VA/video_vae` 模型代码。本仓库不包含模型代码、权重或 TRT engine；模型使用须遵守 [MiniMax H3 Community License](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE)。
+
+在启动 ComfyUI 所用的 Python 环境中安装：
+
+```bash
+cd /path/to/ComfyUI/custom_nodes
+git clone https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt.git
+cd /path/to/ComfyUI
+python -m pip install -r custom_nodes/ComfyUI-H3VAE-PyOpt/requirements.txt
+```
+
+优先沿用 ComfyUI 已安装、与本机 CUDA 匹配的 PyTorch。设置模型路径后重启 ComfyUI：
+
+```bash
+export H3_VAE_MODEL_CODE_DIR=/path/to/MiniMax-H3/FL2VA/video_vae
+export H3_VAE_WEIGHTS_PATH=/path/to/minimax_h3_video_vae_fp16.safetensors
+```
+
+权重也可放入 `ComfyUI/models/vae` 并在节点中选择；模型代码目录仍需设置。重启 ComfyUI 后，搜索 **MiniMax H3 VAE Load (PyTorch Optimized)**，将其 `VAE` 输出连接到原有的 `VAE Encode` / `VAE Decode`。首次使用建议保持 `dtype=fp16`、`int8_encode=false`、`int8_decode=false`。更多选项见[节点用法](#comfyui-用法)。
+
+当前性能测试在 Linux 完成；Windows 需要匹配其 Python/PyTorch/CUDA 组合的 Triton，尚无本项目的实测兼容性结论。SDPA 默认 `auto`；强制指定后端可能失去自动回退。详见[兼容性与 SDPA 说明](docs/compatibility.md#sdpa-backend-fallback)。
+
 ## 性能
 
 以下结果均在 **NVIDIA RTX PRO 5000 72GB** 上测得。性能数字均为预热后的稳态时间，不含加载、首次编译和 engine 初始化。
+
+### Decode 耗时图
+
+下图仅比较 decoder 的稳态耗时，均按从慢到快排列。第一张是此前的 FP16 参照，包括 ComfyUI 和 TensorRT 的独立基准；第二张显示 v0.2.0 的 FP16 与仅启用 INT8 decoder 的同轮 A/B，并列出 v0.1.0 时期的 FP16 历史参照。BF16 尚未验证，因此不将 FP16 数据标为 BF16。
+
+![FP16 decoder 耗时历史对比](docs/images/h3vae_fp16_decode_comparison.svg)
+
+![v0.2.0 INT8 decoder 耗时对比](docs/images/h3vae_int8_decode_comparison.svg)
+
+v0.2.0 同轮测试的 decoder 耗时由 **11.477 s 降至 8.278 s（−27.9%）**。历史竞品和 v0.1.0 时期数字并未在本轮 INT8 实验中重测，不据此计算跨批次加速比。测试条件与画质结果见 [INT8 实验](docs/experimental_int8.md)、[ComfyUI 对照](docs/h3_latest_fast_ab_2026-09-18.md)和 [TensorRT 同 tile 对照](docs/h3_trt_256_same_tile_benchmark_2026-09-18.md)。
 
 ### 最新 decode：FP16 / INT8 / ComfyUI / TensorRT
 
@@ -132,28 +189,6 @@ RTX PRO 5000 72GB，768×1344×124，encoder/decoder tile 均为 `256`，staged 
 
 同 tile 的 768×1344×124 默认上游 PyTorch decode 为 **19.643 s**，空间分块优化实现为 **13.647 s**，耗时低 **30.5%**。[同 tile A/B 详情](docs/h3_same_tile_ab_benchmark_2026-09-16.md) · [默认 PyTorch 基线](docs/h3_default_pytorch_vae_decode_2026-09-16.md)。两组表采用不同的 PyTorch 环境和调用路径，不应把绝对时延混合比较。测试时 GPU 有其他负载；换机器或修改 tile 后请重新测试并检查输出质量。
 
-## 安装
-
-需要 NVIDIA CUDA GPU、兼容的 PyTorch 与 Triton，以及与权重匹配的 MiniMax H3 `FL2VA/video_vae` 模型代码。本仓库不包含模型代码、权重或 TRT engine；模型使用须遵守 [MiniMax H3 Community License](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE)。
-
-在启动 ComfyUI 所用的 Python 环境中安装：
-
-```bash
-cd /path/to/ComfyUI/custom_nodes
-git clone https://github.com/fishelegs/ComfyUI-H3VAE-PyOpt.git
-cd /path/to/ComfyUI
-python -m pip install -r custom_nodes/ComfyUI-H3VAE-PyOpt/requirements.txt
-```
-
-优先沿用 ComfyUI 已安装、与本机 CUDA 匹配的 PyTorch。设置模型路径后重启 ComfyUI：
-
-```bash
-export H3_VAE_MODEL_CODE_DIR=/path/to/MiniMax-H3/FL2VA/video_vae
-export H3_VAE_WEIGHTS_PATH=/path/to/minimax_h3_video_vae_fp16.safetensors
-```
-
-权重也可放入 `ComfyUI/models/vae`，在节点中选择；模型代码目录仍需设置。当前性能测试在 Linux 完成；Windows 需要为其 Python/PyTorch/CUDA 组合安装兼容的 Triton。Decoder 的 SDPA 后端默认设为 `auto`：PyTorch 会按当前 GPU、dtype 和输入 shape 选择可用实现，在 Flash Attention 不可用时回退，避免 `No available kernel`。如需固定后端做可复现基准，可在启动 ComfyUI 前显式设置 `MINIMAX_H3_TORCH_SDPA_BACKEND=flash`；强制 `flash` 的环境或输入不受支持时仍会报错。
-
 ## ComfyUI 用法
 
 添加 **MiniMax H3 VAE Load (PyTorch Optimized)** 节点（`H3VAEPyOptLoader`），把 `VAE` 输出连接到现有的 `VAE Encode`、`VAE Decode` 或 MiniMax H3 workflow。推荐先使用 `dtype=fp16`、`int8_encode=false`、`int8_decode=false`、decoder tile `256`、tile batch `2`、encoder staged batch `4`。Encoder tile 默认自动选择（672×672 用 `672`，768×1344 用 `256`），也可显式设置。`tile_batch=0` 可按空闲显存选择 1 或 2。需要排除首次编译开销时将 `warmup` 设为 `decode` 或 `both`。
@@ -191,6 +226,8 @@ curl -sS -X POST http://127.0.0.1:8188/prompt \
 最小 API workflow：[FP16 融合版](examples/minimal_h3vae_pyopt_fp16_fused_prompt.json) / [INT8 融合版](examples/minimal_h3vae_pyopt_int8_fused_prompt.json)。替换模型路径后，按上面的 `/prompt` 方法提交；这些全零 latent 示例只演示连接，不用于画质评估。
 
 ## 直接测试
+
+计划对当前 ComfyUI 默认 / `--fast`、TensorRT、PyOpt FP16 / INT8 decoder 做同条件复测时，请使用[统一复测方案](docs/benchmarks/unified-comparison.md)。该方案明确区分现有可运行脚本和仍需补齐的统一采集能力；未完成的测量不会计入上方成绩。
 
 仅测试最新 FP16 融合配置（encoder 仍为原 FP16 路径）：
 

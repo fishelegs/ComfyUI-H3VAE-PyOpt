@@ -13,7 +13,9 @@ import triton.language as tl
 def _partial(X,P,Q,C:tl.constexpr,H:tl.constexpr,W:tl.constexpr,
              SD:tl.constexpr,SC:tl.constexpr,SH:tl.constexpr,SW:tl.constexpr,
              G:tl.constexpr,NP:tl.constexpr,BS:tl.constexpr,BC:tl.constexpr):
-    part=tl.program_id(0);cb=tl.program_id(1);t=tl.program_id(2)
+    part=tl.program_id(0)
+    cb=tl.program_id(1)
+    t=tl.program_id(2)
     s=part*BS+tl.arange(0,BS)
     c=cb*BC+tl.arange(0,BC)
     cg:tl.constexpr=C//G
@@ -29,12 +31,14 @@ def _partial(X,P,Q,C:tl.constexpr,H:tl.constexpr,W:tl.constexpr,
     m2=tl.sum(tl.sum(tl.where(mask,centered*centered,0.),2),0)
     g=cb*bg+tl.arange(0,bg)
     dest=(t*NP+part)*G+g
-    tl.store(P+dest,avg,g<G);tl.store(Q+dest,m2,g<G)
+    tl.store(P+dest,avg,g<G)
+    tl.store(Q+dest,m2,g<G)
 
 @triton.jit
 def _merge(P,Q,S,H:tl.constexpr,W:tl.constexpr,C:tl.constexpr,G:tl.constexpr,
            NP:tl.constexpr,BS:tl.constexpr,EPS:tl.constexpr,BP:tl.constexpr):
-    g=tl.program_id(0);t=tl.program_id(1)
+    g=tl.program_id(0)
+    t=tl.program_id(1)
     p=tl.arange(0,BP)
     count=tl.minimum(BS,tl.maximum(0,H*W-p*BS))*(C//G)
     avg=tl.load(P+(t*NP+p)*G+g,p<NP,other=0)
@@ -52,9 +56,11 @@ def _normalize_pack(X,Weight,Bias,S,Y,C:tl.constexpr,D:tl.constexpr,H:tl.constex
                     G:tl.constexpr,BLOCK:tl.constexpr):
     idx=tl.program_id(0)*BLOCK+tl.arange(0,BLOCK)
     total:tl.constexpr=C*(D+2)*(H+2)*(W+2)
-    c=idx%C;q=idx//C
+    c=idx%C
+    q=idx//C
     t=q//((H+2)*(W+2))-2
-    h=q//(W+2)%(H+2)-1;w=q%(W+2)-1
+    h=q//(W+2)%(H+2)-1
+    w=q%(W+2)-1
     h=tl.where(h<0,-h,tl.where(h>=H,2*H-2-h,h))
     w=tl.where(w<0,-w,tl.where(w>=W,2*W-2-w,w))
     valid=(idx<total)&(t>=0)&(t<D)
@@ -62,7 +68,8 @@ def _normalize_pack(X,Weight,Bias,S,Y,C:tl.constexpr,D:tl.constexpr,H:tl.constex
     stat=(t*G+c//(C//G))*2
     mean=tl.load(S+stat,valid,other=0)
     rstd=tl.load(S+stat+1,valid,other=0)
-    gamma=tl.load(Weight+c).to(tl.float32);beta=tl.load(Bias+c).to(tl.float32)
+    gamma=tl.load(Weight+c).to(tl.float32)
+    beta=tl.load(Bias+c).to(tl.float32)
     z=(((v-mean)*rstd)*gamma+beta).to(tl.float16).to(tl.float32)
     z=(z/(1.+tl.exp(-z))).to(tl.float16)
     tl.store(Y+idx,tl.where(valid,z,0.),idx<total)
@@ -92,9 +99,14 @@ class FusedNormPadConv(torch.nn.Module):
             raise ValueError('Expected temporal-isolated GroupNorm with 32 groups')
         if conv.padding!=(1,1,1) or conv.kernel_size!=(3,3,3) or not conv.causal or conv.pad_mode!='reflect' or conv.pad_mode_t!='constant' or conv.spatial_parallel:
             raise ValueError('Expected single-GPU causal 3x3x3 reflect-padded conv')
-        self.norm_weight=norm.weight;self.norm_bias=norm.bias;self.eps=norm.eps
-        self.weight=conv.weight;self.bias=conv.bias;self.stride=conv.stride
-        self.config=config;self.with_conv=with_conv
+        self.norm_weight=norm.weight
+        self.norm_bias=norm.bias
+        self.eps=norm.eps
+        self.weight=conv.weight
+        self.bias=conv.bias
+        self.stride=conv.stride
+        self.config=config
+        self.with_conv=with_conv
     def forward(self,x):
         y=fused_temporal_norm_pad(x,self.norm_weight,self.norm_bias,self.eps,self.config)
         return F.conv3d(y,self.weight,self.bias,stride=self.stride) if self.with_conv else y

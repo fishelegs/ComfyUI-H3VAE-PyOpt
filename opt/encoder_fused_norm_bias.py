@@ -15,7 +15,9 @@ from encoder_fused_norm_opaque import OpaqueFusedNormPadConv
 def _partial_bias(X, PreBias, P, Q, C: tl.constexpr, H: tl.constexpr, W: tl.constexpr,
                   SD: tl.constexpr, SC: tl.constexpr, SH: tl.constexpr, SW: tl.constexpr,
                   G: tl.constexpr, NP: tl.constexpr, BS: tl.constexpr, BC: tl.constexpr):
-    part = tl.program_id(0); cb = tl.program_id(1); t = tl.program_id(2)
+    part = tl.program_id(0)
+    cb = tl.program_id(1)
+    t = tl.program_id(2)
     s = part * BS + tl.arange(0, BS)
     c = cb * BC + tl.arange(0, BC)
     cg: tl.constexpr = C // G
@@ -33,7 +35,8 @@ def _partial_bias(X, PreBias, P, Q, C: tl.constexpr, H: tl.constexpr, W: tl.cons
     m2 = tl.sum(tl.sum(tl.where(mask, centered*centered, 0.), 2), 0)
     g = cb*bg + tl.arange(0, bg)
     dest = (t*NP + part)*G + g
-    tl.store(P + dest, avg, g < G); tl.store(Q + dest, m2, g < G)
+    tl.store(P + dest, avg, g < G)
+    tl.store(Q + dest, m2, g < G)
 
 
 @triton.jit
@@ -43,9 +46,11 @@ def _normalize_pack_bias(X, PreBias, Weight, Bias, S, Y,
                          G: tl.constexpr, BLOCK: tl.constexpr):
     idx = tl.program_id(0)*BLOCK + tl.arange(0, BLOCK)
     total: tl.constexpr = C*(D+2)*(H+2)*(W+2)
-    c = idx % C; q = idx // C
+    c = idx % C
+    q = idx // C
     t = q // ((H+2)*(W+2)) - 2
-    h = q // (W+2) % (H+2) - 1; w = q % (W+2) - 1
+    h = q // (W+2) % (H+2) - 1
+    w = q % (W+2) - 1
     h = tl.where(h < 0, -h, tl.where(h >= H, 2*H-2-h, h))
     w = tl.where(w < 0, -w, tl.where(w >= W, 2*W-2-w, w))
     valid = (idx < total) & (t >= 0) & (t < D)
@@ -55,7 +60,8 @@ def _normalize_pack_bias(X, PreBias, Weight, Bias, S, Y,
     stat = (t*G + c//(C//G))*2
     mean = tl.load(S+stat, valid, other=0)
     rstd = tl.load(S+stat+1, valid, other=0)
-    gamma = tl.load(Weight+c).to(tl.float32); beta = tl.load(Bias+c).to(tl.float32)
+    gamma = tl.load(Weight+c).to(tl.float32)
+    beta = tl.load(Bias+c).to(tl.float32)
     z = (((v-mean)*rstd)*gamma+beta).to(tl.float16).to(tl.float32)
     z = (z/(1.+tl.exp(-z))).to(tl.float16)
     tl.store(Y+idx, tl.where(valid, z, 0.), idx < total)
