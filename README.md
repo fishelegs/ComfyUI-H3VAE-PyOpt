@@ -15,6 +15,21 @@
 
 数字来自 RTX PRO 5000 72GB 的预热后实测，仅适用于所述环境与设置；详细口径和质量边界见[性能与画质](#性能)。INT8 encoder 也可独立试验，但当前实测更慢，不作为加速建议。
 
+### 为什么选择 PyOpt？
+
+**已测优势：默认 FP16 的 decode 延迟低于历史 ComfyUI / TensorRT 对照；可选 INT8 decoder 在同轮测试中进一步降低 27.9%。** 同时沿用 ComfyUI 原有 VAE 节点，日常运行无需构建和分发 TensorRT engine。
+
+| Decode 对比（768×1344×124） | 参照 → PyOpt | 耗时降低 | 证据范围 |
+| --- | ---: | ---: | --- |
+| ComfyUI 默认 → PyOpt FP16 | 15.021 → 11.443 s | **23.8%** | [2026-09-18 历史对照](docs/h3_latest_fast_ab_2026-09-18.md)，ComfyUI `387f98a`；PyOpt 为上一轮同口径结果 |
+| ComfyUI `--fast fp16_accumulation` → PyOpt FP16 | 12.440 → 11.443 s | **8.0%** | 同上，各自独立进程测量 |
+| TensorRT → PyOpt FP16 | 11.966 → 11.437 s | **4.4%** | [2026-09-18 同 tile 对照](docs/h3_trt_256_same_tile_benchmark_2026-09-18.md)，双方 tile 256；软件栈不同 |
+| PyOpt FP16 → PyOpt INT8 decoder | 11.477 → 8.278 s | **27.9%** | [2026-09-22 同轮 A/B](docs/experimental_int8.md)，只开启 INT8 decode |
+
+所有数字均来自 RTX PRO 5000 72GB，表示预热后的 **decode 耗时降低**，不代表整个视频生成流程的加速倍数。各行是独立实验，不能串联百分比；INT8 尚未与当前 ComfyUI / TensorRT 完成统一复测。
+
+**怎么选：**优先稳定使用默认 FP16；追求更低 decode 延迟可试 INT8 decoder，并检查自己的真实视频。内部 992 帧测试的源重建平均 PSNR 从 35.110 降至 34.963 dB；尚无独立单模型峰值显存与冷启动对照，暂不宣称省显存或首次运行更快。[统一复测方案与待补证据](docs/benchmarks/unified-comparison.md)。
+
 **快速导航：**[安装与配置](#快速开始) · [性能与画质](#性能) · [节点用法](#comfyui-用法) · [复现基准](#直接测试) · [兼容性](docs/compatibility.md)
 
 > [!IMPORTANT]
@@ -165,6 +180,8 @@ curl -sS -X POST http://127.0.0.1:8188/prompt \
 示例使用全零 latent，只验证节点连接与 decode，不代表生成画质。
 
 ## 直接测试
+
+计划对当前 ComfyUI 默认 / `--fast`、TensorRT、PyOpt FP16 / INT8 decoder 做同条件复测时，请使用[统一复测方案](docs/benchmarks/unified-comparison.md)。该方案明确区分现有可运行脚本和仍需补齐的统一采集能力；未完成的测量不会计入上方成绩。
 
 用当前插件 runtime 测试 672×672×124，无需 TensorRT：
 
