@@ -43,8 +43,9 @@ For `encoder_int8.py` and `encoder_int8_integration.py`:
 - Maintain accumulator-bound validation when changing reduction dimensions.
 - Preserve the existing padding/layout contract; input layout differences can
   produce materially different outputs.
-- Current evidence shows INT8 encode is slower than FP16. Do not optimize the
-  product defaults around `int8_encode` without new end-to-end evidence.
+- Historical v0.2.0 INT8 encode was slower than FP16. The 2026-10-02 optimized
+  path has SM120 end-to-end evidence; see the encoder optimization report.
+  Keep default precision unchanged and require new evidence for other targets.
 
 ## INT8 decoder contract
 

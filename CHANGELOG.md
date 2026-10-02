@@ -7,6 +7,18 @@ Versioning for release tags.
 
 ## Unreleased
 
+### Changed
+
+- Optimize the existing opt-in INT8 encoder with a larger output-channel tile
+  and bounded absmax/contiguous quantization, without changing the eight-layer
+  quantization scope, scales, rounding, padding, or default precision.
+- Same-session SM120 full-video encode timing: previous INT8 12.545 s →
+  optimized INT8 10.121 s (−19.32%); FP16 control 11.931 s. See
+  `docs/encoder_int8_optimization_2026-10-02.md` for quality and scope.
+- Eight-video/992-frame validation preserves previous INT8 latents and decoded
+  RGB exactly on the tested inputs; GPU edge cases and Comfy offload/reload
+  checks pass. Existing INT8 versus FP16 quality loss remains.
+
 ### Added
 
 - Opt-in `decode_fusions` on the existing Loader and runtime, preserving all

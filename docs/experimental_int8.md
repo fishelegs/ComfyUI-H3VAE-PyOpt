@@ -38,7 +38,28 @@ been measured; CPU/ROCm are rejected and Windows is unvalidated. Unsupported
 configurations fail explicitly without silently labeling an FP16 fallback
 as INT8. `fast_linear` and `int8_decode` are mutually exclusive.
 
-## Performance: four-way comparison
+## Updated encoder implementation (unreleased, 2026-10-02)
+
+The encoder now uses a 128×128×64 convolution tile for both prefix widths
+and a bounded two-stage absmax reduction plus contiguous quantization,
+avoiding the full-sized FP16 abs intermediate. Quantized layers, FP32 scales,
+rounding, padding, and defaults are unchanged.
+
+On the measured SM120 host, a same-session five-run full-video comparison
+(768×1344×124, tile256/staged4) measured FP16 **11.931490 s**, previous INT8
+**12.545198 s**, and optimized INT8 **10.121342 s**: encode latency falls
+**19.32% versus previous INT8** and **15.17% versus FP16**. These are encoder
+timings, not total pipeline speedups; the existing INT8 precision trade-off
+remains. Across eight freshly checked videos (992 frames), optimized and
+previous INT8 latents and reconstructed RGB were exactly equal. Comfy wrapper
+and CPU-offload/CUDA-reload checks also passed. See
+[implementation and validation](encoder_int8_optimization_2026-10-02.md).
+
+The following v0.2.0 measurements are historical and use the earlier encoder.
+Do not combine their decoder times with the new encoder to claim a measured
+combined pipeline latency.
+
+## Historical v0.2.0 performance: four-way comparison
 
 Measured on **NVIDIA RTX PRO 5000 72GB**, Linux, Python 3.12.14,
 PyTorch 2.11.0+cu130, CUDA 13.0, Triton 3.6.0, comfy-kitchen 0.2.34.
@@ -70,8 +91,8 @@ excluded.
 
 The sum adds separately measured means; it is **not** a timed complete
 video-generation pipeline. Decoder-only reduces decode latency by **27.87%**.
-The INT8 encoder is **4.95% slower**, despite real integer execution.
-It is included for experimentation, not recommended as an encode speedup.
+The original v0.2.0 INT8 encoder was **4.95% slower**, despite real integer execution.
+That historical implementation was not recommended as an encode speedup.
 For the best measured speed/quality trade-off, enable only `int8_decode`.
 
 Raw CUDA Event samples (seconds):

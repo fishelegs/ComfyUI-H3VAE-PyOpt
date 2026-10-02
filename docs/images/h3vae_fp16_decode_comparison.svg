@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1008pt" height="576pt" viewBox="0 0 1008 576" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg role="img" aria-labelledby="chart-title chart-description" xmlns:xlink="http://www.w3.org/1999/xlink" width="1008pt" height="576pt" viewBox="0 0 1008 576" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <title id="chart-title">FP16 decode: historical references + fusion profile</title>
+ <desc id="chart-description">768 × 1344 × 124  |  Decoder tile 256  |  Independent experiments; dates and configurations differ. Latest opt-in FP16 fusion: 10.923 s  ·  decode_fusions=true / batch 8. ComfyUI default · Sep 18: 15.021000 seconds; ComfyUI --fast · Sep 18: 12.440000 seconds; TensorRT rebuilt · Sep 18: 11.966000 seconds; PyOpt v0.2.0 · Sep 22: 11.477000 seconds; PyOpt FP16 fusion · Sep 24: 10.923379 seconds. ComfyUI --fast uses FP16 accumulation; TensorRT uses a different software stack. Latest fusion: 2 warmups / 5 runs. Historical controls were not remeasured in that experiment. FP16 fusion source PSNR: 35.110 dB across 992 frames. FP16 encoder retained. No cross-experiment speedup ratio or combined encode/decode claim. BF16 is not validated.</desc>
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-09-29T18:30:55.064589</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.10.8, https://matplotlib.org/</dc:title>
+      <dc:title>ComfyUI-H3VAE-PyOpt benchmark charts</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -21,162 +22,242 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 576 
-L 1008 576 
-L 1008 0 
-L 0 0 
+   <path d="M 0 576
+L 1008 576
+L 1008 0
+L 0 0
 z
 " style="fill: #f4f7fb"/>
   </g>
   <g id="axes_1">
    <g id="patch_2">
-    <path d="M 282.24 391.68 
-L 927.36 391.68 
-L 927.36 149.76 
-L 282.24 149.76 
+    <path d="M 317.52 408.96
+L 927.36 408.96
+L 927.36 144
+L 317.52 144
 z
-" style="fill: #ffffff"/>
+" style="fill: #f4f7fb"/>
    </g>
    <g id="matplotlib.axis_1">
     <g id="xtick_1">
      <g id="line2d_1">
-      <path d="M 282.24 391.68 
-L 282.24 149.76 
-" clip-path="url(#pfc99c0fbfd)" style="fill: none; stroke: #e4ecf2; stroke-linecap: square"/>
+      <path d="M 317.52 408.96
+L 317.52 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_2"/>
      <g id="text_1">
-      <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #708394" x="282.24" y="412.038281" transform="rotate(-0 282.24 412.038281)">0</text>
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="317.52" y="426.558437" transform="rotate(-0 317.52 426.558437)">0</text>
      </g>
     </g>
     <g id="xtick_2">
      <g id="line2d_3">
-      <path d="M 461.44 391.68 
-L 461.44 149.76 
-" clip-path="url(#pfc99c0fbfd)" style="fill: none; stroke: #e4ecf2; stroke-linecap: square"/>
+      <path d="M 389.265882 408.96
+L 389.265882 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_4"/>
      <g id="text_2">
-      <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #708394" x="461.44" y="412.038281" transform="rotate(-0 461.44 412.038281)">5</text>
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="389.265882" y="426.558437" transform="rotate(-0 389.265882 426.558437)">2</text>
      </g>
     </g>
     <g id="xtick_3">
      <g id="line2d_5">
-      <path d="M 640.64 391.68 
-L 640.64 149.76 
-" clip-path="url(#pfc99c0fbfd)" style="fill: none; stroke: #e4ecf2; stroke-linecap: square"/>
+      <path d="M 461.011765 408.96
+L 461.011765 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_6"/>
      <g id="text_3">
-      <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #708394" x="640.64" y="412.038281" transform="rotate(-0 640.64 412.038281)">10</text>
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="461.011765" y="426.558437" transform="rotate(-0 461.011765 426.558437)">4</text>
      </g>
     </g>
     <g id="xtick_4">
      <g id="line2d_7">
-      <path d="M 819.84 391.68 
-L 819.84 149.76 
-" clip-path="url(#pfc99c0fbfd)" style="fill: none; stroke: #e4ecf2; stroke-linecap: square"/>
+      <path d="M 532.757647 408.96
+L 532.757647 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_8"/>
      <g id="text_4">
-      <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #708394" x="819.84" y="412.038281" transform="rotate(-0 819.84 412.038281)">15 s</text>
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="532.757647" y="426.558437" transform="rotate(-0 532.757647 426.558437)">6</text>
      </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_9">
+      <path d="M 604.503529 408.96
+L 604.503529 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_10"/>
+     <g id="text_5">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="604.503529" y="426.558437" transform="rotate(-0 604.503529 426.558437)">8</text>
+     </g>
+    </g>
+    <g id="xtick_6">
+     <g id="line2d_11">
+      <path d="M 676.249412 408.96
+L 676.249412 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_12"/>
+     <g id="text_6">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="676.249412" y="426.558437" transform="rotate(-0 676.249412 426.558437)">10</text>
+     </g>
+    </g>
+    <g id="xtick_7">
+     <g id="line2d_13">
+      <path d="M 747.995294 408.96
+L 747.995294 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_14"/>
+     <g id="text_7">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="747.995294" y="426.558437" transform="rotate(-0 747.995294 426.558437)">12</text>
+     </g>
+    </g>
+    <g id="xtick_8">
+     <g id="line2d_15">
+      <path d="M 819.741176 408.96
+L 819.741176 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_16"/>
+     <g id="text_8">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="819.741176" y="426.558437" transform="rotate(-0 819.741176 426.558437)">14</text>
+     </g>
+    </g>
+    <g id="xtick_9">
+     <g id="line2d_17">
+      <path d="M 891.487059 408.96
+L 891.487059 144
+" clip-path="url(#p190c376cc0)" style="fill: none; stroke: #dce5ec; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_18"/>
+     <g id="text_9">
+      <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: middle" x="891.487059" y="426.558437" transform="rotate(-0 891.487059 426.558437)">16</text>
+     </g>
+    </g>
+    <g id="text_10">
+     <text style="fill: #607789; font: 11px 'DejaVu Sans'; text-anchor: middle" x="622.44" y="449.996406" transform="rotate(-0 622.44 449.996406)">Steady-state latency (seconds)  ·  Lower is better</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
     <g id="ytick_1">
-     <g id="line2d_9"/>
-     <g id="text_5">
-      <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #19344a" x="270.24" y="190.074079" transform="rotate(-0 270.24 190.074079)">ComfyUI default</text>
+     <g id="line2d_19"/>
+     <g id="text_11">
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="175.434341" transform="rotate(-0 307.52 175.434341)">ComfyUI default · Sep 18</text>
      </g>
     </g>
     <g id="ytick_2">
-     <g id="line2d_10"/>
-     <g id="text_6">
-      <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #19344a" x="270.24" y="247.130682" transform="rotate(-0 270.24 247.130682)">ComfyUI --fast</text>
+     <g id="line2d_20"/>
+     <g id="text_12">
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="228.141721" transform="rotate(-0 307.52 228.141721)">ComfyUI --fast · Sep 18</text>
      </g>
     </g>
     <g id="ytick_3">
-     <g id="line2d_11"/>
-     <g id="text_7">
-      <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #19344a" x="270.24" y="304.187286" transform="rotate(-0 270.24 304.187286)">TensorRT 256/256</text>
+     <g id="line2d_21"/>
+     <g id="text_13">
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="280.849102" transform="rotate(-0 307.52 280.849102)">TensorRT rebuilt · Sep 18</text>
      </g>
     </g>
     <g id="ytick_4">
-     <g id="line2d_12"/>
-     <g id="text_8">
-      <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #19344a" x="270.24" y="361.24389" transform="rotate(-0 270.24 361.24389)">PyOpt v0.1.0-era FP16</text>
+     <g id="line2d_22"/>
+     <g id="text_14">
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="333.556482" transform="rotate(-0 307.52 333.556482)">PyOpt v0.2.0 · Sep 22</text>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_23"/>
+     <g id="text_15">
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="386.263862" transform="rotate(-0 307.52 386.263862)">PyOpt FP16 fusion · Sep 24</text>
      </g>
     </g>
    </g>
    <g id="patch_3">
-    <path d="M 282.24 169.729811 
-L 820.59264 169.729811 
-L 820.59264 200.540377 
-L 282.24 200.540377 
+    <path d="M 317.52 156.043636
+L 856.367449 156.043636
+L 856.367449 186.086843
+L 317.52 186.086843
 z
-" clip-path="url(#pfc99c0fbfd)" style="fill: #a9b8c7"/>
+" clip-path="url(#p190c376cc0)" style="fill: #9eabb8"/>
    </g>
    <g id="patch_4">
-    <path d="M 282.24 226.786415 
-L 728.0896 226.786415 
-L 728.0896 257.596981 
-L 282.24 257.596981 
+    <path d="M 317.52 208.751017
+L 763.779388 208.751017
+L 763.779388 238.794223
+L 317.52 238.794223
 z
-" clip-path="url(#pfc99c0fbfd)" style="fill: #a9b8c7"/>
+" clip-path="url(#p190c376cc0)" style="fill: #9eabb8"/>
    </g>
    <g id="patch_5">
-    <path d="M 282.24 283.843019 
-L 711.10144 283.843019 
-L 711.10144 314.653585 
-L 282.24 314.653585 
+    <path d="M 317.52 261.458397
+L 746.775614 261.458397
+L 746.775614 291.501603
+L 317.52 291.501603
 z
-" clip-path="url(#pfc99c0fbfd)" style="fill: #a9b8c7"/>
+" clip-path="url(#p190c376cc0)" style="fill: #9eabb8"/>
    </g>
    <g id="patch_6">
-    <path d="M 282.24 340.899623 
-L 692.35712 340.899623 
-L 692.35712 371.710189 
-L 282.24 371.710189 
+    <path d="M 317.52 314.165777
+L 729.233746 314.165777
+L 729.233746 344.208983
+L 317.52 344.208983
 z
-" clip-path="url(#pfc99c0fbfd)" style="fill: #7895ab"/>
+" clip-path="url(#p190c376cc0)" style="fill: #3979b5"/>
    </g>
-   <g id="text_9">
-    <text style="font-weight: 700; font-size: 12.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #19344a" x="827.04384" y="188.584313" transform="rotate(-0 827.04384 188.584313)">15.021 s</text>
+   <g id="patch_7">
+    <path d="M 317.52 366.873157
+L 709.37375 366.873157
+L 709.37375 396.916364
+L 317.52 396.916364
+z
+" clip-path="url(#p190c376cc0)" style="fill: #008b80"/>
    </g>
-   <g id="text_10">
-    <text style="font-weight: 700; font-size: 12.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #19344a" x="734.5408" y="245.640917" transform="rotate(-0 734.5408 245.640917)">12.440 s</text>
+   <g id="text_16">
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="861.748391" y="174.652427" transform="rotate(-0 861.748391 174.652427)">15.021 s</text>
    </g>
-   <g id="text_11">
-    <text style="font-weight: 700; font-size: 12.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #19344a" x="717.55264" y="302.697521" transform="rotate(-0 717.55264 302.697521)">11.966 s</text>
+   <g id="text_17">
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="769.160329" y="227.359807" transform="rotate(-0 769.160329 227.359807)">12.440 s</text>
    </g>
-   <g id="text_12">
-    <text style="font-weight: 700; font-size: 12.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #19344a" x="698.80832" y="359.754124" transform="rotate(-0 698.80832 359.754124)">11.443 s</text>
+   <g id="text_18">
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="752.156555" y="280.067188" transform="rotate(-0 752.156555 280.067188)">11.966 s</text>
+   </g>
+   <g id="text_19">
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="734.614687" y="332.774568" transform="rotate(-0 734.614687 332.774568)">11.477 s</text>
+   </g>
+   <g id="text_20">
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="714.754691" y="385.481948" transform="rotate(-0 714.754691 385.481948)">10.923 s</text>
    </g>
   </g>
-  <g id="text_13">
-   <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #47667b" x="65.52" y="37.44" transform="rotate(-0 65.52 37.44)">H3 VAE  /  FP16 REFERENCE</text>
+  <g id="text_21">
+   <text style="fill: #19344a; font: 700 24px 'DejaVu Sans'; text-anchor: start" x="45.36" y="40.32" transform="rotate(-0 45.36 40.32)">FP16 decode: historical references + fusion profile</text>
   </g>
-  <g id="text_14">
-   <text style="font-weight: 700; font-size: 24px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #10263b" x="65.52" y="73.728" transform="rotate(-0 65.52 73.728)">Decoder latency · earlier implementations</text>
+  <g id="text_22">
+   <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="67.392" transform="rotate(-0 45.36 67.392)">768 × 1344 × 124  |  Decoder tile 256  |  Independent experiments; dates and configurations differ</text>
   </g>
-  <g id="text_15">
-   <text style="font-size: 12.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #566b7d" x="65.52" y="103.68" transform="rotate(-0 65.52 103.68)">Historical measurements, sorted from slowest to fastest</text>
+  <g id="text_23">
+   <text style="fill: #008b80; font: 700 15px 'DejaVu Sans'; text-anchor: start" x="45.36" y="106.56" transform="rotate(-0 45.36 106.56)">Latest opt-in FP16 fusion: 10.923 s  ·  decode_fusions=true / batch 8</text>
   </g>
-  <g id="text_16">
-   <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #405d71" x="65.52" y="455.04" transform="rotate(-0 65.52 455.04)">FP16 reference only · TensorRT and ComfyUI results came from separate benchmark runs.</text>
+  <g id="text_24">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="483.84" transform="rotate(-0 45.36 483.84)">ComfyUI --fast uses FP16 accumulation; TensorRT uses a different software stack.</text>
   </g>
-  <g id="text_17">
-   <text style="font-size: 10.5px; font-family: 'DejaVu Sans'; fill: #50677a" transform="translate(65.52 484.088789)">RTX PRO 5000 72GB · 768 × 1344 × 124 · decoder tile 256 · lower is better.</text>
-   <text style="font-size: 10.5px; font-family: 'DejaVu Sans'; fill: #50677a" transform="translate(65.52 498.24)">Steady-state CUDA Event mean; model loading, first compilation and media I/O excluded.</text>
+  <g id="text_25">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="501.696" transform="rotate(-0 45.36 501.696)">Latest fusion: 2 warmups / 5 runs. Historical controls were not remeasured in that experiment.</text>
   </g>
-  <g id="text_18">
-   <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8191a0" x="65.52" y="544.32" transform="rotate(-0 65.52 544.32)">Sources: docs/h3_latest_fast_ab_2026-09-18.md · docs/h3_trt_256_same_tile_benchmark_2026-09-18.md</text>
+  <g id="text_26">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="519.552" transform="rotate(-0 45.36 519.552)">FP16 fusion source PSNR: 35.110 dB across 992 frames. FP16 encoder retained.</text>
+  </g>
+  <g id="text_27">
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="537.408" transform="rotate(-0 45.36 537.408)">No cross-experiment speedup ratio or combined encode/decode claim. BF16 is not validated.</text>
+  </g>
+  <g id="text_28">
+   <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: start" x="45.36" y="561.6" transform="rotate(-0 45.36 561.6)">ComfyUI-H3VAE-PyOpt  ·  Measured on RTX PRO 5000 72GB / SM120</text>
   </g>
  </g>
  <defs>
-  <clipPath id="pfc99c0fbfd">
-   <rect x="282.24" y="149.76" width="645.12" height="241.92"/>
+  <clipPath id="p190c376cc0">
+   <rect x="317.52" y="144" width="609.84" height="264.96"/>
   </clipPath>
  </defs>
 </svg>

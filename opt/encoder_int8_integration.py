@@ -34,8 +34,8 @@ INT8_ENCODER_POLICY = {
     "quantized_conv_count": 8,
     "kernel": (3, 3, 3),
     "tile_variants_by_input_channels": {
-        128: "128x64x64",
-        256: "128x64x128",
+        128: "128x128x64",
+        256: "128x128x64",
     },
     "excluded": (
         "conv_in",
@@ -54,7 +54,7 @@ def _resolve_tile_variant(
 ) -> str:
     """Select the validated Triton tile for a source convolution.
 
-    The two variants were measured on the real H3 prefix shapes. Keeping the
+    The variant was measured on the real H3 prefix shapes. Keeping the
     selection here (rather than making the kernel guess from a dynamic tensor)
     makes it a compile-time constant for each installed module.
     """

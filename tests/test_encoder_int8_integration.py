@@ -166,8 +166,8 @@ class EncoderInt8IntegrationCpuTest(unittest.TestCase):
         self.assertTrue(any(key.endswith("weight_scale") for key in state_keys))
 
     def test_stage_aware_tile_policy(self):
-        self.assertEqual(_resolve_tile_variant(128, "auto"), "128x64x64")
-        self.assertEqual(_resolve_tile_variant(256, None), "128x64x128")
+        self.assertEqual(_resolve_tile_variant(128, "auto"), "128x128x64")
+        self.assertEqual(_resolve_tile_variant(256, None), "128x128x64")
         with self.assertRaisesRegex(ValueError, "only supports input channels"):
             _resolve_tile_variant(4, "auto")
 

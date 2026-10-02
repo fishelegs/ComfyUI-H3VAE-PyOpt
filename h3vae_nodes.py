@@ -107,8 +107,8 @@ class H3VAEPyOptLoader:
                 "int8_encode": ("BOOLEAN", {"default": False,
                     "tooltip": "Experimental CUDA FP16 mixed INT8 encoder path: exactly "
                                "eight 3x3x3 convolutions in prefix stages 0/1; other "
-                               "encoder operations retain their original precision. Measured slower "
-                               "than the default encoder; changes output. No fallback; "
+                               "encoder operations retain their original precision. Speed depends "
+                               "on hardware and workload; changes output. No fallback; "
                                "independent of int8_decode."}),
                 "model_code_dir": ("STRING", {"default": DEFAULT_MODEL_CODE_DIR,
                     "tooltip": "FL2VA video_vae bundle dir (klvae reference code + "

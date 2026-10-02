@@ -50,6 +50,23 @@ For encoder numerical regression, use `bench_encoder_quality.py` with the same
 model code, weights, input shape, and tile settings as the implementation being
 compared.
 
+## INT8 encoder optimization checks
+
+Run the optional CUDA regression tests explicitly; ordinary CPU CI skips them:
+
+```bash
+H3VAE_TEST_CUDA=1 python -m unittest discover -s tests -p 'test_encoder_int8_gpu.py'
+```
+
+These cover quantization values/layout, reduction tails, extreme FP16 values,
+rounding, convolution tile equivalence, and input guards. They do not replace
+full-model/video validation. `bench_encoder_int8_optimization.py` compares an
+explicit previous kernel snapshot with the current compiled runtime and FP16,
+using identical inputs and verifying real-layer, latent, and decoded RGB errors.
+See [the measured encoder optimization](encoder_int8_optimization_2026-10-02.md)
+for reproducible arguments. Keep Comfy wrapper/offload checks in
+`bench_int8_comfy_smoke.py` separate from real-video quality evidence.
+
 ## Performance report checklist
 
 For the opt-in `decode_fusions` profiles, see [decode-fusion validation](decode_fusions.md).

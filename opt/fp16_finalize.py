@@ -31,7 +31,8 @@ def kernel():
         else:
             offset=(i//(3*T*H*W))*S0+c*S1+((i//(H*W))%T)*S2+((i//W)%H)*S3+(i%W)*S4
         x=tl.load(X+offset,i<NUM,other=0).to(tl.float32)
-        std=tl.load(S+c);mean=tl.load(A+c)
+        std=tl.load(S+c)
+        mean=tl.load(A+c)
         # Deliberately disable FMA at launch: match separate FP32 multiply/add.
         value=x*std+mean
         # Comparisons preserve NaN propagation and the sign of an in-range zero.

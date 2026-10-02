@@ -29,10 +29,12 @@ from torch import nn
 
 
 _TRITON_KERNELS: tuple[Any, Any] | None = None
+_QUANTIZATION_KERNELS: tuple[Any, Any, Any] | None = None
 _TILE_VARIANTS = {
     "64x64x64": (64, 64, 64),
     "128x64x64": (128, 64, 64),
     "128x64x128": (128, 64, 128),
+    "128x128x64": (128, 128, 64),
 }
 
 
@@ -324,6 +326,60 @@ def prepare_int8_weight(
     return qweight.contiguous(), scale.float().contiguous(), config
 
 
+def _quantization_kernels() -> tuple[Any, Any, Any]:
+    """Lazy bounded reduction and contiguous NDHWC quantization kernels."""
+    global _QUANTIZATION_KERNELS
+    if _QUANTIZATION_KERNELS is not None:
+        return _QUANTIZATION_KERNELS
+    try:
+        import triton
+        import triton.language as tl
+    except ImportError as exc:  # pragma: no cover - CPU-only environments
+        raise RuntimeError(
+            "INT8 encoder requires Triton; no FP16 fallback is available"
+        ) from exc
+
+    @triton.jit
+    def partial_absmax(x_ptr, partial_ptr, n_elements,
+                       GRID: tl.constexpr, BLOCK: tl.constexpr):
+        offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+        maxima = tl.full((BLOCK,), 0, tl.float32)
+        # Capping the grid bounds scratch space and the final reduction, even
+        # for large tiles. No full-sized abs tensor is written to GPU memory.
+        for chunk in range(0, tl.cdiv(n_elements, GRID * BLOCK)):
+            indices = offsets + chunk * GRID * BLOCK
+            values = tl.load(x_ptr + indices, indices < n_elements, other=0)
+            maxima = tl.maximum(maxima, tl.abs(values.to(tl.float32)))
+        tl.store(partial_ptr + tl.program_id(0), tl.max(maxima, 0))
+
+    @triton.jit
+    def merge_scale(partial_ptr, scale_ptr,
+                    N: tl.constexpr, BLOCK: tl.constexpr):
+        offsets = tl.arange(0, BLOCK)
+        maximum = tl.max(tl.load(partial_ptr + offsets, offsets < N, other=0), 0)
+        # Match PyTorch's eager FP32 division by the scalar 127 exactly:
+        # its CUDA path multiplies by the rounded FP32 reciprocal.
+        scale = maximum * (1.0 / 127.0)
+        tl.store(scale_ptr, tl.where(scale > 0, scale, 1.0))
+
+    @triton.jit
+    def quantize_contiguous(x_ptr, q_ptr, scale_ptr, n_elements,
+                            BLOCK: tl.constexpr):
+        offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+        values = tl.load(x_ptr + offsets, offsets < n_elements, other=0).to(tl.float32)
+        scaled = values / tl.load(scale_ptr)
+        rounded = tl.where(
+            scaled >= 0.0,
+            tl.math.floor(scaled + 0.5),
+            -tl.math.floor(-scaled + 0.5),
+        )
+        rounded = tl.maximum(tl.minimum(rounded, 127.0), -127.0)
+        tl.store(q_ptr + offsets, rounded.to(tl.int8), offsets < n_elements)
+
+    _QUANTIZATION_KERNELS = (partial_absmax, merge_scale, quantize_contiguous)
+    return _QUANTIZATION_KERNELS
+
+
 @torch.no_grad()
 def quantize_activation_tensor(
     x: torch.Tensor,
@@ -341,29 +397,30 @@ def quantize_activation_tensor(
     if check_finite and not bool(torch.isfinite(x).all().item()):
         raise ValueError("INT8 activation quantization rejects non-finite input")
     x = x.contiguous(memory_format=torch.channels_last_3d)
-    scale = x.abs().amax().float().div(127.0)
-    scale = torch.where(scale > 0, scale, torch.ones_like(scale))
+    n_elements = x.numel()
+    if n_elements == 0:
+        raise ValueError("INT8 activation quantization requires a nonempty tensor")
+    reduce_kernel, scale_kernel, quant_kernel = _quantization_kernels()
+    reduce_block = 8192
+    partial_count = min(triton_cdiv(n_elements, reduce_block), 2048)
+    partials = torch.empty((partial_count,), dtype=torch.float32, device=x.device)
+    scale = torch.empty((), dtype=torch.float32, device=x.device)
     qx = torch.empty(
         x.shape,
         dtype=torch.int8,
         device=x.device,
         memory_format=torch.channels_last_3d,
     )
-    quant_kernel, _ = _triton_kernels()
-    block = 256
-    grid = (triton_cdiv(x.numel(), block),)
-    quant_kernel[grid](
-        x,
-        qx,
-        x.numel(),
-        x.shape[1],
-        x.shape[2],
-        x.shape[3],
-        x.shape[4],
-        *x.stride(),
-        scale,
-        BLOCK=block,
-        num_warps=4,
+    reduce_kernel[(partial_count,)](
+        x, partials, n_elements, GRID=partial_count, BLOCK=reduce_block, num_warps=4,
+    )
+    scale_kernel[(1,)](
+        partials, scale, N=partial_count,
+        BLOCK=1 << (partial_count - 1).bit_length(), num_warps=4,
+    )
+    block = 1024
+    quant_kernel[(triton_cdiv(n_elements, block),)](
+        x, qx, scale, n_elements, BLOCK=block, num_warps=4,
     )
     return qx, scale
 

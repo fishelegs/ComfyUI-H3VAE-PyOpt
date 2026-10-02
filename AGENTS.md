@@ -16,9 +16,10 @@ Treat the validated FP16 path as the default and safest baseline.
 - `int8_decode=true` is an experimental speed/quality trade-off. On the
   currently measured RTX PRO 5000 setup it improves decoder latency, but the
   result is hardware- and workload-specific.
-- `int8_encode=true` exists for research. The current measured implementation
-  is slower than the FP16 encoder and must not be presented as a recommended
-  speed optimization without new evidence.
+- `int8_encode=true` remains experimental. The original v0.2.0 encoder was
+  slower than FP16; the 2026-10-02 tile/quantization optimization has measured
+  end-to-end gains on SM120. See `docs/encoder_int8_optimization_2026-10-02.md`.
+  Do not generalize that speedup to other hardware or hide INT8 quality loss.
 - `fast_linear` and `int8_decode` are mutually exclusive.
 - Never silently fall back to FP16 while reporting an INT8 path as active.
 - Do not change the default precision path merely because an experimental mode

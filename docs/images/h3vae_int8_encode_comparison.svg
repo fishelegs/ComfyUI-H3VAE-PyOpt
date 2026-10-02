@@ -2,8 +2,8 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg role="img" aria-labelledby="chart-title chart-description" xmlns:xlink="http://www.w3.org/1999/xlink" width="1008pt" height="576pt" viewBox="0 0 1008 576" xmlns="http://www.w3.org/2000/svg" version="1.1">
- <title id="chart-title">INT8 decode: release baseline + fusion profiles</title>
- <desc id="chart-description">768 × 1344 × 124  |  Decoder tile 256  |  FP16 encoder retained in every row. Latest INT8 fusion: 6.667 s  ·  144 quantized linears / batch 4. Sep 22 · FP16 paired control: 11.476686 seconds; Sep 22 · INT8 / 72 linears / B2: 8.277575 seconds; Sep 24 · FP16 fusion / B8: 10.923379 seconds; Sep 24 · INT8 fusion / 144 / B4: 6.666817 seconds. Sep 22: paired FP16 → INT8 decode latency −27.87%; 2 warmups / 3 runs. Sep 24: separate profile experiments, 2 warmups / 5 runs; not a four-way paired comparison. INT8 fusion source PSNR: 34.940 dB vs FP16 fusion 35.110 dB on 992 frames. Fusion requires int8_encode=false. Do not combine this with the 10.121 s INT8 encoder.</desc>
+ <title id="chart-title">INT8 encode: optimized full-video runtime</title>
+ <desc id="chart-description">2026-10-02 paired experiment  |  768 × 1344 × 124  |  Tile 256 / staged batch 4  |  2 warmups / 5 runs. 19.32% lower latency vs previous INT8  ·  15.17% lower vs FP16. Previous INT8: 12.545198 seconds; FP16 paired control: 11.931490 seconds; INT8: tile change only: 11.278200 seconds; INT8: tile + quantization: 10.121342 seconds. Same inputs, weights and compiled INT8 graph; dynamic quantization included. 8 videos / 992 frames: optimized and previous INT8 latents + RGB are bitwise equal. Source PSNR: FP16 35.110 dB; old/new INT8 34.486 dB. Existing quantization loss remains. Encoder only. decode_fusions=false; do not add this to the fused decoder time.</desc>
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
@@ -135,98 +135,93 @@ L 927.36 144
     <g id="ytick_1">
      <g id="line2d_17"/>
      <g id="text_10">
-      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="179.642073" transform="rotate(-0 307.52 179.642073)">Sep 22 · FP16 paired control</text>
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="179.642073" transform="rotate(-0 307.52 179.642073)">Previous INT8</text>
      </g>
     </g>
     <g id="ytick_2">
      <g id="line2d_18"/>
      <g id="text_11">
-      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="247.113425" transform="rotate(-0 307.52 247.113425)">Sep 22 · INT8 / 72 linears / B2</text>
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="247.113425" transform="rotate(-0 307.52 247.113425)">FP16 paired control</text>
      </g>
     </g>
     <g id="ytick_3">
      <g id="line2d_19"/>
      <g id="text_12">
-      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="314.584778" transform="rotate(-0 307.52 314.584778)">Sep 24 · FP16 fusion / B8</text>
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="314.584778" transform="rotate(-0 307.52 314.584778)">INT8: tile change only</text>
      </g>
     </g>
     <g id="ytick_4">
      <g id="line2d_20"/>
      <g id="text_13">
-      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="382.05613" transform="rotate(-0 307.52 382.05613)">Sep 24 · INT8 fusion / 144 / B4</text>
+      <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: end" x="307.52" y="382.05613" transform="rotate(-0 307.52 382.05613)">INT8: tile + quantization</text>
      </g>
     </g>
    </g>
-   <g id="line2d_21">
-    <path d="M 317.52 276.48
-L 927.36 276.48
-" clip-path="url(#p190c376cc0)" style="fill: none; stroke-dasharray: 4,4; stroke-dashoffset: 0; stroke: #a7bac9"/>
-   </g>
    <g id="patch_3">
     <path d="M 317.52 156.043636
-L 817.444437 156.043636
-L 817.444437 194.502307
+L 863.98881 156.043636
+L 863.98881 194.502307
 L 317.52 194.502307
 z
-" clip-path="url(#p190c376cc0)" style="fill: #3979b5"/>
+" clip-path="url(#p190c376cc0)" style="fill: #bf7236"/>
    </g>
    <g id="patch_4">
     <path d="M 317.52 223.514989
-L 678.091176 223.514989
-L 678.091176 261.973659
+L 837.255715 223.514989
+L 837.255715 261.973659
 L 317.52 261.973659
-z
-" clip-path="url(#p190c376cc0)" style="fill: #9eabb8"/>
-   </g>
-   <g id="patch_5">
-    <path d="M 317.52 290.986341
-L 793.342411 290.986341
-L 793.342411 329.445011
-L 317.52 329.445011
 z
 " clip-path="url(#p190c376cc0)" style="fill: #3979b5"/>
    </g>
+   <g id="patch_5">
+    <path d="M 317.52 290.986341
+L 808.798409 290.986341
+L 808.798409 329.445011
+L 317.52 329.445011
+z
+" clip-path="url(#p190c376cc0)" style="fill: #9eabb8"/>
+   </g>
    <g id="patch_6">
     <path d="M 317.52 358.457693
-L 607.926565 358.457693
-L 607.926565 396.916364
+L 758.405666 358.457693
+L 758.405666 396.916364
 L 317.52 396.916364
 z
 " clip-path="url(#p190c376cc0)" style="fill: #008b80"/>
    </g>
    <g id="text_14">
-    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="823.978437" y="178.860159" transform="rotate(-0 823.978437 178.860159)">11.477 s</text>
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="870.52281" y="178.860159" transform="rotate(-0 870.52281 178.860159)">12.545 s</text>
    </g>
    <g id="text_15">
-    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="684.625176" y="246.331511" transform="rotate(-0 684.625176 246.331511)">8.278 s</text>
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="843.789715" y="246.331511" transform="rotate(-0 843.789715 246.331511)">11.931 s</text>
    </g>
    <g id="text_16">
-    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="799.876411" y="313.802864" transform="rotate(-0 799.876411 313.802864)">10.923 s</text>
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="815.332409" y="313.802864" transform="rotate(-0 815.332409 313.802864)">11.278 s</text>
    </g>
    <g id="text_17">
-    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="614.460565" y="381.274216" transform="rotate(-0 614.460565 381.274216)">6.667 s</text>
+    <text style="fill: #19344a; font: 700 13px 'DejaVu Sans'; text-anchor: start" x="764.939666" y="381.274216" transform="rotate(-0 764.939666 381.274216)">10.121 s</text>
    </g>
   </g>
   <g id="text_18">
-   <text style="fill: #19344a; font: 700 24px 'DejaVu Sans'; text-anchor: start" x="45.36" y="40.32" transform="rotate(-0 45.36 40.32)">INT8 decode: release baseline + fusion profiles</text>
+   <text style="fill: #19344a; font: 700 24px 'DejaVu Sans'; text-anchor: start" x="45.36" y="40.32" transform="rotate(-0 45.36 40.32)">INT8 encode: optimized full-video runtime</text>
   </g>
   <g id="text_19">
-   <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="67.392" transform="rotate(-0 45.36 67.392)">768 × 1344 × 124  |  Decoder tile 256  |  FP16 encoder retained in every row</text>
+   <text style="fill: #607789; font: 11.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="67.392" transform="rotate(-0 45.36 67.392)">2026-10-02 paired experiment  |  768 × 1344 × 124  |  Tile 256 / staged batch 4  |  2 warmups / 5 runs</text>
   </g>
   <g id="text_20">
-   <text style="fill: #008b80; font: 700 15px 'DejaVu Sans'; text-anchor: start" x="45.36" y="106.56" transform="rotate(-0 45.36 106.56)">Latest INT8 fusion: 6.667 s  ·  144 quantized linears / batch 4</text>
+   <text style="fill: #008b80; font: 700 15px 'DejaVu Sans'; text-anchor: start" x="45.36" y="106.56" transform="rotate(-0 45.36 106.56)">19.32% lower latency vs previous INT8  ·  15.17% lower vs FP16</text>
   </g>
   <g id="text_21">
-   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="483.84" transform="rotate(-0 45.36 483.84)">Sep 22: paired FP16 → INT8 decode latency −27.87%; 2 warmups / 3 runs.</text>
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="483.84" transform="rotate(-0 45.36 483.84)">Same inputs, weights and compiled INT8 graph; dynamic quantization included.</text>
   </g>
   <g id="text_22">
-   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="501.696" transform="rotate(-0 45.36 501.696)">Sep 24: separate profile experiments, 2 warmups / 5 runs; not a four-way paired comparison.</text>
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="501.696" transform="rotate(-0 45.36 501.696)">8 videos / 992 frames: optimized and previous INT8 latents + RGB are bitwise equal.</text>
   </g>
   <g id="text_23">
-   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="519.552" transform="rotate(-0 45.36 519.552)">INT8 fusion source PSNR: 34.940 dB vs FP16 fusion 35.110 dB on 992 frames.</text>
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="519.552" transform="rotate(-0 45.36 519.552)">Source PSNR: FP16 35.110 dB; old/new INT8 34.486 dB. Existing quantization loss remains.</text>
   </g>
   <g id="text_24">
-   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="537.408" transform="rotate(-0 45.36 537.408)">Fusion requires int8_encode=false. Do not combine this with the 10.121 s INT8 encoder.</text>
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="537.408" transform="rotate(-0 45.36 537.408)">Encoder only. decode_fusions=false; do not add this to the fused decoder time.</text>
   </g>
   <g id="text_25">
    <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: start" x="45.36" y="561.6" transform="rotate(-0 45.36 561.6)">ComfyUI-H3VAE-PyOpt  ·  Measured on RTX PRO 5000 72GB / SM120</text>
