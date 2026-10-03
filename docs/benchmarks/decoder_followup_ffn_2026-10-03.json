@@ -1,0 +1,3477 @@
+{
+  "research_date": "2026-10-03",
+  "baseline_commit": "7bd9809ae97fa54796d838941929211e9681e5b8",
+  "status": "all_listed_ffn_candidates_rejected",
+  "production_changes_adopted": false,
+  "timings_are_full_decode": false,
+  "full_decode_speedup_claimed": false,
+  "scope": "Local FFN-up/SwiGLU/quantization chain replays and separate quantizer-only replays. Their absolute timings have different scopes and must not be combined.",
+  "quality_scope": {
+    "schedule_and_lut": "Final INT8 q and FP32 scales compared exactly against production on one captured real M7188 K2048 N16384 FFN-up input. This is not full-video quality evidence.",
+    "finite_gate_lut_checks": {
+      "description": "Enumerate every finite FP16 gate encoding, pair each with five constant up values, and compare final FP16 product output bits.",
+      "finite_gate_encodings": 63488,
+      "up_constants": [
+        0.0,
+        -1.0,
+        1.0,
+        0.03125,
+        65504.0
+      ],
+      "pair_checks": 317440,
+      "exhaustive_all_gate_up_pairs": false,
+      "observed_mismatches_per_up": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "separate_q_scale_check": "The q/scale equality check uses the actual captured M7188 input, not the finite-gate enumeration."
+    },
+    "quantizer": "Exact q and bitwise FP32 scales on real M7188 data, an explicitly repeated-row M14376 extension, and M17 synthetic tails/subnormal/nonfinite edge cases."
+  },
+  "decision_summary": [
+    {
+      "family": "ffn_up_schedule",
+      "candidate": "copy_control",
+      "timing_scope": "local complete up+SwiGLU+quantization, not full decode",
+      "shape_mnk": [
+        7188,
+        16384,
+        2048
+      ],
+      "baseline_mean_ms": 1.1876133183638256,
+      "candidate_mean_ms": 1.1879999836285908,
+      "local_latency_change_percent": 0.03255817855747356,
+      "q_exact": true,
+      "scale_exact": true,
+      "decision": "rejected_for_production",
+      "reason": "Correct local outputs but no useful measured local latency improvement."
+    },
+    {
+      "family": "ffn_up_schedule",
+      "candidate": "group4",
+      "timing_scope": "local complete up+SwiGLU+quantization, not full decode",
+      "shape_mnk": [
+        7188,
+        16384,
+        2048
+      ],
+      "baseline_mean_ms": 1.1876133183638256,
+      "candidate_mean_ms": 1.186191995938619,
+      "local_latency_change_percent": -0.1196788890145517,
+      "q_exact": true,
+      "scale_exact": true,
+      "decision": "rejected_for_production",
+      "reason": "Correct local outputs but no useful measured local latency improvement."
+    },
+    {
+      "family": "ffn_up_schedule",
+      "candidate": "group16",
+      "timing_scope": "local complete up+SwiGLU+quantization, not full decode",
+      "shape_mnk": [
+        7188,
+        16384,
+        2048
+      ],
+      "baseline_mean_ms": 1.1876133183638256,
+      "candidate_mean_ms": 1.1891066630681355,
+      "local_latency_change_percent": 0.12574334433763656,
+      "q_exact": true,
+      "scale_exact": true,
+      "decision": "rejected_for_production",
+      "reason": "Correct local outputs but no useful measured local latency improvement."
+    },
+    {
+      "family": "ffn_up_schedule",
+      "candidate": "stream_store",
+      "timing_scope": "local complete up+SwiGLU+quantization, not full decode",
+      "shape_mnk": [
+        7188,
+        16384,
+        2048
+      ],
+      "baseline_mean_ms": 1.1876133183638256,
+      "candidate_mean_ms": 1.193533331155777,
+      "local_latency_change_percent": 0.4984798250753375,
+      "q_exact": true,
+      "scale_exact": true,
+      "decision": "rejected_for_production",
+      "reason": "Correct local outputs but no useful measured local latency improvement."
+    },
+    {
+      "family": "ffn_up_schedule",
+      "candidate": "warps8",
+      "timing_scope": "local complete up+SwiGLU+quantization, not full decode",
+      "shape_mnk": [
+        7188,
+        16384,
+        2048
+      ],
+      "baseline_mean_ms": 1.1876133183638256,
+      "candidate_mean_ms": 1.1819066802660625,
+      "local_latency_change_percent": -0.4805131442635835,
+      "q_exact": true,
+      "scale_exact": true,
+      "decision": "rejected_for_production",
+      "reason": "Correct local outputs but no useful measured local latency improvement."
+    },
+    {
+      "family": "ffn_up_lut",
+      "candidate": "lut_warps4",
+      "timing_scope": "local complete up+SwiGLU+quantization including fresh 256KiB FP32 SiLU lookup generation each call; no persistent GPU tensor cache",
+      "shape_mnk": [
+        7188,
+        16384,
+        2048
+      ],
+      "baseline_mean_ms": 1.1914480030536652,
+      "candidate_mean_ms": 2.058367987473806,
+      "local_latency_change_percent": 72.76188152552494,
+      "q_exact": true,
+      "scale_exact": true,
+      "decision": "rejected_for_production",
+      "reason": "Correct local outputs but a large measured local latency regression."
+    },
+    {
+      "family": "ffn_up_lut",
+      "candidate": "lut_warps8",
+      "timing_scope": "local complete up+SwiGLU+quantization including fresh 256KiB FP32 SiLU lookup generation each call; no persistent GPU tensor cache",
+      "shape_mnk": [
+        7188,
+        16384,
+        2048
+      ],
+      "baseline_mean_ms": 1.1914480030536652,
+      "candidate_mean_ms": 2.069053332010905,
+      "local_latency_change_percent": 73.65871835849731,
+      "q_exact": true,
+      "scale_exact": true,
+      "decision": "rejected_for_production",
+      "reason": "Correct local outputs but a large measured local latency regression."
+    }
+  ],
+  "experiments": {
+    "ffn_up_schedule": {
+      "plan": {
+        "baseline_commit": "7bd9809",
+        "target": "FFN-up/SwiGLU (2.269s of 6.420s kernel time)",
+        "scope": "Captured real M7188,K2048,N16384 up GEMM plus SwiGLU and row quantization, with transient allocations.",
+        "new_variables": [
+          "GROUP_M=4/16 versus8 changes CTA locality",
+          "Streaming activation store changes cache policy only",
+          "8 warps versus4 changes layout/register distribution"
+        ],
+        "candidates": 6,
+        "quality_gate": "production q and FP32 scales exactly equal; no precision/tile/normalization changes",
+        "history": "Prior fused-up sweep varied tile/BK and partial-max. No matching cache/CTA-group/warp8-at-same-tile experiment found.",
+        "source_sha256": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198"
+      },
+      "replay": {
+        "status": "passed",
+        "scope": "local complete up+SwiGLU+quantization, not full decode",
+        "warmup": 3,
+        "runs": 12,
+        "shape_mnk": [
+          7188,
+          16384,
+          2048
+        ],
+        "environment": {
+          "torch": "2.11.0+cu130",
+          "cuda": "13.0",
+          "triton": "3.6.0"
+        },
+        "sources": {
+          "replay.py": "faad6fe98a0c644c4f7fe98a03e15b2876d38132b94abf5b7798bca7129a3039",
+          "candidates.py": "641c557d7f9e425259b97e51f51a800746713d129adc1cb73abb46e673620e47",
+          "int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198"
+        },
+        "variants": {
+          "production": {
+            "q_equal": true,
+            "scale_equal": true,
+            "samples_ms": [
+              1.191648006439209,
+              1.1864639520645142,
+              1.184831976890564,
+              1.1843839883804321,
+              1.186527967453003,
+              1.186079978942871,
+              1.188223958015442,
+              1.1861120462417603,
+              1.1879680156707764,
+              1.1904640197753906,
+              1.1886719465255737,
+              1.1899839639663696
+            ],
+            "wall_ms": [
+              1.4241887256503105,
+              1.446292269974947,
+              1.4450210146605968,
+              1.433342695236206,
+              1.444258727133274,
+              1.4462526887655258,
+              1.4480948448181152,
+              1.4420971274375916,
+              1.4483160339295864,
+              1.4532026834785938,
+              1.4454922638833523,
+              1.447304617613554
+            ],
+            "mean_ms": 1.1876133183638256,
+            "median_ms": 1.1872479915618896,
+            "paired_wins": 0
+          },
+          "copy_control": {
+            "config": [
+              8,
+              "",
+              4
+            ],
+            "samples_ms": [
+              1.1879680156707764,
+              1.1881599426269531,
+              1.1907199621200562,
+              1.1843199729919434,
+              1.1865919828414917,
+              1.1881920099258423,
+              1.1887999773025513,
+              1.188256025314331,
+              1.188223958015442,
+              1.1885440349578857,
+              1.1860159635543823,
+              1.1902079582214355
+            ],
+            "wall_ms": [
+              1.437499187886715,
+              1.4431769959628582,
+              1.450780313462019,
+              1.4422573149204254,
+              1.4475258067250252,
+              1.449056901037693,
+              1.448074821382761,
+              1.4477837830781937,
+              1.443549059331417,
+              1.4480468817055225,
+              1.4443187974393368,
+              1.4496580697596073
+            ],
+            "q_equal": true,
+            "scale_equal": true,
+            "q_mismatch": 0,
+            "scale_mismatch": 0,
+            "regs": 238,
+            "spills": 0,
+            "shared": 49152,
+            "mean_ms": 1.1879999836285908,
+            "median_ms": 1.188207983970642,
+            "paired_wins": 4
+          },
+          "group4": {
+            "config": [
+              4,
+              "",
+              4
+            ],
+            "samples_ms": [
+              1.1841280460357666,
+              1.1844160556793213,
+              1.1901119947433472,
+              1.1881279945373535,
+              1.1840959787368774,
+              1.1867519617080688,
+              1.1826239824295044,
+              1.1845120191574097,
+              1.1844160556793213,
+              1.1907199621200562,
+              1.1861759424209595,
+              1.188223958015442
+            ],
+            "wall_ms": [
+              1.4413157477974892,
+              1.4441711828112602,
+              1.4461828395724297,
+              1.4478149823844433,
+              1.4446796849370003,
+              1.448807306587696,
+              1.4424961991608143,
+              1.443197950720787,
+              1.4416957274079323,
+              1.4491570182144642,
+              1.4392728917300701,
+              1.4482061378657818
+            ],
+            "q_equal": true,
+            "scale_equal": true,
+            "q_mismatch": 0,
+            "scale_mismatch": 0,
+            "regs": 238,
+            "spills": 0,
+            "shared": 49152,
+            "mean_ms": 1.186191995938619,
+            "median_ms": 1.1853439807891846,
+            "paired_wins": 8
+          },
+          "group16": {
+            "config": [
+              16,
+              "",
+              4
+            ],
+            "samples_ms": [
+              1.188256025314331,
+              1.1839359998703003,
+              1.1923840045928955,
+              1.1867200136184692,
+              1.1921919584274292,
+              1.1840640306472778,
+              1.1904640197753906,
+              1.1889599561691284,
+              1.1909120082855225,
+              1.1883200407028198,
+              1.1924159526824951,
+              1.1906559467315674
+            ],
+            "wall_ms": [
+              1.4476249925792217,
+              1.4427369460463524,
+              1.4534336514770985,
+              1.444188877940178,
+              1.452313270419836,
+              1.4434079639613628,
+              1.4508389867842197,
+              1.4436081983149052,
+              1.450659241527319,
+              1.4468450099229813,
+              1.4550751075148582,
+              1.4479048550128937
+            ],
+            "q_equal": true,
+            "scale_equal": true,
+            "q_mismatch": 0,
+            "scale_mismatch": 0,
+            "regs": 238,
+            "spills": 0,
+            "shared": 49152,
+            "mean_ms": 1.1891066630681355,
+            "median_ms": 1.1897119879722595,
+            "paired_wins": 4
+          },
+          "stream_store": {
+            "config": [
+              8,
+              ".cs",
+              4
+            ],
+            "samples_ms": [
+              1.1845760345458984,
+              1.1862080097198486,
+              1.1943999528884888,
+              1.18886399269104,
+              1.184000015258789,
+              1.190176010131836,
+              1.1904959678649902,
+              1.1879680156707764,
+              1.1887680292129517,
+              1.190176010131836,
+              1.241919994354248,
+              1.1948479413986206
+            ],
+            "wall_ms": [
+              1.4404850080609322,
+              1.443247776478529,
+              1.4547151513397694,
+              1.4494778588414192,
+              1.4362391084432602,
+              1.4504501596093178,
+              1.4426768757402897,
+              1.4501996338367462,
+              1.4476948417723179,
+              1.448135357350111,
+              1.258546020835638,
+              1.4497479423880577
+            ],
+            "q_equal": true,
+            "scale_equal": true,
+            "q_mismatch": 0,
+            "scale_mismatch": 0,
+            "regs": 238,
+            "spills": 0,
+            "shared": 49152,
+            "mean_ms": 1.193533331155777,
+            "median_ms": 1.189520001411438,
+            "paired_wins": 4
+          },
+          "warps8": {
+            "config": [
+              8,
+              "",
+              8
+            ],
+            "samples_ms": [
+              1.1760640144348145,
+              1.1783679723739624,
+              1.178272008895874,
+              1.1782079935073853,
+              1.1781760454177856,
+              1.1778559684753418,
+              1.176576018333435,
+              1.178048014640808,
+              1.1724480390548706,
+              1.1782079935073853,
+              1.232192039489746,
+              1.1784640550613403
+            ],
+            "wall_ms": [
+              1.4349152334034443,
+              1.4381008222699165,
+              1.4406549744307995,
+              1.4412249438464642,
+              1.4376193284988403,
+              1.436278223991394,
+              1.440524123609066,
+              1.4368579722940922,
+              1.432992983609438,
+              1.4332439750432968,
+              1.248811837285757,
+              1.4398926869034767
+            ],
+            "q_equal": true,
+            "scale_equal": true,
+            "q_mismatch": 0,
+            "scale_mismatch": 0,
+            "regs": 128,
+            "spills": 0,
+            "shared": 49152,
+            "mean_ms": 1.1819066802660625,
+            "median_ms": 1.1781920194625854,
+            "paired_wins": 11
+          }
+        },
+        "orders": [
+          [
+            "production",
+            "copy_control",
+            "group4",
+            "group16",
+            "stream_store",
+            "warps8"
+          ],
+          [
+            "copy_control",
+            "group4",
+            "group16",
+            "stream_store",
+            "warps8",
+            "production"
+          ],
+          [
+            "group4",
+            "group16",
+            "stream_store",
+            "warps8",
+            "production",
+            "copy_control"
+          ],
+          [
+            "group16",
+            "stream_store",
+            "warps8",
+            "production",
+            "copy_control",
+            "group4"
+          ],
+          [
+            "stream_store",
+            "warps8",
+            "production",
+            "copy_control",
+            "group4",
+            "group16"
+          ],
+          [
+            "warps8",
+            "production",
+            "copy_control",
+            "group4",
+            "group16",
+            "stream_store"
+          ],
+          [
+            "warps8",
+            "stream_store",
+            "group16",
+            "group4",
+            "copy_control",
+            "production"
+          ],
+          [
+            "production",
+            "warps8",
+            "stream_store",
+            "group16",
+            "group4",
+            "copy_control"
+          ],
+          [
+            "copy_control",
+            "production",
+            "warps8",
+            "stream_store",
+            "group16",
+            "group4"
+          ],
+          [
+            "group4",
+            "copy_control",
+            "production",
+            "warps8",
+            "stream_store",
+            "group16"
+          ],
+          [
+            "group16",
+            "group4",
+            "copy_control",
+            "production",
+            "warps8",
+            "stream_store"
+          ],
+          [
+            "stream_store",
+            "group16",
+            "group4",
+            "copy_control",
+            "production",
+            "warps8"
+          ]
+        ]
+      }
+    },
+    "ffn_up_lut": {
+      "plan": {
+        "baseline_commit": "7bd9809",
+        "target": "INT8 FFN-up/SwiGLU epilogue",
+        "mechanism": "FP16-rounded gate has only 65536 encodings. Generate its FP32 SiLU values once per FFN call and reuse a 256KiB table inside the GEMM epilogue. No persistent GPU tensor cache.",
+        "included_costs": "Fresh table allocation and generation, GEMM/SwiGLU output allocation, quantization and q/scale allocation.",
+        "screening_quality": "All finite FP16 gate encodings with five representative up constants; captured real q and FP32 scales must exactly match production.",
+        "outcome": "Rejected at local replay: q/scales exact but complete chain mean increased from 1.191448ms to 2.058368ms (4 warps), or 2.069053ms (8 warps). No full-decode experiment or production change."
+      },
+      "replay": {
+        "status": "passed",
+        "scope": "local complete up+SwiGLU+quantization including fresh 256KiB FP32 SiLU lookup generation each call; no persistent GPU tensor cache",
+        "warmup": 3,
+        "runs": 12,
+        "shape_mnk": [
+          7188,
+          16384,
+          2048
+        ],
+        "environment": {
+          "torch": "2.11.0+cu130",
+          "cuda": "13.0",
+          "triton": "3.6.0"
+        },
+        "sources": {
+          "replay_lut.py": "f6eee4b0901ecd43b7a1bd9447ac4f11fabd117732c7c39077a61ed4e29feba5",
+          "lookup_candidates.py": "864fa2aceaa12b3db65801449079afb198f486f16cf1c7f4bc4be34c84bf686c",
+          "int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198"
+        },
+        "variants": {
+          "production": {
+            "q_equal": true,
+            "scale_equal": true,
+            "samples_ms": [
+              1.1851520538330078,
+              1.186303973197937,
+              1.1840640306472778,
+              1.1839679479599,
+              1.245792031288147,
+              1.1839679479599,
+              1.18886399269104,
+              1.1882879734039307,
+              1.1858880519866943,
+              1.1864320039749146,
+              1.188256025314331,
+              1.1904000043869019
+            ],
+            "wall_ms": [
+              1.4209751971065998,
+              1.4444510452449322,
+              1.4428673312067986,
+              1.4431378804147243,
+              1.2624431401491165,
+              1.4430680312216282,
+              1.443137414753437,
+              1.4463718980550766,
+              1.443779096007347,
+              1.4453311450779438,
+              1.4445497654378414,
+              1.449889037758112
+            ],
+            "mean_ms": 1.1914480030536652,
+            "median_ms": 1.1863679885864258,
+            "paired_wins": 0
+          },
+          "lut_warps4": {
+            "config": [
+              4
+            ],
+            "samples_ms": [
+              2.0566399097442627,
+              2.058720111846924,
+              2.0563199520111084,
+              2.0583999156951904,
+              2.0589759349823,
+              2.0606400966644287,
+              2.0584959983825684,
+              2.059135913848877,
+              2.0568959712982178,
+              2.057055950164795,
+              2.060703992843628,
+              2.058432102203369
+            ],
+            "wall_ms": [
+              2.3099277168512344,
+              2.3222467862069607,
+              2.314846031367779,
+              2.316136844456196,
+              2.3151561617851257,
+              2.3180809803307056,
+              2.3173601366579533,
+              2.315937075763941,
+              2.3154071532189846,
+              2.314816229045391,
+              2.310850191861391,
+              2.3165391758084297
+            ],
+            "q_equal": true,
+            "scale_equal": true,
+            "q_mismatch": 0,
+            "scale_mismatch": 0,
+            "regs": 242,
+            "spills": 0,
+            "shared": 49152,
+            "mean_ms": 2.058367987473806,
+            "median_ms": 2.0584640502929688,
+            "paired_wins": 0
+          },
+          "lut_warps8": {
+            "config": [
+              8
+            ],
+            "samples_ms": [
+              2.0607359409332275,
+              2.0630719661712646,
+              2.0630719661712646,
+              2.0668160915374756,
+              2.1190080642700195,
+              2.0629119873046875,
+              2.067199945449829,
+              2.0624639987945557,
+              2.0669119358062744,
+              2.0630080699920654,
+              2.0668160915374756,
+              2.0666239261627197
+            ],
+            "wall_ms": [
+              2.318782266229391,
+              2.3172497749328613,
+              2.32102582231164,
+              2.3231180384755135,
+              2.1377261728048325,
+              2.324239816516638,
+              2.3256330750882626,
+              2.3230076767504215,
+              2.326773013919592,
+              2.319062128663063,
+              2.334635704755783,
+              2.3260628804564476
+            ],
+            "q_equal": true,
+            "scale_equal": true,
+            "q_mismatch": 0,
+            "scale_mismatch": 0,
+            "regs": 127,
+            "spills": 0,
+            "shared": 49152,
+            "mean_ms": 2.069053332010905,
+            "median_ms": 2.064847946166992,
+            "paired_wins": 0
+          }
+        },
+        "orders": [
+          [
+            "production",
+            "lut_warps4",
+            "lut_warps8"
+          ],
+          [
+            "lut_warps4",
+            "lut_warps8",
+            "production"
+          ],
+          [
+            "lut_warps8",
+            "production",
+            "lut_warps4"
+          ],
+          [
+            "lut_warps8",
+            "lut_warps4",
+            "production"
+          ],
+          [
+            "production",
+            "lut_warps8",
+            "lut_warps4"
+          ],
+          [
+            "lut_warps4",
+            "production",
+            "lut_warps8"
+          ],
+          [
+            "production",
+            "lut_warps4",
+            "lut_warps8"
+          ],
+          [
+            "lut_warps4",
+            "lut_warps8",
+            "production"
+          ],
+          [
+            "lut_warps8",
+            "production",
+            "lut_warps4"
+          ],
+          [
+            "lut_warps8",
+            "lut_warps4",
+            "production"
+          ],
+          [
+            "production",
+            "lut_warps8",
+            "lut_warps4"
+          ],
+          [
+            "lut_warps4",
+            "production",
+            "lut_warps8"
+          ]
+        ],
+        "finite_gate_lut_checks": [
+          {
+            "up": 0.0,
+            "mismatch": 0
+          },
+          {
+            "up": -1.0,
+            "mismatch": 0
+          },
+          {
+            "up": 1.0,
+            "mismatch": 0
+          },
+          {
+            "up": 0.03125,
+            "mismatch": 0
+          },
+          {
+            "up": 65504.0,
+            "mismatch": 0
+          }
+        ]
+      }
+    },
+    "ffn_quantizer": {
+      "research_date": "2026-10-03",
+      "decision": "Do not promote any candidate to production",
+      "conclusion": "All four candidates preserve q and scale bits on one real FFN capture and synthetic edge inputs. Single-row 4-warps saves only 0.81% at real M7188 and one of three paired blocks regresses; 16-warps and both multirow variants are slower. The repeated-row M14376 extension is not an independent capture. No full-decode speedup has been measured or claimed.",
+      "timings_are_full_decode": false,
+      "kernel_contract": "Keep FP32 absmax and FP32 stored scales, FP16 denominator rounding, tl.div_rn, FP16 quotient rounding, nearbyint, NaN->-128, and INT8 clamp exactly unchanged.",
+      "mechanism_observations": [
+        "Production single-row quantizer uses 54 registers/thread and 32 bytes shared memory at 8 warps; multirow variants increase register demand and shared reduction storage, with zero spills in these measurements. These resource counts alone do not establish a hardware bottleneck.",
+        "A real M7188 call reads 117768192 FP16 activation bytes and writes 58884096 INT8 bytes plus scales. Measured effective streaming traffic is approximately 1 TB/s; this is bytes divided by elapsed time, not a measured DRAM-bandwidth counter.",
+        "Fusing final rowwise quantization into current FFN-up tiles would require the exact maximum over 128 independent column tiles. A partial-max scratch would add producer work and another memory dependency while keeping the activation read/write pass. Do not implement this without evidence that reduction cost dominates."
+      ],
+      "summary": [
+        {
+          "case": "real_M7188",
+          "candidate": "row1_w4",
+          "baseline_mean_ms": 0.17022453281614516,
+          "candidate_mean_ms": 0.1688509335120519,
+          "mean_improvement_percent": 0.8069338075827437,
+          "median_improvement_percent": 0.5795602450871296,
+          "kernel_resources": {
+            "registers": 84,
+            "spills": 0,
+            "shared_bytes": 16,
+            "num_warps": 4
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        },
+        {
+          "case": "real_M7188",
+          "candidate": "row1_w16",
+          "baseline_mean_ms": 0.16982973284191555,
+          "candidate_mean_ms": 0.172293022274971,
+          "mean_improvement_percent": -1.4504465100633412,
+          "median_improvement_percent": -0.8744015675818506,
+          "kernel_resources": {
+            "registers": 36,
+            "spills": 0,
+            "shared_bytes": 64,
+            "num_warps": 16
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        },
+        {
+          "case": "real_M7188",
+          "candidate": "row2_w8",
+          "baseline_mean_ms": 0.17041200035148196,
+          "candidate_mean_ms": 0.17297000057167478,
+          "mean_improvement_percent": -1.5010681260221315,
+          "median_improvement_percent": -1.4389219592565894,
+          "kernel_resources": {
+            "registers": 94,
+            "spills": 0,
+            "shared_bytes": 64,
+            "num_warps": 8
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        },
+        {
+          "case": "real_M7188",
+          "candidate": "row4_w16",
+          "baseline_mean_ms": 0.1708421332968606,
+          "candidate_mean_ms": 0.17682946655485365,
+          "mean_improvement_percent": -3.5045999148168416,
+          "median_improvement_percent": -3.752864057861305,
+          "kernel_resources": {
+            "registers": 94,
+            "spills": 0,
+            "shared_bytes": 256,
+            "num_warps": 16
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        },
+        {
+          "case": "repeated_real_rows_M14376",
+          "candidate": "row1_w4",
+          "baseline_mean_ms": 0.3997959567440881,
+          "candidate_mean_ms": 0.39396249055862426,
+          "mean_improvement_percent": 1.4591108506877282,
+          "median_improvement_percent": 1.770778830587616,
+          "kernel_resources": {
+            "registers": 84,
+            "spills": 0,
+            "shared_bytes": 16,
+            "num_warps": 4
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        },
+        {
+          "case": "repeated_real_rows_M14376",
+          "candidate": "row1_w16",
+          "baseline_mean_ms": 0.40062848925590516,
+          "candidate_mean_ms": 0.4015929321448008,
+          "mean_improvement_percent": -0.24073247778431117,
+          "median_improvement_percent": -0.2058542626198756,
+          "kernel_resources": {
+            "registers": 36,
+            "spills": 0,
+            "shared_bytes": 64,
+            "num_warps": 16
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        },
+        {
+          "case": "repeated_real_rows_M14376",
+          "candidate": "row2_w8",
+          "baseline_mean_ms": 0.4000879963239034,
+          "candidate_mean_ms": 0.400500135951572,
+          "mean_improvement_percent": -0.10301224516993113,
+          "median_improvement_percent": 0.04340852987700927,
+          "kernel_resources": {
+            "registers": 94,
+            "spills": 0,
+            "shared_bytes": 64,
+            "num_warps": 8
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        },
+        {
+          "case": "repeated_real_rows_M14376",
+          "candidate": "row4_w16",
+          "baseline_mean_ms": 0.3996872458193037,
+          "candidate_mean_ms": 0.4023392902480231,
+          "mean_improvement_percent": -0.6635299115645088,
+          "median_improvement_percent": -0.2857253585359265,
+          "kernel_resources": {
+            "registers": 94,
+            "spills": 0,
+            "shared_bytes": 256,
+            "num_warps": 16
+          },
+          "q_exact": true,
+          "scale_bitwise_exact": true
+        }
+      ],
+      "raw_replay": {
+        "status": "completed_all_exact",
+        "timestamp_utc": "2026-10-03T07:02:41.892346+00:00",
+        "scope": "Quantizer-only component replay. Not complete FFN or full decode timing.",
+        "timings_are_full_decode": false,
+        "source_sha256": {
+          "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+          "opt/int8_swiglu_fused.py": "2dfa8240257f3677454455fbbd29921db48572874db6dd96be14db03e44ae456"
+        },
+        "replay_source_sha256": "80ff2e3475e2406f87d5dbd339afaf3b92af4f11b82f40d4c59932d300c9dc83",
+        "repo_commit": "7bd9809ae97fa54796d838941929211e9681e5b8",
+        "input": {
+          "basename": "gemm_7188_16384_2048.pt",
+          "sha256": "14c51202e9cb118fea9e968da98ba50bfffe5b0ce616b0cfb0c0b309f778e815",
+          "tensors": {
+            "q": {
+              "shape": [
+                7188,
+                2048
+              ],
+              "dtype": "torch.int8"
+            },
+            "s": {
+              "shape": [
+                7188,
+                1
+              ],
+              "dtype": "torch.float32"
+            },
+            "w": {
+              "shape": [
+                16384,
+                2048
+              ],
+              "dtype": "torch.int8"
+            },
+            "ws": {
+              "shape": [
+                16384
+              ],
+              "dtype": "torch.float32"
+            },
+            "b": {
+              "shape": [
+                16384
+              ],
+              "dtype": "torch.float16"
+            },
+            "ref": {
+              "shape": [
+                7188,
+                16384
+              ],
+              "dtype": "torch.float16"
+            }
+          }
+        },
+        "configs": {
+          "row1_w8_baseline": [
+            1,
+            8,
+            "production"
+          ],
+          "row1_w4": [
+            1,
+            4,
+            "production"
+          ],
+          "row1_w16": [
+            1,
+            16,
+            "production"
+          ],
+          "row2_w8": [
+            2,
+            8,
+            "multirow"
+          ],
+          "row4_w16": [
+            4,
+            16,
+            "multirow"
+          ]
+        },
+        "timing_protocol": {
+          "blocks": 3,
+          "samples_per_segment": 6,
+          "launches_per_sample": 20,
+          "warmup_pairs": 5,
+          "orders": "ABBA/BAAB alternation",
+          "timer": "CUDA events; output/input tensors preallocated; no GEMM inside measurement"
+        },
+        "cases": [
+          {
+            "name": "real_M7188",
+            "shape": [
+              7188,
+              8192
+            ],
+            "source_kind": "real captured up-GEMM inputs, current production fused producer",
+            "minimum_read_write_bytes_per_call": 176681040,
+            "baseline_kernel": {
+              "registers": 54,
+              "spills": 0,
+              "shared_bytes": 32,
+              "num_warps": 8,
+              "asm_sha256": {
+                "ptx": "2f72f1cf0683dad576ee5414acdd4d6d8b9bc9025a59fa4b1939f0034e947631",
+                "ttgir": "cd655d14e4b6682f469e3a2b8413d916aa1f83cdcf356403323a7e6d40a100bc"
+              }
+            },
+            "candidates": [
+              {
+                "name": "row1_w4",
+                "config": [
+                  1,
+                  4,
+                  "production"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 84,
+                  "spills": 0,
+                  "shared_bytes": 16,
+                  "num_warps": 4,
+                  "asm_sha256": {
+                    "ptx": "87af5fafb0f7b9edf361f7700d2a18bbf1f222070df97a9b3629db72efde23b3",
+                    "ttgir": "d7713fe20b836fb2058b24e0b769c31f242e8ac44dc7f4d85602e694007b5bdb"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.17022453281614516,
+                    "median_ms": 0.1706120014190674,
+                    "min_ms": 0.15296640396118164,
+                    "max_ms": 0.17151039838790894,
+                    "all_samples_ms": [
+                      0.17107199430465697,
+                      0.170687997341156,
+                      0.1705471992492676,
+                      0.17044639587402344,
+                      0.17127039432525634,
+                      0.17037919759750367,
+                      0.17063679695129394,
+                      0.17042720317840576,
+                      0.17151039838790894,
+                      0.17066880464553832,
+                      0.1705456018447876,
+                      0.1706223964691162,
+                      0.17095359563827514,
+                      0.1706431984901428,
+                      0.17100160121917723,
+                      0.1703711986541748,
+                      0.15296640396118164,
+                      0.17117279767990112,
+                      0.17096960544586182,
+                      0.17017439603805543,
+                      0.17053120136260985,
+                      0.17128959894180298,
+                      0.1706480026245117,
+                      0.17043520212173463,
+                      0.17125279903411866,
+                      0.17054400444030762,
+                      0.17036960124969483,
+                      0.17097439765930175,
+                      0.1703727960586548,
+                      0.17047359943389892,
+                      0.17051999568939208,
+                      0.17061439752578736,
+                      0.17060960531234742,
+                      0.17047840356826782,
+                      0.1705024003982544,
+                      0.17139999866485595
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.1688509335120519,
+                    "median_ms": 0.169623202085495,
+                    "min_ms": 0.15337920188903809,
+                    "max_ms": 0.17116639614105225,
+                    "all_samples_ms": [
+                      0.154366397857666,
+                      0.1705024003982544,
+                      0.16983360052108765,
+                      0.16958880424499512,
+                      0.1698591947555542,
+                      0.16979520320892333,
+                      0.1696784019470215,
+                      0.16966400146484376,
+                      0.16984959840774536,
+                      0.16939200162887574,
+                      0.16968159675598143,
+                      0.16930400133132933,
+                      0.1701311945915222,
+                      0.16958880424499512,
+                      0.16957279443740844,
+                      0.16903200149536132,
+                      0.1689504027366638,
+                      0.17044639587402344,
+                      0.1706272006034851,
+                      0.16934880018234252,
+                      0.16924320459365844,
+                      0.16965759992599488,
+                      0.16973600387573243,
+                      0.1694416046142578,
+                      0.17006880044937134,
+                      0.16897120475769042,
+                      0.16938719749450684,
+                      0.16948959827423096,
+                      0.16914080381393432,
+                      0.1692415952682495,
+                      0.16941440105438232,
+                      0.17109600305557252,
+                      0.17006239891052247,
+                      0.15337920188903809,
+                      0.17116639614105225,
+                      0.169924795627594
+                    ]
+                  },
+                  "mean_improvement_percent": 0.8069338075827437,
+                  "median_improvement_percent": 0.5795602450871296,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17107199430465697,
+                            0.170687997341156,
+                            0.1705471992492676,
+                            0.17044639587402344,
+                            0.17127039432525634,
+                            0.17037919759750367
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.154366397857666,
+                            0.1705024003982544,
+                            0.16983360052108765,
+                            0.16958880424499512,
+                            0.1698591947555542,
+                            0.16979520320892333
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.1696784019470215,
+                            0.16966400146484376,
+                            0.16984959840774536,
+                            0.16939200162887574,
+                            0.16968159675598143,
+                            0.16930400133132933
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17063679695129394,
+                            0.17042720317840576,
+                            0.17151039838790894,
+                            0.17066880464553832,
+                            0.1705456018447876,
+                            0.1706223964691162
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.1701311945915222,
+                            0.16958880424499512,
+                            0.16957279443740844,
+                            0.16903200149536132,
+                            0.1689504027366638,
+                            0.17044639587402344
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17095359563827514,
+                            0.1706431984901428,
+                            0.17100160121917723,
+                            0.1703711986541748,
+                            0.15296640396118164,
+                            0.17117279767990112
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17096960544586182,
+                            0.17017439603805543,
+                            0.17053120136260985,
+                            0.17128959894180298,
+                            0.1706480026245117,
+                            0.17043520212173463
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.1706272006034851,
+                            0.16934880018234252,
+                            0.16924320459365844,
+                            0.16965759992599488,
+                            0.16973600387573243,
+                            0.1694416046142578
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17125279903411866,
+                            0.17054400444030762,
+                            0.17036960124969483,
+                            0.17097439765930175,
+                            0.1703727960586548,
+                            0.17047359943389892
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17006880044937134,
+                            0.16897120475769042,
+                            0.16938719749450684,
+                            0.16948959827423096,
+                            0.16914080381393432,
+                            0.1692415952682495
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.16941440105438232,
+                            0.17109600305557252,
+                            0.17006239891052247,
+                            0.15337920188903809,
+                            0.17116639614105225,
+                            0.169924795627594
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17051999568939208,
+                            0.17061439752578736,
+                            0.17060960531234742,
+                            0.17047840356826782,
+                            0.1705024003982544,
+                            0.17139999866485595
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 1046.372894274755
+                }
+              },
+              {
+                "name": "row1_w16",
+                "config": [
+                  1,
+                  16,
+                  "production"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 36,
+                  "spills": 0,
+                  "shared_bytes": 64,
+                  "num_warps": 16,
+                  "asm_sha256": {
+                    "ptx": "3c170469fee3fcad7dfea3650335f339a91457852ff2a8227742ea65686cd28f",
+                    "ttgir": "4f8f3ab9ff4392866a7a631e644f960011caa42db25a0e8931781fae31644dd9"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.16982973284191555,
+                    "median_ms": 0.17072160243988038,
+                    "min_ms": 0.1536687970161438,
+                    "max_ms": 0.17231359481811523,
+                    "all_samples_ms": [
+                      0.17182079553604127,
+                      0.17072000503540039,
+                      0.17025439739227294,
+                      0.17017920017242433,
+                      0.17012319564819336,
+                      0.17073440551757812,
+                      0.17130399942398072,
+                      0.17089279890060424,
+                      0.1702847957611084,
+                      0.16970080137252808,
+                      0.1545807957649231,
+                      0.17128640413284302,
+                      0.17215679883956908,
+                      0.17032480239868164,
+                      0.17078239917755128,
+                      0.17027519941329955,
+                      0.17109279632568358,
+                      0.17072319984436035,
+                      0.17027519941329955,
+                      0.17098239660263062,
+                      0.17002559900283815,
+                      0.1710096001625061,
+                      0.17038240432739257,
+                      0.16987199783325196,
+                      0.17231359481811523,
+                      0.17088960409164428,
+                      0.1536687970161438,
+                      0.17167199850082399,
+                      0.1703503966331482,
+                      0.169868803024292,
+                      0.1709663987159729,
+                      0.17023359537124633,
+                      0.17031840085983277,
+                      0.17130240201950073,
+                      0.17147680521011352,
+                      0.1710255980491638
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.172293022274971,
+                    "median_ms": 0.17221439480781556,
+                    "min_ms": 0.17076480388641357,
+                    "max_ms": 0.1742303967475891,
+                    "all_samples_ms": [
+                      0.17415839433670044,
+                      0.17270400524139404,
+                      0.17220319509506227,
+                      0.17076480388641357,
+                      0.17213280200958253,
+                      0.1717728018760681,
+                      0.1721951961517334,
+                      0.1710752010345459,
+                      0.17259999513626098,
+                      0.17330080270767212,
+                      0.17184319496154785,
+                      0.17282719612121583,
+                      0.17204639911651612,
+                      0.1709328055381775,
+                      0.1715440034866333,
+                      0.17255200147628785,
+                      0.17254240512847902,
+                      0.1735967993736267,
+                      0.17315200567245484,
+                      0.17123039960861205,
+                      0.17192480564117432,
+                      0.17259999513626098,
+                      0.17174079418182372,
+                      0.17288000583648683,
+                      0.17389440536499023,
+                      0.17224639654159546,
+                      0.1712656021118164,
+                      0.17108960151672364,
+                      0.17208800315856934,
+                      0.17259680032730101,
+                      0.17237919569015503,
+                      0.17222559452056885,
+                      0.17233439683914184,
+                      0.1742303967475891,
+                      0.17189760208129884,
+                      0.17198079824447632
+                    ]
+                  },
+                  "mean_improvement_percent": -1.4504465100633412,
+                  "median_improvement_percent": -0.8744015675818506,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17182079553604127,
+                            0.17072000503540039,
+                            0.17025439739227294,
+                            0.17017920017242433,
+                            0.17012319564819336,
+                            0.17073440551757812
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17415839433670044,
+                            0.17270400524139404,
+                            0.17220319509506227,
+                            0.17076480388641357,
+                            0.17213280200958253,
+                            0.1717728018760681
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.1721951961517334,
+                            0.1710752010345459,
+                            0.17259999513626098,
+                            0.17330080270767212,
+                            0.17184319496154785,
+                            0.17282719612121583
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17130399942398072,
+                            0.17089279890060424,
+                            0.1702847957611084,
+                            0.16970080137252808,
+                            0.1545807957649231,
+                            0.17128640413284302
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17204639911651612,
+                            0.1709328055381775,
+                            0.1715440034866333,
+                            0.17255200147628785,
+                            0.17254240512847902,
+                            0.1735967993736267
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17215679883956908,
+                            0.17032480239868164,
+                            0.17078239917755128,
+                            0.17027519941329955,
+                            0.17109279632568358,
+                            0.17072319984436035
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17027519941329955,
+                            0.17098239660263062,
+                            0.17002559900283815,
+                            0.1710096001625061,
+                            0.17038240432739257,
+                            0.16987199783325196
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17315200567245484,
+                            0.17123039960861205,
+                            0.17192480564117432,
+                            0.17259999513626098,
+                            0.17174079418182372,
+                            0.17288000583648683
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17231359481811523,
+                            0.17088960409164428,
+                            0.1536687970161438,
+                            0.17167199850082399,
+                            0.1703503966331482,
+                            0.169868803024292
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17389440536499023,
+                            0.17224639654159546,
+                            0.1712656021118164,
+                            0.17108960151672364,
+                            0.17208800315856934,
+                            0.17259680032730101
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17237919569015503,
+                            0.17222559452056885,
+                            0.17233439683914184,
+                            0.1742303967475891,
+                            0.17189760208129884,
+                            0.17198079824447632
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.1709663987159729,
+                            0.17023359537124633,
+                            0.17031840085983277,
+                            0.17130240201950073,
+                            0.17147680521011352,
+                            0.1710255980491638
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 1025.4683426356405
+                }
+              },
+              {
+                "name": "row2_w8",
+                "config": [
+                  2,
+                  8,
+                  "multirow"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 94,
+                  "spills": 0,
+                  "shared_bytes": 64,
+                  "num_warps": 8,
+                  "asm_sha256": {
+                    "ptx": "c65b40b1bf84436e6810cc8f6a2fa18bc33c35ab4066b2301fa034eb8a10d542",
+                    "ttgir": "5d332747760df43148acf7768b23ba2884a2897f9ba9bf084b4a07a3c97e28a7"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.17041200035148196,
+                    "median_ms": 0.170905601978302,
+                    "min_ms": 0.1536960005760193,
+                    "max_ms": 0.17329119443893432,
+                    "all_samples_ms": [
+                      0.17086880207061766,
+                      0.17047359943389892,
+                      0.1710495948791504,
+                      0.17012959718704224,
+                      0.17093440294265747,
+                      0.1701024055480957,
+                      0.1719887971878052,
+                      0.17184799909591675,
+                      0.17029600143432616,
+                      0.17048799991607666,
+                      0.17034560441970825,
+                      0.17091840505599976,
+                      0.17111680507659913,
+                      0.1709936022758484,
+                      0.1710736036300659,
+                      0.170905601978302,
+                      0.170523202419281,
+                      0.1706480026245117,
+                      0.17091519832611085,
+                      0.1710368037223816,
+                      0.17099039554595946,
+                      0.1536960005760193,
+                      0.17039519548416138,
+                      0.17108160257339478,
+                      0.17329119443893432,
+                      0.17053600549697875,
+                      0.17068159580230713,
+                      0.17090719938278198,
+                      0.1701359987258911,
+                      0.170905601978302,
+                      0.17123359441757202,
+                      0.17147519588470458,
+                      0.17142720222473146,
+                      0.17070560455322265,
+                      0.17040159702301025,
+                      0.1703119993209839
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.17297000057167478,
+                    "median_ms": 0.17336480021476747,
+                    "min_ms": 0.15543839931488038,
+                    "max_ms": 0.17489759922027587,
+                    "all_samples_ms": [
+                      0.17419040203094482,
+                      0.1731168031692505,
+                      0.17275840044021606,
+                      0.174452805519104,
+                      0.15543839931488038,
+                      0.17469919919967652,
+                      0.17392799854278565,
+                      0.17344800233840943,
+                      0.17300959825515747,
+                      0.17343519926071166,
+                      0.17212799787521363,
+                      0.17294559478759766,
+                      0.174235200881958,
+                      0.17398560047149658,
+                      0.17449920177459716,
+                      0.17262719869613646,
+                      0.17317440509796142,
+                      0.17339520454406737,
+                      0.17489759922027587,
+                      0.17429440021514891,
+                      0.17283999919891357,
+                      0.17333439588546753,
+                      0.17327040433883667,
+                      0.17263360023498536,
+                      0.17380800247192382,
+                      0.1732480049133301,
+                      0.17194080352783203,
+                      0.17345600128173827,
+                      0.17414560317993164,
+                      0.17329280376434325,
+                      0.17284159660339354,
+                      0.17298239469528198,
+                      0.17452640533447267,
+                      0.17366399765014648,
+                      0.1727839946746826,
+                      0.17349280118942262
+                    ]
+                  },
+                  "mean_improvement_percent": -1.5010681260221315,
+                  "median_improvement_percent": -1.4389219592565894,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17086880207061766,
+                            0.17047359943389892,
+                            0.1710495948791504,
+                            0.17012959718704224,
+                            0.17093440294265747,
+                            0.1701024055480957
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17419040203094482,
+                            0.1731168031692505,
+                            0.17275840044021606,
+                            0.174452805519104,
+                            0.15543839931488038,
+                            0.17469919919967652
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17392799854278565,
+                            0.17344800233840943,
+                            0.17300959825515747,
+                            0.17343519926071166,
+                            0.17212799787521363,
+                            0.17294559478759766
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.1719887971878052,
+                            0.17184799909591675,
+                            0.17029600143432616,
+                            0.17048799991607666,
+                            0.17034560441970825,
+                            0.17091840505599976
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.174235200881958,
+                            0.17398560047149658,
+                            0.17449920177459716,
+                            0.17262719869613646,
+                            0.17317440509796142,
+                            0.17339520454406737
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17111680507659913,
+                            0.1709936022758484,
+                            0.1710736036300659,
+                            0.170905601978302,
+                            0.170523202419281,
+                            0.1706480026245117
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17091519832611085,
+                            0.1710368037223816,
+                            0.17099039554595946,
+                            0.1536960005760193,
+                            0.17039519548416138,
+                            0.17108160257339478
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17489759922027587,
+                            0.17429440021514891,
+                            0.17283999919891357,
+                            0.17333439588546753,
+                            0.17327040433883667,
+                            0.17263360023498536
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17329119443893432,
+                            0.17053600549697875,
+                            0.17068159580230713,
+                            0.17090719938278198,
+                            0.1701359987258911,
+                            0.170905601978302
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17380800247192382,
+                            0.1732480049133301,
+                            0.17194080352783203,
+                            0.17345600128173827,
+                            0.17414560317993164,
+                            0.17329280376434325
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17284159660339354,
+                            0.17298239469528198,
+                            0.17452640533447267,
+                            0.17366399765014648,
+                            0.1727839946746826,
+                            0.17349280118942262
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17123359441757202,
+                            0.17147519588470458,
+                            0.17142720222473146,
+                            0.17070560455322265,
+                            0.17040159702301025,
+                            0.1703119993209839
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 1021.4548153787364
+                }
+              },
+              {
+                "name": "row4_w16",
+                "config": [
+                  4,
+                  16,
+                  "multirow"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 94,
+                  "spills": 0,
+                  "shared_bytes": 256,
+                  "num_warps": 16,
+                  "asm_sha256": {
+                    "ptx": "56c649ef006f2eeb28a6d7d1ded3926b585a952b08c0753964fbf4c4ae1347da",
+                    "ttgir": "c2462562dd6b6dae3602dafea6c7434320b413bdb8551daf64b2fbc30cd59333"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.1708421332968606,
+                    "median_ms": 0.17081359624862671,
+                    "min_ms": 0.1701040029525757,
+                    "max_ms": 0.17288479804992676,
+                    "all_samples_ms": [
+                      0.17288479804992676,
+                      0.17068320512771606,
+                      0.17098400592803956,
+                      0.17011200189590453,
+                      0.1701040029525757,
+                      0.17053920030593872,
+                      0.17097280025482178,
+                      0.17055840492248536,
+                      0.17150880098342897,
+                      0.17082879543304444,
+                      0.1702304005622864,
+                      0.17040959596633912,
+                      0.17128959894180298,
+                      0.1711151957511902,
+                      0.17140640020370485,
+                      0.17039519548416138,
+                      0.17053439617156982,
+                      0.1708143949508667,
+                      0.17122880220413209,
+                      0.170305597782135,
+                      0.17072160243988038,
+                      0.17115360498428345,
+                      0.17045919895172118,
+                      0.17101759910583497,
+                      0.1711199998855591,
+                      0.17030240297317506,
+                      0.17038880586624144,
+                      0.17084959745407105,
+                      0.1715648055076599,
+                      0.17117919921875,
+                      0.17081279754638673,
+                      0.17016639709472656,
+                      0.17043999433517457,
+                      0.17105599641799926,
+                      0.17144479751586914,
+                      0.17073440551757812
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.17682946655485365,
+                    "median_ms": 0.17722399830818175,
+                    "min_ms": 0.16330720186233522,
+                    "max_ms": 0.1792080044746399,
+                    "all_samples_ms": [
+                      0.17691680192947387,
+                      0.17721920013427733,
+                      0.1746224045753479,
+                      0.1790719985961914,
+                      0.1777999997138977,
+                      0.1774783968925476,
+                      0.17854080200195313,
+                      0.17722879648208617,
+                      0.17715519666671753,
+                      0.17744159698486328,
+                      0.17694079875946045,
+                      0.17856960296630858,
+                      0.17755359411239624,
+                      0.17598400115966797,
+                      0.17900960445404052,
+                      0.1769503951072693,
+                      0.1773408055305481,
+                      0.17503199577331544,
+                      0.17583199739456176,
+                      0.1762063980102539,
+                      0.17706559896469115,
+                      0.17546080350875853,
+                      0.1773568034172058,
+                      0.17823679447174073,
+                      0.16330720186233522,
+                      0.17835839986801147,
+                      0.17616480588912964,
+                      0.17693760395050048,
+                      0.17756799459457398,
+                      0.1792080044746399,
+                      0.17568479776382445,
+                      0.17751519680023192,
+                      0.17730560302734374,
+                      0.17859519720077516,
+                      0.17713119983673095,
+                      0.17707040309906005
+                    ]
+                  },
+                  "mean_improvement_percent": -3.5045999148168416,
+                  "median_improvement_percent": -3.752864057861305,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17288479804992676,
+                            0.17068320512771606,
+                            0.17098400592803956,
+                            0.17011200189590453,
+                            0.1701040029525757,
+                            0.17053920030593872
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17691680192947387,
+                            0.17721920013427733,
+                            0.1746224045753479,
+                            0.1790719985961914,
+                            0.1777999997138977,
+                            0.1774783968925476
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17854080200195313,
+                            0.17722879648208617,
+                            0.17715519666671753,
+                            0.17744159698486328,
+                            0.17694079875946045,
+                            0.17856960296630858
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17097280025482178,
+                            0.17055840492248536,
+                            0.17150880098342897,
+                            0.17082879543304444,
+                            0.1702304005622864,
+                            0.17040959596633912
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17755359411239624,
+                            0.17598400115966797,
+                            0.17900960445404052,
+                            0.1769503951072693,
+                            0.1773408055305481,
+                            0.17503199577331544
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17128959894180298,
+                            0.1711151957511902,
+                            0.17140640020370485,
+                            0.17039519548416138,
+                            0.17053439617156982,
+                            0.1708143949508667
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17122880220413209,
+                            0.170305597782135,
+                            0.17072160243988038,
+                            0.17115360498428345,
+                            0.17045919895172118,
+                            0.17101759910583497
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17583199739456176,
+                            0.1762063980102539,
+                            0.17706559896469115,
+                            0.17546080350875853,
+                            0.1773568034172058,
+                            0.17823679447174073
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.1711199998855591,
+                            0.17030240297317506,
+                            0.17038880586624144,
+                            0.17084959745407105,
+                            0.1715648055076599,
+                            0.17117919921875
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.16330720186233522,
+                            0.17835839986801147,
+                            0.17616480588912964,
+                            0.17693760395050048,
+                            0.17756799459457398,
+                            0.1792080044746399
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.17568479776382445,
+                            0.17751519680023192,
+                            0.17730560302734374,
+                            0.17859519720077516,
+                            0.17713119983673095,
+                            0.17707040309906005
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.17081279754638673,
+                            0.17016639709472656,
+                            0.17043999433517457,
+                            0.17105599641799926,
+                            0.17144479751586914,
+                            0.17073440551757812
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 999.1606231826322
+                }
+              }
+            ],
+            "baseline_vs_captured_ck": {
+              "q_exact": true,
+              "scale_bitwise_exact": true
+            }
+          },
+          {
+            "name": "edge_M17",
+            "shape": [
+              17,
+              8192
+            ],
+            "source_kind": "synthetic contract edges; no performance claim",
+            "minimum_read_write_bytes_per_call": 417860,
+            "baseline_kernel": {
+              "registers": 54,
+              "spills": 0,
+              "shared_bytes": 32,
+              "num_warps": 8,
+              "asm_sha256": {
+                "ptx": "2f72f1cf0683dad576ee5414acdd4d6d8b9bc9025a59fa4b1939f0034e947631",
+                "ttgir": "cd655d14e4b6682f469e3a2b8413d916aa1f83cdcf356403323a7e6d40a100bc"
+              }
+            },
+            "candidates": [
+              {
+                "name": "row1_w4",
+                "config": [
+                  1,
+                  4,
+                  "production"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 84,
+                  "spills": 0,
+                  "shared_bytes": 16,
+                  "num_warps": 4,
+                  "asm_sha256": {
+                    "ptx": "87af5fafb0f7b9edf361f7700d2a18bbf1f222070df97a9b3629db72efde23b3",
+                    "ttgir": "d7713fe20b836fb2058b24e0b769c31f242e8ac44dc7f4d85602e694007b5bdb"
+                  }
+                }
+              },
+              {
+                "name": "row1_w16",
+                "config": [
+                  1,
+                  16,
+                  "production"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 36,
+                  "spills": 0,
+                  "shared_bytes": 64,
+                  "num_warps": 16,
+                  "asm_sha256": {
+                    "ptx": "3c170469fee3fcad7dfea3650335f339a91457852ff2a8227742ea65686cd28f",
+                    "ttgir": "4f8f3ab9ff4392866a7a631e644f960011caa42db25a0e8931781fae31644dd9"
+                  }
+                }
+              },
+              {
+                "name": "row2_w8",
+                "config": [
+                  2,
+                  8,
+                  "multirow"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 104,
+                  "spills": 0,
+                  "shared_bytes": 64,
+                  "num_warps": 8,
+                  "asm_sha256": {
+                    "ptx": "e3a2953dd7d20706ec49773ce3a1ed8d085b7b0311506c5eeeafe428f5e158f3",
+                    "ttgir": "55c54999f2bd735aa60ddd1ca82a31a074fbd96e63958b2dcb117054fc1e9f05"
+                  }
+                }
+              },
+              {
+                "name": "row4_w16",
+                "config": [
+                  4,
+                  16,
+                  "multirow"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 102,
+                  "spills": 0,
+                  "shared_bytes": 256,
+                  "num_warps": 16,
+                  "asm_sha256": {
+                    "ptx": "ed84be0f1850029c665e467742180dab70a663491f33cd674789e470b0e8b19e",
+                    "ttgir": "410a8ed57894f1a4ca0989c0017786ae814717e2cb8c4afde7c179d0c202f29a"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "repeated_real_rows_M14376",
+            "shape": [
+              14376,
+              8192
+            ],
+            "source_kind": "explicit repetition of real rows; not an independent capture",
+            "minimum_read_write_bytes_per_call": 353362080,
+            "baseline_kernel": {
+              "registers": 54,
+              "spills": 0,
+              "shared_bytes": 32,
+              "num_warps": 8,
+              "asm_sha256": {
+                "ptx": "2f72f1cf0683dad576ee5414acdd4d6d8b9bc9025a59fa4b1939f0034e947631",
+                "ttgir": "cd655d14e4b6682f469e3a2b8413d916aa1f83cdcf356403323a7e6d40a100bc"
+              }
+            },
+            "candidates": [
+              {
+                "name": "row1_w4",
+                "config": [
+                  1,
+                  4,
+                  "production"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 84,
+                  "spills": 0,
+                  "shared_bytes": 16,
+                  "num_warps": 4,
+                  "asm_sha256": {
+                    "ptx": "87af5fafb0f7b9edf361f7700d2a18bbf1f222070df97a9b3629db72efde23b3",
+                    "ttgir": "d7713fe20b836fb2058b24e0b769c31f242e8ac44dc7f4d85602e694007b5bdb"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.3997959567440881,
+                    "median_ms": 0.40212881565093994,
+                    "min_ms": 0.3882992029190063,
+                    "max_ms": 0.40572481155395507,
+                    "all_samples_ms": [
+                      0.40445761680603026,
+                      0.4036543846130371,
+                      0.40451841354370116,
+                      0.40375680923461915,
+                      0.3986815929412842,
+                      0.39738879203796384,
+                      0.4034848213195801,
+                      0.3894927978515625,
+                      0.4009439945220947,
+                      0.40096001625061034,
+                      0.40308480262756347,
+                      0.40178561210632324,
+                      0.40361762046813965,
+                      0.38853280544281005,
+                      0.40572481155395507,
+                      0.4028575897216797,
+                      0.403879976272583,
+                      0.3882992029190063,
+                      0.39985439777374265,
+                      0.4025519847869873,
+                      0.4032735824584961,
+                      0.4011216163635254,
+                      0.4031839847564697,
+                      0.39731199741363527,
+                      0.39543681144714354,
+                      0.4037519931793213,
+                      0.39863359928131104,
+                      0.40285282135009765,
+                      0.395580792427063,
+                      0.40472798347473143,
+                      0.40247201919555664,
+                      0.39686400890350343,
+                      0.4028223991394043,
+                      0.39583520889282225,
+                      0.38856959342956543,
+                      0.39268798828125
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.39396249055862426,
+                    "median_ms": 0.3950080037117004,
+                    "min_ms": 0.3783535957336426,
+                    "max_ms": 0.4013088226318359,
+                    "all_samples_ms": [
+                      0.38398079872131347,
+                      0.3997760057449341,
+                      0.39074881076812745,
+                      0.3922032117843628,
+                      0.3916991949081421,
+                      0.39153280258178713,
+                      0.3934848070144653,
+                      0.3921040058135986,
+                      0.4004799842834473,
+                      0.39934239387512205,
+                      0.3963632106781006,
+                      0.3994944095611572,
+                      0.39190399646759033,
+                      0.397377610206604,
+                      0.3940144062042236,
+                      0.38835361003875735,
+                      0.3981744050979614,
+                      0.3988127946853638,
+                      0.39571199417114256,
+                      0.3959104061126709,
+                      0.3783535957336426,
+                      0.4013088226318359,
+                      0.38831520080566406,
+                      0.38838241100311277,
+                      0.3997423887252808,
+                      0.3995552062988281,
+                      0.3972559928894043,
+                      0.3787760019302368,
+                      0.4005392074584961,
+                      0.3950896024703979,
+                      0.3947472095489502,
+                      0.3954063892364502,
+                      0.3914527893066406,
+                      0.3953183889389038,
+                      0.3949264049530029,
+                      0.3920111894607544
+                    ]
+                  },
+                  "mean_improvement_percent": 1.4591108506877282,
+                  "median_improvement_percent": 1.770778830587616,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40445761680603026,
+                            0.4036543846130371,
+                            0.40451841354370116,
+                            0.40375680923461915,
+                            0.3986815929412842,
+                            0.39738879203796384
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.38398079872131347,
+                            0.3997760057449341,
+                            0.39074881076812745,
+                            0.3922032117843628,
+                            0.3916991949081421,
+                            0.39153280258178713
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.3934848070144653,
+                            0.3921040058135986,
+                            0.4004799842834473,
+                            0.39934239387512205,
+                            0.3963632106781006,
+                            0.3994944095611572
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4034848213195801,
+                            0.3894927978515625,
+                            0.4009439945220947,
+                            0.40096001625061034,
+                            0.40308480262756347,
+                            0.40178561210632324
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.39190399646759033,
+                            0.397377610206604,
+                            0.3940144062042236,
+                            0.38835361003875735,
+                            0.3981744050979614,
+                            0.3988127946853638
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40361762046813965,
+                            0.38853280544281005,
+                            0.40572481155395507,
+                            0.4028575897216797,
+                            0.403879976272583,
+                            0.3882992029190063
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.39985439777374265,
+                            0.4025519847869873,
+                            0.4032735824584961,
+                            0.4011216163635254,
+                            0.4031839847564697,
+                            0.39731199741363527
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.39571199417114256,
+                            0.3959104061126709,
+                            0.3783535957336426,
+                            0.4013088226318359,
+                            0.38831520080566406,
+                            0.38838241100311277
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.39543681144714354,
+                            0.4037519931793213,
+                            0.39863359928131104,
+                            0.40285282135009765,
+                            0.395580792427063,
+                            0.40472798347473143
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.3997423887252808,
+                            0.3995552062988281,
+                            0.3972559928894043,
+                            0.3787760019302368,
+                            0.4005392074584961,
+                            0.3950896024703979
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.3947472095489502,
+                            0.3954063892364502,
+                            0.3914527893066406,
+                            0.3953183889389038,
+                            0.3949264049530029,
+                            0.3920111894607544
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40247201919555664,
+                            0.39686400890350343,
+                            0.4028223991394043,
+                            0.39583520889282225,
+                            0.38856959342956543,
+                            0.39268798828125
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 896.9434615436246
+                }
+              },
+              {
+                "name": "row1_w16",
+                "config": [
+                  1,
+                  16,
+                  "production"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 36,
+                  "spills": 0,
+                  "shared_bytes": 64,
+                  "num_warps": 16,
+                  "asm_sha256": {
+                    "ptx": "3c170469fee3fcad7dfea3650335f339a91457852ff2a8227742ea65686cd28f",
+                    "ttgir": "4f8f3ab9ff4392866a7a631e644f960011caa42db25a0e8931781fae31644dd9"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.40062848925590516,
+                    "median_ms": 0.40261039733886717,
+                    "min_ms": 0.3849440097808838,
+                    "max_ms": 0.40497760772705077,
+                    "all_samples_ms": [
+                      0.4026832103729248,
+                      0.4044047832489014,
+                      0.3998159885406494,
+                      0.4031519889831543,
+                      0.3982255935668945,
+                      0.4005871772766113,
+                      0.40076160430908203,
+                      0.4035855770111084,
+                      0.40388641357421873,
+                      0.399947190284729,
+                      0.38497281074523926,
+                      0.4006800174713135,
+                      0.4033423900604248,
+                      0.4015359878540039,
+                      0.40328001976013184,
+                      0.403380823135376,
+                      0.40364799499511717,
+                      0.3849440097808838,
+                      0.40303678512573243,
+                      0.39907839298248293,
+                      0.3972208023071289,
+                      0.4031360149383545,
+                      0.3987375974655151,
+                      0.3917232036590576,
+                      0.40346560478210447,
+                      0.40159039497375487,
+                      0.40094561576843263,
+                      0.4037680149078369,
+                      0.40333919525146483,
+                      0.39613120555877684,
+                      0.4033360004425049,
+                      0.40497760772705077,
+                      0.4036880016326904,
+                      0.39837119579315183,
+                      0.4047088146209717,
+                      0.40253758430480957
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.4015929321448008,
+                    "median_ms": 0.40343918800354006,
+                    "min_ms": 0.3806512117385864,
+                    "max_ms": 0.4080319881439209,
+                    "all_samples_ms": [
+                      0.40499038696289064,
+                      0.4080319881439209,
+                      0.4037168025970459,
+                      0.38210880756378174,
+                      0.40488319396972655,
+                      0.40498080253601076,
+                      0.4039152145385742,
+                      0.40248799324035645,
+                      0.4075119972229004,
+                      0.4033055782318115,
+                      0.4053408145904541,
+                      0.40251522064208983,
+                      0.3952080011367798,
+                      0.3978976011276245,
+                      0.4017632007598877,
+                      0.40551037788391114,
+                      0.4046720027923584,
+                      0.4027167797088623,
+                      0.4051760196685791,
+                      0.40357279777526855,
+                      0.4047840118408203,
+                      0.4040688037872314,
+                      0.40235037803649903,
+                      0.3806512117385864,
+                      0.4064671993255615,
+                      0.40563359260559084,
+                      0.4058879852294922,
+                      0.40228800773620604,
+                      0.4029359817504883,
+                      0.4023888111114502,
+                      0.38826560974121094,
+                      0.40146560668945314,
+                      0.4027167797088623,
+                      0.40390400886535643,
+                      0.39490718841552735,
+                      0.3983247995376587
+                    ]
+                  },
+                  "mean_improvement_percent": -0.24073247778431117,
+                  "median_improvement_percent": -0.2058542626198756,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4026832103729248,
+                            0.4044047832489014,
+                            0.3998159885406494,
+                            0.4031519889831543,
+                            0.3982255935668945,
+                            0.4005871772766113
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40499038696289064,
+                            0.4080319881439209,
+                            0.4037168025970459,
+                            0.38210880756378174,
+                            0.40488319396972655,
+                            0.40498080253601076
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.4039152145385742,
+                            0.40248799324035645,
+                            0.4075119972229004,
+                            0.4033055782318115,
+                            0.4053408145904541,
+                            0.40251522064208983
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40076160430908203,
+                            0.4035855770111084,
+                            0.40388641357421873,
+                            0.399947190284729,
+                            0.38497281074523926,
+                            0.4006800174713135
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.3952080011367798,
+                            0.3978976011276245,
+                            0.4017632007598877,
+                            0.40551037788391114,
+                            0.4046720027923584,
+                            0.4027167797088623
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4033423900604248,
+                            0.4015359878540039,
+                            0.40328001976013184,
+                            0.403380823135376,
+                            0.40364799499511717,
+                            0.3849440097808838
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40303678512573243,
+                            0.39907839298248293,
+                            0.3972208023071289,
+                            0.4031360149383545,
+                            0.3987375974655151,
+                            0.3917232036590576
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.4051760196685791,
+                            0.40357279777526855,
+                            0.4047840118408203,
+                            0.4040688037872314,
+                            0.40235037803649903,
+                            0.3806512117385864
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40346560478210447,
+                            0.40159039497375487,
+                            0.40094561576843263,
+                            0.4037680149078369,
+                            0.40333919525146483,
+                            0.39613120555877684
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.4064671993255615,
+                            0.40563359260559084,
+                            0.4058879852294922,
+                            0.40228800773620604,
+                            0.4029359817504883,
+                            0.4023888111114502
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.38826560974121094,
+                            0.40146560668945314,
+                            0.4027167797088623,
+                            0.40390400886535643,
+                            0.39490718841552735,
+                            0.3983247995376587
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4033360004425049,
+                            0.40497760772705077,
+                            0.4036880016326904,
+                            0.39837119579315183,
+                            0.4047088146209717,
+                            0.40253758430480957
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 879.901142962819
+                }
+              },
+              {
+                "name": "row2_w8",
+                "config": [
+                  2,
+                  8,
+                  "multirow"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 94,
+                  "spills": 0,
+                  "shared_bytes": 64,
+                  "num_warps": 8,
+                  "asm_sha256": {
+                    "ptx": "6b3ce523cf71cb289e3b8d60ced753f6671b8088f40eb2c60cc749a61e2a9016",
+                    "ttgir": "2d92dfa32a07620cc2c07c76759fb1bbde09965d4b12ca2a41332b24f03aa097"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.4000879963239034,
+                    "median_ms": 0.4017167806625366,
+                    "min_ms": 0.38324480056762694,
+                    "max_ms": 0.4052527904510498,
+                    "all_samples_ms": [
+                      0.40216641426086425,
+                      0.38324480056762694,
+                      0.4003407955169678,
+                      0.403001594543457,
+                      0.4012303829193115,
+                      0.4018655776977539,
+                      0.4026031970977783,
+                      0.4041071891784668,
+                      0.4011871814727783,
+                      0.40227842330932617,
+                      0.4033504009246826,
+                      0.40365118980407716,
+                      0.3902895927429199,
+                      0.40476479530334475,
+                      0.4006800174713135,
+                      0.40137600898742676,
+                      0.4052527904510498,
+                      0.40230398178100585,
+                      0.40262398719787595,
+                      0.4009664058685303,
+                      0.39547200202941896,
+                      0.38408000469207765,
+                      0.39927361011505125,
+                      0.40273280143737794,
+                      0.40159997940063474,
+                      0.40183358192443847,
+                      0.4018735885620117,
+                      0.39967999458312986,
+                      0.3848207950592041,
+                      0.40110077857971194,
+                      0.4028816223144531,
+                      0.4043727874755859,
+                      0.40147838592529295,
+                      0.4004208087921143,
+                      0.40322561264038087,
+                      0.40103678703308104
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.400500135951572,
+                    "median_ms": 0.4015424013137817,
+                    "min_ms": 0.37989919185638427,
+                    "max_ms": 0.40389280319213866,
+                    "all_samples_ms": [
+                      0.40047202110290525,
+                      0.4020864009857178,
+                      0.40152478218078613,
+                      0.4013199806213379,
+                      0.40079679489135744,
+                      0.4022240161895752,
+                      0.4013887882232666,
+                      0.40340161323547363,
+                      0.37989919185638427,
+                      0.4020415782928467,
+                      0.4026048183441162,
+                      0.40389280319213866,
+                      0.40133280754089357,
+                      0.4012271881103516,
+                      0.4007232189178467,
+                      0.38819839954376223,
+                      0.40235199928283694,
+                      0.40156002044677735,
+                      0.40146241188049314,
+                      0.4026224136352539,
+                      0.4018752098083496,
+                      0.40299358367919924,
+                      0.4009664058685303,
+                      0.40242562294006345,
+                      0.40214080810546876,
+                      0.40134401321411134,
+                      0.40271358489990233,
+                      0.40126237869262693,
+                      0.40294561386108396,
+                      0.40233759880065917,
+                      0.4035327911376953,
+                      0.4018256187438965,
+                      0.4000432014465332,
+                      0.40093441009521485,
+                      0.40137600898742676,
+                      0.388156795501709
+                    ]
+                  },
+                  "mean_improvement_percent": -0.10301224516993113,
+                  "median_improvement_percent": 0.04340852987700927,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40216641426086425,
+                            0.38324480056762694,
+                            0.4003407955169678,
+                            0.403001594543457,
+                            0.4012303829193115,
+                            0.4018655776977539
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40047202110290525,
+                            0.4020864009857178,
+                            0.40152478218078613,
+                            0.4013199806213379,
+                            0.40079679489135744,
+                            0.4022240161895752
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.4013887882232666,
+                            0.40340161323547363,
+                            0.37989919185638427,
+                            0.4020415782928467,
+                            0.4026048183441162,
+                            0.40389280319213866
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4026031970977783,
+                            0.4041071891784668,
+                            0.4011871814727783,
+                            0.40227842330932617,
+                            0.4033504009246826,
+                            0.40365118980407716
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40133280754089357,
+                            0.4012271881103516,
+                            0.4007232189178467,
+                            0.38819839954376223,
+                            0.40235199928283694,
+                            0.40156002044677735
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.3902895927429199,
+                            0.40476479530334475,
+                            0.4006800174713135,
+                            0.40137600898742676,
+                            0.4052527904510498,
+                            0.40230398178100585
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40262398719787595,
+                            0.4009664058685303,
+                            0.39547200202941896,
+                            0.38408000469207765,
+                            0.39927361011505125,
+                            0.40273280143737794
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40146241188049314,
+                            0.4026224136352539,
+                            0.4018752098083496,
+                            0.40299358367919924,
+                            0.4009664058685303,
+                            0.40242562294006345
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40159997940063474,
+                            0.40183358192443847,
+                            0.4018735885620117,
+                            0.39967999458312986,
+                            0.3848207950592041,
+                            0.40110077857971194
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40214080810546876,
+                            0.40134401321411134,
+                            0.40271358489990233,
+                            0.40126237869262693,
+                            0.40294561386108396,
+                            0.40233759880065917
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.4035327911376953,
+                            0.4018256187438965,
+                            0.4000432014465332,
+                            0.40093441009521485,
+                            0.40137600898742676,
+                            0.388156795501709
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4028816223144531,
+                            0.4043727874755859,
+                            0.40147838592529295,
+                            0.4004208087921143,
+                            0.40322561264038087,
+                            0.40103678703308104
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 882.3020225958877
+                }
+              },
+              {
+                "name": "row4_w16",
+                "config": [
+                  4,
+                  16,
+                  "multirow"
+                ],
+                "correctness": {
+                  "q_exact": true,
+                  "scale_bitwise_exact": true
+                },
+                "kernel": {
+                  "registers": 94,
+                  "spills": 0,
+                  "shared_bytes": 256,
+                  "num_warps": 16,
+                  "asm_sha256": {
+                    "ptx": "75efeb83c8f91f21bee35c89f62ceeee2d2d5a383d664120fb37427a372795f9",
+                    "ttgir": "b53d99a9a43b7ddd3f8360b010f99d933f475168a5e967f1128e141de006ecb6"
+                  }
+                },
+                "timing": {
+                  "baseline": {
+                    "mean_ms": 0.3996872458193037,
+                    "median_ms": 0.40233840942382815,
+                    "min_ms": 0.3799216032028198,
+                    "max_ms": 0.40548319816589357,
+                    "all_samples_ms": [
+                      0.4031231880187988,
+                      0.40259361267089844,
+                      0.4029871940612793,
+                      0.3912719964981079,
+                      0.4046448230743408,
+                      0.3799216032028198,
+                      0.38443360328674314,
+                      0.40468640327453614,
+                      0.40307841300964353,
+                      0.4028223991394043,
+                      0.40227999687194826,
+                      0.40334081649780273,
+                      0.4026800155639648,
+                      0.38841440677642824,
+                      0.4032576084136963,
+                      0.4047567844390869,
+                      0.4033952236175537,
+                      0.40171518325805666,
+                      0.4042719841003418,
+                      0.3937040090560913,
+                      0.39625279903411864,
+                      0.4011712074279785,
+                      0.4013535976409912,
+                      0.40367679595947265,
+                      0.40061278343200685,
+                      0.3987279891967773,
+                      0.40548319816589357,
+                      0.4022047996520996,
+                      0.40280961990356445,
+                      0.39066081047058104,
+                      0.402188777923584,
+                      0.400494384765625,
+                      0.40239682197570803,
+                      0.388972806930542,
+                      0.40343360900878905,
+                      0.4009215831756592
+                    ]
+                  },
+                  "candidate": {
+                    "mean_ms": 0.4023392902480231,
+                    "median_ms": 0.4034879922866821,
+                    "min_ms": 0.3859424114227295,
+                    "max_ms": 0.40752158164978025,
+                    "all_samples_ms": [
+                      0.40752158164978025,
+                      0.40315837860107423,
+                      0.4044911861419678,
+                      0.40519042015075685,
+                      0.40208001136779786,
+                      0.39687840938568114,
+                      0.4036399841308594,
+                      0.4020671844482422,
+                      0.40517277717590333,
+                      0.4024208068847656,
+                      0.4024847984313965,
+                      0.4040031909942627,
+                      0.40067358016967775,
+                      0.40509281158447263,
+                      0.40285282135009765,
+                      0.4044896125793457,
+                      0.3976560115814209,
+                      0.40482239723205565,
+                      0.40416321754455564,
+                      0.3859424114227295,
+                      0.4045936107635498,
+                      0.403656005859375,
+                      0.40514721870422366,
+                      0.4026671886444092,
+                      0.40004801750183105,
+                      0.40427680015563966,
+                      0.3883280038833618,
+                      0.40113282203674316,
+                      0.4033423900604248,
+                      0.40496320724487306,
+                      0.4032400131225586,
+                      0.40390238761901853,
+                      0.40355520248413085,
+                      0.404145622253418,
+                      0.4034207820892334,
+                      0.40299358367919924
+                    ]
+                  },
+                  "mean_improvement_percent": -0.6635299115645088,
+                  "median_improvement_percent": -0.2857253585359265,
+                  "blocks": [
+                    {
+                      "block": 0,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4031231880187988,
+                            0.40259361267089844,
+                            0.4029871940612793,
+                            0.3912719964981079,
+                            0.4046448230743408,
+                            0.3799216032028198
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40752158164978025,
+                            0.40315837860107423,
+                            0.4044911861419678,
+                            0.40519042015075685,
+                            0.40208001136779786,
+                            0.39687840938568114
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.4036399841308594,
+                            0.4020671844482422,
+                            0.40517277717590333,
+                            0.4024208068847656,
+                            0.4024847984313965,
+                            0.4040031909942627
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.38443360328674314,
+                            0.40468640327453614,
+                            0.40307841300964353,
+                            0.4028223991394043,
+                            0.40227999687194826,
+                            0.40334081649780273
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 1,
+                      "order": [
+                        "candidate",
+                        "baseline",
+                        "baseline",
+                        "candidate"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40067358016967775,
+                            0.40509281158447263,
+                            0.40285282135009765,
+                            0.4044896125793457,
+                            0.3976560115814209,
+                            0.40482239723205565
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4026800155639648,
+                            0.38841440677642824,
+                            0.4032576084136963,
+                            0.4047567844390869,
+                            0.4033952236175537,
+                            0.40171518325805666
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.4042719841003418,
+                            0.3937040090560913,
+                            0.39625279903411864,
+                            0.4011712074279785,
+                            0.4013535976409912,
+                            0.40367679595947265
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40416321754455564,
+                            0.3859424114227295,
+                            0.4045936107635498,
+                            0.403656005859375,
+                            0.40514721870422366,
+                            0.4026671886444092
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "block": 2,
+                      "order": [
+                        "baseline",
+                        "candidate",
+                        "candidate",
+                        "baseline"
+                      ],
+                      "segments": [
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.40061278343200685,
+                            0.3987279891967773,
+                            0.40548319816589357,
+                            0.4022047996520996,
+                            0.40280961990356445,
+                            0.39066081047058104
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.40004801750183105,
+                            0.40427680015563966,
+                            0.3883280038833618,
+                            0.40113282203674316,
+                            0.4033423900604248,
+                            0.40496320724487306
+                          ]
+                        },
+                        {
+                          "mode": "candidate",
+                          "samples_ms": [
+                            0.4032400131225586,
+                            0.40390238761901853,
+                            0.40355520248413085,
+                            0.404145622253418,
+                            0.4034207820892334,
+                            0.40299358367919924
+                          ]
+                        },
+                        {
+                          "mode": "baseline",
+                          "samples_ms": [
+                            0.402188777923584,
+                            0.400494384765625,
+                            0.40239682197570803,
+                            0.388972806930542,
+                            0.40343360900878905,
+                            0.4009215831756592
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "candidate_effective_GB_per_second": 878.2688854030861
+                }
+              }
+            ],
+            "baseline_vs_captured_ck": {
+              "q_exact": true,
+              "scale_bitwise_exact": true
+            }
+          }
+        ],
+        "environment": {
+          "torch": "2.11.0+cu130",
+          "triton": "3.6.0",
+          "cuda": "13.0",
+          "comfy_kitchen": "0.2.31",
+          "gpu": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ]
+        },
+        "elapsed_seconds": 5.406240812968463
+      }
+    }
+  },
+  "input_report_sha256": {
+    "ffn_up_schedule/replay.json": "54cf7b07c74ff36ba1769ab0a6f2005cd6913e06d2c9be7b64f05a6cbf2523b3",
+    "ffn_up_schedule/plan.json": "338f733da71bd79686c0a2002ba2739c13ce95cb1dfec181a1188d238b85d49f",
+    "ffn_up_lut/replay_lut.json": "7ccdc4acb4097d9d0dd2d360c77f8587315e63cf108811b240da5daf5619c809",
+    "ffn_up_lut/plan_lut.json": "76d00157b9d8eac8d162361e5dcc3b1f3a00f6101adc4876775855ac959ab946",
+    "ffn_quantizer/quantizer_candidates_public.json": "f3619754e51f963b76906980c40ecefd7cf4819e55ea92082d66cfb06def6f4d"
+  },
+  "sanitization": {
+    "absolute_paths_or_private_media_in_public_report": false,
+    "removed_fields": [
+      {
+        "field": "ffn_up_schedule/plan.json/planning_only",
+        "reason": "Omit historical full-decode projections; only measured component timings are published."
+      },
+      {
+        "field": "ffn_up_lut/plan_lut.json/planning_only",
+        "reason": "Omit historical full-decode projections; only measured component timings are published."
+      }
+    ],
+    "preserved": "All original numeric samples, ordering, numerical checks, source hashes, environment and kernel resource records."
+  }
+}
