@@ -1,0 +1,553 @@
+{
+  "title": "Post-hoc norm1 → dynamic quant → QKV activity budget",
+  "status": "reclassified_existing_profile_only",
+  "scope": "CPU-only SQLite/JSON reclassification of saved Nsight captures. No GPU run, no new profiling, no timed comparison, no source edits.",
+  "interpretation": {
+    "measured_scope": "Kernel activity inside the saved vae_decode NVTX interval; counts and summed kernel durations, not standalone op wall times.",
+    "budget_only": "The fused capture shows norm1 + QKV activation quant totaling about 192.229 ms. This is an extremely optimistic upper budget, not an expected or measured saving; a semantics-preserving fusion cannot be assumed to remove all of either cost. QKV GEMM remains about 832.641 ms in the measured path.",
+    "not_a_batch8_cause": "These are historical batch4 captures; they do not localize or explain the batch4/batch8 RGB mismatch.",
+    "not_a_speedup": "Baseline and fused Nsight captures are independent processes with different selected norm kernels; their deltas must not be reported as speedup.",
+    "current_code_relation": "Both historical profile JSONs record Git HEAD dbd49e0, but that field is not a dirty-working-tree source fingerprint. The fused SQLite capture itself proves that the experimental FFN-up fusion was active: it contains 1,764 up_swiglu and 1,764 quantize_act launches. This is the fused variant later adopted at 7bd9809, not a pre-fusion capture. Related paired-experiment source hashes and the post-measurement M>262144 host-guard fingerprint are preserved under capture_identity and documented in the linked decoder_int8_ffn report. The shared norm/quant and runtime hashes support source-level alignment of the norm1/attention/QKV prefix within that paired experiment, but do not prove equal generated kernels or launch configurations. These old batch4 profiles do not localize the current batch4/batch8 mismatch."
+  },
+  "profiles": {
+    "baseline": {
+      "profile_alias": "historical_baseline",
+      "sqlite_sha256": "3c69ea30863f1bf34c4cbf559be1cbe38829551c4dd7ebfaa43080dcf8f03a1b",
+      "nvtx": {
+        "label": "vae_decode",
+        "start_ns": 10300630,
+        "end_ns": 6650074393,
+        "duration_ns": 6639773763,
+        "duration_seconds": 6.639773763
+      },
+      "gpu_activity": {
+        "kernel_event_count": 25426,
+        "kernel_sum_ns": 6552347200,
+        "activity_union_seconds": 6.554805986,
+        "no_activity_seconds": 0.084967777,
+        "streams": [
+          [
+            0,
+            1,
+            7
+          ]
+        ]
+      },
+      "settings": {
+        "input_alias": "internal_124_frame_decode_input",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "decoder_tile": 256,
+        "tile_batch": 4,
+        "dtype": "float16",
+        "int8_decode": true,
+        "decode_fusions": true,
+        "recorded_git_head": "dbd49e094387b28f3252d34d0cbf8da1ed3b4cc8",
+        "recorded_git_head_semantics": "Metadata records the checked-out Git HEAD; it does not fingerprint dirty working-tree contents.",
+        "working_tree_variant": "Baseline reference profile role. The recorded HEAD alone does not establish a clean working tree or exact source fingerprint."
+      },
+      "norm1_to_qkv": {
+        "norm1": {
+          "count": 1764,
+          "total_ns": 118821027,
+          "total_ms": 118.821027,
+          "groups": [
+            {
+              "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_4",
+              "count": 49,
+              "total_ns": 1618435,
+              "launches": [
+                {
+                  "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_4",
+                  "grid": [
+                    3594,
+                    1,
+                    1
+                  ],
+                  "block_x": 512,
+                  "registers_per_thread": 20,
+                  "static_shared_bytes": 0,
+                  "dynamic_shared_bytes": 2048,
+                  "count": 49,
+                  "total_ns": 1618435
+                }
+              ]
+            },
+            {
+              "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_8",
+              "count": 1715,
+              "total_ns": 117202592,
+              "launches": [
+                {
+                  "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_8",
+                  "grid": [
+                    7188,
+                    1,
+                    1
+                  ],
+                  "block_x": 256,
+                  "registers_per_thread": 28,
+                  "static_shared_bytes": 0,
+                  "dynamic_shared_bytes": 32,
+                  "count": 1715,
+                  "total_ns": 117202592
+                }
+              ]
+            }
+          ],
+          "source_mapping": "NormQuantBlock.forward: norm1(hidden_states.float()).to(hidden_states.dtype), followed by attn."
+        },
+        "qkv_activation_quant": {
+          "count": 1764,
+          "total_ns": 75007128,
+          "total_ms": 75.007128,
+          "kernel_short_name": "quantize_int8_rowwise_kernel",
+          "launches": [
+            {
+              "kernel_short_name": "quantize_int8_rowwise_kernel",
+              "grid": [
+                7188,
+                1,
+                1
+              ],
+              "block_x": 256,
+              "registers_per_thread": 17,
+              "static_shared_bytes": 48,
+              "dynamic_shared_bytes": 0,
+              "count": 1764,
+              "total_ns": 75007128
+            }
+          ],
+          "predecessor_counts": {
+            "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_4": 49,
+            "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_8": 1715
+          },
+          "successor": {
+            "short_name": "Kernel2",
+            "grid": [
+              57,
+              24,
+              1
+            ],
+            "identity": "GemmIdentityThreadblockSwizzle",
+            "dtype_marker": "signed char"
+          }
+        },
+        "qkv_int8_gemm": {
+          "count": 1764,
+          "total_ns": 819382272,
+          "total_ms": 819.382272,
+          "grid": [
+            57,
+            24,
+            1
+          ],
+          "block_x": 256,
+          "registers_per_thread": 224,
+          "dynamic_shared_bytes": 73728,
+          "full_name_sha256": "4dea23ee1f8d3dfff825952562bda8928dafabe146deb734e454ce06a42d7c85",
+          "derived_shape": {
+            "M": 7188,
+            "K": 2048,
+            "N": 6144,
+            "M_reason": "batch4 × 1,797 sequence rows",
+            "grid_reason": "ceil(7188/128)=57; 6144/256=24"
+          }
+        },
+        "norm1_plus_qkv_activation_quant_ns": 193828155,
+        "norm1_plus_qkv_activation_quant_ms": 193.828155,
+        "norm1_quant_qkv_gemm_total_ns": 1013210427,
+        "norm1_quant_qkv_gemm_total_seconds": 1.013210427,
+        "fraction_of_nvtx_seconds": 0.15259713104173728
+      },
+      "quantizer_split": {
+        "all_rowwise_quant_calls": 3528,
+        "all_rowwise_quant_grid": [
+          7188,
+          1,
+          1
+        ],
+        "qkv_activation_quant": {
+          "count": 1764,
+          "total_ns": 75007128
+        },
+        "attention_output_activation_quant": {
+          "count": 1764,
+          "total_ns": 70015235,
+          "predecessor": "triton_poi_fused_int8_linear_nan_to_num_transpose_view_7",
+          "successor": {
+            "short_name": "Kernel2",
+            "grid": [
+              440,
+              1,
+              1
+            ],
+            "identity": "ThreadblockSwizzleLeanStreamK"
+          },
+          "launches": [
+            {
+              "kernel_short_name": "quantize_int8_rowwise_kernel",
+              "grid": [
+                7188,
+                1,
+                1
+              ],
+              "block_x": 256,
+              "registers_per_thread": 17,
+              "static_shared_bytes": 48,
+              "dynamic_shared_bytes": 0,
+              "count": 1764,
+              "total_ns": 70015235
+            }
+          ]
+        }
+      },
+      "other_normalization_and_projection": {
+        "norm2_residual_quant_fused": {
+          "count": 1764,
+          "total_ns": 99008668,
+          "classification": "norm2 + residual + INT8 row quant share the opaque fused custom-op path; not norm1 and not separable here"
+        },
+        "norm_out": {
+          "count": 49,
+          "total_ns": 1925156,
+          "kernel_role": "final_residual_layernorm",
+          "source_mapping": "vae_vit.forward norm_out after transformer blocks"
+        },
+        "output_projection": {
+          "count": 49,
+          "total_ns": 23480660,
+          "kernel_role": "output_projection; report separately from norm1/norm_out"
+        },
+        "input_projection": {
+          "count": 49,
+          "total_ns": 941411,
+          "source_mapping": "vae_vit.forward x_embedder"
+        }
+      }
+    },
+    "fused": {
+      "profile_alias": "historical_fused",
+      "sqlite_sha256": "6f7e3814dca22e24be78c6b3dcb7b6a67053007cc07b916e0bb80ebe9739f94c",
+      "nvtx": {
+        "label": "vae_decode",
+        "start_ns": 10623783,
+        "end_ns": 6510229832,
+        "duration_ns": 6499606049,
+        "duration_seconds": 6.499606049
+      },
+      "gpu_activity": {
+        "kernel_event_count": 25426,
+        "kernel_sum_ns": 6420260086,
+        "activity_union_seconds": 6.422705816,
+        "no_activity_seconds": 0.076900233,
+        "streams": [
+          [
+            0,
+            1,
+            7
+          ]
+        ]
+      },
+      "settings": {
+        "input_alias": "internal_124_frame_decode_input",
+        "input_shape": [
+          1,
+          3,
+          124,
+          768,
+          1344
+        ],
+        "decoder_tile": 256,
+        "tile_batch": 4,
+        "dtype": "float16",
+        "int8_decode": true,
+        "decode_fusions": true,
+        "recorded_git_head": "dbd49e094387b28f3252d34d0cbf8da1ed3b4cc8",
+        "recorded_git_head_semantics": "Metadata records the checked-out Git HEAD; it does not fingerprint dirty working-tree contents.",
+        "working_tree_variant": "Dirty experimental FFN-up fusion variant; SQLite launch evidence includes 1,764 up_swiglu and 1,764 quantize_act calls."
+      },
+      "norm1_to_qkv": {
+        "norm1": {
+          "count": 1764,
+          "total_ns": 127511436,
+          "total_ms": 127.511436,
+          "groups": [
+            {
+              "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_4",
+              "count": 49,
+              "total_ns": 1277668,
+              "launches": [
+                {
+                  "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_4",
+                  "grid": [
+                    1797,
+                    1,
+                    1
+                  ],
+                  "block_x": 512,
+                  "registers_per_thread": 22,
+                  "static_shared_bytes": 0,
+                  "dynamic_shared_bytes": 64,
+                  "count": 49,
+                  "total_ns": 1277668
+                }
+              ]
+            },
+            {
+              "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_8",
+              "count": 1715,
+              "total_ns": 126233768,
+              "launches": [
+                {
+                  "kernel_short_name": "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_8",
+                  "grid": [
+                    3594,
+                    1,
+                    1
+                  ],
+                  "block_x": 128,
+                  "registers_per_thread": 52,
+                  "static_shared_bytes": 0,
+                  "dynamic_shared_bytes": 32,
+                  "count": 1715,
+                  "total_ns": 126233768
+                }
+              ]
+            }
+          ],
+          "source_mapping": "NormQuantBlock.forward: norm1(hidden_states.float()).to(hidden_states.dtype), followed by attn."
+        },
+        "qkv_activation_quant": {
+          "count": 1764,
+          "total_ns": 64717254,
+          "total_ms": 64.717254,
+          "kernel_short_name": "quantize_int8_rowwise_kernel",
+          "launches": [
+            {
+              "kernel_short_name": "quantize_int8_rowwise_kernel",
+              "grid": [
+                7188,
+                1,
+                1
+              ],
+              "block_x": 256,
+              "registers_per_thread": 17,
+              "static_shared_bytes": 48,
+              "dynamic_shared_bytes": 0,
+              "count": 1764,
+              "total_ns": 64717254
+            }
+          ],
+          "predecessor_counts": {
+            "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_4": 49,
+            "triton_red_fused__to_copy_add_int8_linear_mean_mul_pow_rsqrt_8": 1715
+          },
+          "successor": {
+            "short_name": "Kernel2",
+            "grid": [
+              57,
+              24,
+              1
+            ],
+            "identity": "GemmIdentityThreadblockSwizzle",
+            "dtype_marker": "signed char"
+          }
+        },
+        "qkv_int8_gemm": {
+          "count": 1764,
+          "total_ns": 832640501,
+          "total_ms": 832.640501,
+          "grid": [
+            57,
+            24,
+            1
+          ],
+          "block_x": 256,
+          "registers_per_thread": 224,
+          "dynamic_shared_bytes": 73728,
+          "full_name_sha256": "4dea23ee1f8d3dfff825952562bda8928dafabe146deb734e454ce06a42d7c85",
+          "derived_shape": {
+            "M": 7188,
+            "K": 2048,
+            "N": 6144,
+            "M_reason": "batch4 × 1,797 sequence rows",
+            "grid_reason": "ceil(7188/128)=57; 6144/256=24"
+          }
+        },
+        "norm1_plus_qkv_activation_quant_ns": 192228690,
+        "norm1_plus_qkv_activation_quant_ms": 192.22869,
+        "norm1_quant_qkv_gemm_total_ns": 1024869191,
+        "norm1_quant_qkv_gemm_total_seconds": 1.024869191,
+        "fraction_of_nvtx_seconds": 0.1576817399814073
+      },
+      "quantizer_split": {
+        "all_rowwise_quant_calls": 3528,
+        "all_rowwise_quant_grid": [
+          7188,
+          1,
+          1
+        ],
+        "qkv_activation_quant": {
+          "count": 1764,
+          "total_ns": 64717254
+        },
+        "attention_output_activation_quant": {
+          "count": 1764,
+          "total_ns": 68143418,
+          "predecessor": "triton_poi_fused_int8_linear_nan_to_num_transpose_view_7",
+          "successor": {
+            "short_name": "Kernel2",
+            "grid": [
+              440,
+              1,
+              1
+            ],
+            "identity": "ThreadblockSwizzleLeanStreamK"
+          },
+          "launches": [
+            {
+              "kernel_short_name": "quantize_int8_rowwise_kernel",
+              "grid": [
+                7188,
+                1,
+                1
+              ],
+              "block_x": 256,
+              "registers_per_thread": 17,
+              "static_shared_bytes": 48,
+              "dynamic_shared_bytes": 0,
+              "count": 1764,
+              "total_ns": 68143418
+            }
+          ]
+        }
+      },
+      "other_normalization_and_projection": {
+        "norm2_residual_quant_fused": {
+          "count": 1764,
+          "total_ns": 96868741,
+          "classification": "norm2 + residual + INT8 row quant share the opaque fused custom-op path; not norm1 and not separable here"
+        },
+        "norm_out": {
+          "count": 49,
+          "total_ns": 1880705,
+          "kernel_role": "final_residual_layernorm",
+          "source_mapping": "vae_vit.forward norm_out after transformer blocks"
+        },
+        "output_projection": {
+          "count": 49,
+          "total_ns": 21960051,
+          "kernel_role": "output_projection; report separately from norm1/norm_out"
+        },
+        "input_projection": {
+          "count": 49,
+          "total_ns": 1302051,
+          "source_mapping": "vae_vit.forward x_embedder"
+        }
+      }
+    }
+  },
+  "comparison_summary": {
+    "baseline_norm1_ms": 118.821027,
+    "baseline_qkv_activation_quant_ms": 75.007128,
+    "baseline_qkv_gemm_ms": 819.382272,
+    "baseline_norm1_plus_quant_qkv_gemm_s": 1.013210427,
+    "fused_norm1_ms": 127.511436,
+    "fused_qkv_activation_quant_ms": 64.717254,
+    "fused_qkv_gemm_ms": 832.640501,
+    "fused_norm1_plus_quant_ms": 192.22869,
+    "fused_norm1_plus_quant_qkv_gemm_s": 1.024869191
+  },
+  "classification_method": {
+    "nvtx_query": "SELECT start, end, text FROM NVTX_EVENTS WHERE text='vae_decode'; require exactly one row per capture.",
+    "kernel_query": "SELECT k.start,k.end,k.deviceId,k.contextId,k.streamId,sn.value AS short_name,dn.value AS full_name,k.gridX,k.gridY,k.gridZ,k.blockX,k.registersPerThread,k.staticSharedMemory,k.dynamicSharedMemory,k.localMemoryPerThread FROM CUPTI_ACTIVITY_KIND_KERNEL k JOIN StringIds sn ON sn.id=k.shortName JOIN StringIds dn ON dn.id=k.demangledName WHERE k.start>=? AND k.end<=? ORDER BY k.start;",
+    "ordering": "Sort by start within (deviceId, contextId, streamId); both captures contain only stream (0,1,7) in the decode range. Inspect immediate predecessor and successor of each rowwise quantizer event.",
+    "qkv_quant_rule": "quantize_int8_rowwise_kernel whose predecessor short name ends in rsqrt_4 or rsqrt_8 and whose immediate successor is signed-char identity-swizzle Kernel2 grid (57,24,1).",
+    "attention_output_quant_rule": "Same quantizer whose predecessor is triton_poi_fused_int8_linear_nan_to_num_transpose_view_7 and whose successor is LeanStreamK Kernel2 grid (440,1,1).",
+    "qkv_gemm_rule": "Signed-char CUTLASS Kernel2 with GemmIdentityThreadblockSwizzle and grid (57,24,1); M/N geometry independently agrees with M=7188, N=6144 at 128×256 CTA tile.",
+    "norm1_mapping": "The rsqrt kernels identified as immediate QKV-quant predecessors total 49 + 1715 = 1764 calls, matching 36 blocks × 49 tile batches. Current NormQuantBlock.forward calls norm1 before attention/QKV.",
+    "query_logic_preserved": true
+  },
+  "hashes": {
+    "existing_evidence_aliases": {
+      "nsight_detailed_json": "2b282000007017c7c9f48dc5abad4ef7bd8e980ab1d6f197bbc8ddd1c98a34e6",
+      "historical_fused_sqlite": "6f7e3814dca22e24be78c6b3dcb7b6a67053007cc07b916e0bb80ebe9739f94c",
+      "historical_baseline_sqlite": "3c69ea30863f1bf34c4cbf559be1cbe38829551c4dd7ebfaa43080dcf8f03a1b",
+      "historical_fused_profile_json": "952d2e60c59afc6670a92207d7edbd0465cba64ff7406dd98bdf2fac6c639daa",
+      "historical_baseline_profile_json": "22822f1b0087aa514e5bdf46c97ce0e113c085a6071116d7d1c1e0821ecce7ae",
+      "historical_sql_classifier": "7bc404554a6359d087fcc8a304e7a0788cb052711b2c27157f9a15db150dae55"
+    },
+    "historical_capture_commit": "dbd49e094387b28f3252d34d0cbf8da1ed3b4cc8",
+    "current_repo_head": "0c51963785e930432cabba49d813521744b5b447",
+    "current_source_sha256": {
+      "runtime": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce",
+      "norm_quant": "ad55cc42069a5553f9fcf546ba6490d0683f5e49930ffd0e1072e9a955a079e4",
+      "ffn_up_fused": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+      "kitchen_int8": "8501411c07e5e36a4152fd7514196c509ca681df758140fce30975db81fdd065",
+      "int8_qkv": "c58c739a39f311935f845c86ecbb936e0c4512ca1b8696d2f99d966c18007e0f",
+      "int8_attention_out": "8ec8be89df48e37825963c85c3a79f7af96f1f0528a4f91553b53cf69872d1d0",
+      "qk_rope": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+      "klvae_source": "d05a22b4918ad303f147d6b0d0ae9038bd1af1f810a5553b04f3542ab9bcff96",
+      "vae_vit_source": "a372c28441b56ec2dbc6041dbd6ce2766c64c0e61b2c69a16594a97a11da3f58"
+    }
+  },
+  "capture_identity": {
+    "historical_profile_recorded_git_head": "dbd49e094387b28f3252d34d0cbf8da1ed3b4cc8",
+    "recorded_head_is_not_working_tree_fingerprint": true,
+    "profiles": {
+      "baseline": {
+        "role": "historical baseline reference path",
+        "working_tree_identity_limit": "The profile SQLite data and recorded HEAD do not provide a source hash for the full baseline working tree."
+      },
+      "fused": {
+        "role": "historical fused FFN-up candidate path",
+        "working_tree_variant": "The actual experimental working tree already contained FFN-up fusion; do not describe this capture as predating fusion.",
+        "sqlite_launch_evidence": {
+          "up_swiglu_calls": 1764,
+          "quantize_act_calls": 1764
+        },
+        "later_adopted_commit": "7bd9809"
+      }
+    },
+    "related_committed_report": {
+      "markdown_alias": "ComfyUI-H3VAE-PyOpt/docs/decoder_int8_ffn_2026-10-03.md",
+      "markdown_sha256": "ef21fc3a5e1dfe6f989f935e5daa125ccf677edc8609472a21f5e3d11ae260b2",
+      "benchmark_json_alias": "ComfyUI-H3VAE-PyOpt/docs/benchmarks/decoder_int8_ffn_2026-10-03.json",
+      "benchmark_json_sha256": "b2e94bd8c3a55ccf767afd2039d2515278ca9ee81daabcbfedb052bba966e7a3",
+      "note": "Paired benchmark source fingerprints are preserved below as related experiment provenance; they are not per-event source hashes embedded in the historical SQLite capture."
+    },
+    "related_paired_experiment_source_sha256": {
+      "decode_timing": {
+        "bench_decoder_int8_ffn.py": "12596791cc905a4fc2ed252f22f171c147454713f54b4443df431a0a39c4d08c",
+        "opt/int8_ffn_up_fused.py": "ca45591dffcd2928163309d53299af270311b23fc8e26628ec4ae5d05b09ed9b",
+        "opt/int8_norm_quant.py": "ad55cc42069a5553f9fcf546ba6490d0683f5e49930ffd0e1072e9a955a079e4",
+        "opt/int8_swiglu_fused.py": "2dfa8240257f3677454455fbbd29921db48572874db6dd96be14db03e44ae456",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce",
+        "scripts/benchmark_reduction_control.py": "492784ae84e63b8d229747101161bb1b77e80eb8bde5f18e532ed563e70324ca"
+      },
+      "quality_suite": {
+        "bench_decoder_int8_ffn.py": "b72bf1204500fb3e662320b46aa02bab39b6fed247d810f4ca75fc5c23dee0fc",
+        "opt/int8_ffn_up_fused.py": "ca45591dffcd2928163309d53299af270311b23fc8e26628ec4ae5d05b09ed9b",
+        "opt/int8_norm_quant.py": "ad55cc42069a5553f9fcf546ba6490d0683f5e49930ffd0e1072e9a955a079e4",
+        "opt/int8_swiglu_fused.py": "2dfa8240257f3677454455fbbd29921db48572874db6dd96be14db03e44ae456",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      }
+    },
+    "post_measurement_guard": {
+      "description": "Added host rejection for M>262144 to prevent signed INT32 address overflow, plus a CPU meta boundary test. All measured M=7188 calls are within the limit; Triton kernel function bodies are unchanged.",
+      "patch_sha256": "81d3736b87e2b99b893bb3e916aa48f66931ebc04ca0e2339903b12a57ced5f2",
+      "final_runtime_source_sha256": {
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "opt/int8_norm_quant.py": "ad55cc42069a5553f9fcf546ba6490d0683f5e49930ffd0e1072e9a955a079e4"
+      },
+      "interpretation": "The M>262144 host guard was added after timing; the Triton kernel bodies are unchanged. See the linked report for measured and final fingerprints."
+    },
+    "upstream_norm_qkv_alignment_scope": "In the related paired benchmark, the norm/quant module and runtime source hashes are shared across baseline and candidate; this supports source-level alignment of the upstream norm1/attention/QKV path. It does not establish identical compiler-selected kernels or launch configurations, nor does this historical batch4 profile explain the current batch4/batch8 divergence."
+  }
+}

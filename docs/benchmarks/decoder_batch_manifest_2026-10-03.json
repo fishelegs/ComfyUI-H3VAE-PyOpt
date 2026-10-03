@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "title": "INT8 decoder batch divergence diagnostic evidence manifest",
+  "repository_head": "0c51963785e930432cabba49d813521744b5b447",
+  "cpu_validation": {
+    "snapshot": "git archive HEAD (tracked files only)",
+    "snapshot_file_count": 160,
+    "python_version": "3.12.14",
+    "ruff_version": "0.16.6",
+    "checks": [
+      {
+        "command": "python -m compileall -q .",
+        "exit_code": 0
+      },
+      {
+        "command": "ruff check . --no-cache --exclude 'bench_*.py' --select E9,F63,F7,F82",
+        "exit_code": 0
+      },
+      {
+        "command": "python -m unittest discover -s tests -p 'test_*.py'",
+        "exit_code": 0,
+        "tests_run": 105,
+        "skipped": 14
+      }
+    ]
+  },
+  "change_and_timing_status": {
+    "production_code_changed": false,
+    "new_gpu_timing_run": false
+  },
+  "artifacts": [
+    {
+      "path": "docs/benchmarks/decoder_batch_phase1_2026-10-03.json",
+      "format": "json",
+      "archive_bytes": 289824,
+      "archive_sha256": "0ee016b3495f2eb4a2721d2b1fe588b510bfd95a0d8fca5200f9e9a2622b1f29",
+      "uncompressed_format": "json",
+      "uncompressed_bytes": 289824,
+      "uncompressed_sha256": "0ee016b3495f2eb4a2721d2b1fe588b510bfd95a0d8fca5200f9e9a2622b1f29",
+      "scope": "GPU diagnostic only; no timing; no production file edits"
+    },
+    {
+      "path": "docs/benchmarks/decoder_batch_phase2_2026-10-03.json.gz",
+      "format": "gzip",
+      "archive_bytes": 196541,
+      "archive_sha256": "21ec63700d0dd8dc4978a083efc7001edc6bc7c932ab336829c0788652ecd8b8",
+      "uncompressed_format": "json",
+      "uncompressed_bytes": 3967944,
+      "uncompressed_sha256": "63c5dcb118beeefa0dff80341729584cb93b737c3cb069639beb7337e2ac150f",
+      "scope": "phase2 bounded replay; first eight real tiles; no timing, norm binding, or production edits"
+    },
+    {
+      "path": "docs/benchmarks/decoder_batch_phase3_2026-10-03.json.gz",
+      "format": "gzip",
+      "archive_bytes": 50818,
+      "archive_sha256": "073fddca630c8e001767adafb998a14c124a6c72bb18c3b28070a3d3835f1a3c",
+      "uncompressed_format": "json",
+      "uncompressed_bytes": 1212076,
+      "uncompressed_sha256": "964b412d51f3285c6e0fc6e8bf7cd1b3442a0cbe1944c18de2603e70f70326d3",
+      "scope": "INT8 decoder batch divergence diagnostics, not new performance evidence",
+      "approved_source_sha256": "964b412d51f3285c6e0fc6e8bf7cd1b3442a0cbe1944c18de2603e70f70326d3"
+    },
+    {
+      "path": "docs/benchmarks/decoder_batch_norm_source_review_2026-10-03.json",
+      "format": "json",
+      "archive_bytes": 1430,
+      "archive_sha256": "9a3ef6a255b28366a9e90fadeb483ab4030b0dfbb4bfccdb64c6862f2a675887",
+      "uncompressed_format": "json",
+      "uncompressed_bytes": 1430,
+      "uncompressed_sha256": "9a3ef6a255b28366a9e90fadeb483ab4030b0dfbb4bfccdb64c6862f2a675887",
+      "scope": "CPU review of generated layer-1 residual/norm1 source and selected schedules; no new GPU execution"
+    },
+    {
+      "path": "docs/benchmarks/decoder_batch_profile_budget_2026-10-03.json",
+      "format": "json",
+      "archive_bytes": 23878,
+      "archive_sha256": "995848b09bb45f07734a344c4e7a5c5852c4dace87c557b9f2a90cbd89dda969",
+      "uncompressed_format": "json",
+      "uncompressed_bytes": 23878,
+      "uncompressed_sha256": "995848b09bb45f07734a344c4e7a5c5852c4dace87c557b9f2a90cbd89dda969",
+      "scope": "CPU-only SQLite/JSON reclassification of saved Nsight captures. No GPU run, no new profiling, no timed comparison, no source edits."
+    }
+  ]
+}

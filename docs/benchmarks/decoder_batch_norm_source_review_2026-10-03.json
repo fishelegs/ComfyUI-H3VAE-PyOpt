@@ -1,0 +1,37 @@
+{
+  "scope": "CPU review of generated layer-1 residual/norm1 source and selected schedules; no new GPU execution",
+  "source_rows": [
+    {
+      "variant": "batch4",
+      "source_sha256": "c4cb1809c630480191249aa7f830807153be72a3fc645843c0eef73c6603722f",
+      "config": {
+        "kwargs": {
+          "XBLOCK": 2,
+          "R0_BLOCK": 2048
+        },
+        "num_warps": 8,
+        "num_stages": 1,
+        "found_by_coordesc": true
+      }
+    },
+    {
+      "variant": "batch8",
+      "source_sha256": "462760db3df3a5890a4dc82bfa35533737f84b34e7bf484757e8f60e4ab84775",
+      "config": {
+        "kwargs": {
+          "XBLOCK": 8,
+          "R0_BLOCK": 128
+        },
+        "num_warps": 2,
+        "num_stages": 1,
+        "found_by_coordesc": true
+      }
+    }
+  ],
+  "source_equal_after_replacing_only_row_count": true,
+  "batch4_reduction_chunks": 1,
+  "batch8_reduction_chunks": 16,
+  "reduction_width": 2048,
+  "rounding_contract": "Generated source accumulates squared unrounded residual values, stores the residual to FP16, then reloads FP16 for normalization. Physical block_x alone is not the full statistics input. Prior layer FFN h/out match on all eight tiles; scale and norm weights are shared.",
+  "interpretation": "Different selected reduction schedules can change FP32 summation order. Source inspection alone does not quantify throughput or prove every final RGB difference has this single cause."
+}
