@@ -1,0 +1,5233 @@
+{
+  "date": "2026-10-03",
+  "production_kernel_baseline_commit": "7bd9809",
+  "adopted": false,
+  "full_decode_timings": false,
+  "full_decode_quality": false,
+  "scope": "Local linked capture/replay of decoder layers 0, 17 and 35 from the first real tile; B4,N1797,H32,D64, M7188, QKV K2048,N6144. Cached latent; no fresh full-video decode quality or timing.",
+  "conclusion": "Do not promote. Exact repaired BM128 saves only 0.0072-0.0224 ms in the complete local chain; layer17 improves in 3/6 paired blocks. BM64 regresses. Current advertised encode/decode numbers remain unchanged.",
+  "chronology": [
+    "First capture attempt correctly rejected default comfy-kitchen 0.2.31 before model capture. Its metadata/error are preserved. All actual capture, quality and timing paths then used the isolated 0.2.34 overlay.",
+    "Initial fused BM128 and BM64 reproduce every raw QKV FP16 element but fail normalized Q/K (maximum absolute difference 0.00390625); V remains exact. No timing was performed for these failing kernels.",
+    "Production PTX uses four consecutive FP32 squared values accumulated serially, then a 16-group butterfly xor8,4,2,1. Direct tl.sum on the GEMM MMA-derived layout changes the reduction tree.",
+    "One explicit-tree repair was allowed. Real layer0 FP32 Q/K sums and pre-RoPE FP16 normalized values are bitwise identical at ROWS64 and ROWS128. Actual fused non-debug outputs and separate STORE_RAW debug outputs are checked independently.",
+    "Three real layers retain exact Q/K/V, original strides, original Torch Flash dispatch, exact Flash outputs and exact downstream INT8 output projection. Each measured operation includes fresh dynamic activation quantization and all per-call allocations.",
+    "Six paired ABBA/BAAB blocks per layer, ten chain calls per segment, three warmups. Full order and all samples are retained. No full decoder/video timing, no production edits, no promotion."
+  ],
+  "complete_local_chain": "CK rowwise INT8 input quantization + QKV GEMM/FP16 epilogue + RMSNorm/RoPE + actual ATen Flash + nan_to_num_ + reshape + original INT8 output projection, including per-call allocations.",
+  "diagnostic_preparation_warning": "The diagnostic_preparation entries are single short batches without paired blocks. They exclude Flash and output projection and are not the performance conclusion.",
+  "status_warning": "A raw harness status=passed means the run completed; individual candidate quality.passed fields remain authoritative, including the preserved initial failures.",
+  "summary_complete_chain_bm128": [
+    {
+      "layer": 0,
+      "mean_ms": {
+        "production": 1.5103879928588868,
+        "fused_m128": 1.4880064010620118
+      },
+      "reduction_percent": 1.4818438641392317,
+      "block_savings_ms": [
+        0.03707675933837873,
+        0.017894411087036044,
+        0.04799842834472656,
+        0.021216011047363148,
+        0.009875154495239347,
+        0.00022878646850577056
+      ],
+      "positive_blocks": 6,
+      "mean_savings_ms": 0.022381591796875044
+    },
+    {
+      "layer": 17,
+      "mean_ms": {
+        "production": 1.4934669415156046,
+        "fused_m128": 1.4863023996353149
+      },
+      "reduction_percent": 0.47972550855520657,
+      "block_savings_ms": [
+        -0.020739173889160023,
+        -0.005151987075805664,
+        0.0233151912689209,
+        0.026596784591674583,
+        -0.0010623931884765625,
+        0.02002882957458496
+      ],
+      "positive_blocks": 3,
+      "mean_savings_ms": 0.007164541880289699
+    },
+    {
+      "layer": 35,
+      "mean_ms": {
+        "production": 1.4896383921305338,
+        "fused_m128": 1.4706509272257486
+      },
+      "reduction_percent": 1.2746358448528339,
+      "block_savings_ms": [
+        -0.0017504215240480292,
+        0.07839999198913583,
+        0.02557282447814946,
+        0.006105566024780407,
+        0.00225763320922856,
+        0.003339195251464977
+      ],
+      "positive_blocks": 5,
+      "mean_savings_ms": 0.0189874649047852
+    }
+  ],
+  "reduction_tree_evidence": {
+    "production_ptx_sha256": "16e45217377e83c53c99b740bf4aeee4af90539526cc0733349d71987f882f1a",
+    "production_ttgir_sha256": "be8f8a2d104d454de0f6d0aa299cf96c0b7621ced44a51c3d014871f263be6b9",
+    "production_layout": "sizePerThread=[1,4], threadsPerWarp=[2,16], warpsPerCTA=[4,1], order=[1,0]",
+    "tree": "p=(x0*x0+x1*x1); p=x2*x2+p; p=x3*x3+p; for shift in [8,4,2,1]: p=p+shuffle_xor(p,shift)",
+    "helper_file": "qkv_production_sum64_helper.py",
+    "helper_sha256": "b836ceb2f822aa3d9ae8a3a1dd2d6ea29cd932a5c706613d42df97d5393ef3a2",
+    "candidate_source_sha256": "670f326801d283e5f24920cb6181ec9778145e96499d3c4a72ca87bcd65203c6",
+    "scope": "Compiler/layout-specific observed contract; exactness validated on captured inputs, not a universal guarantee for all compilers or arbitrary inputs."
+  },
+  "source_artifacts": {
+    "plan.json": "434f66fafcae8fb490e8e1adbf10a785b47cf670d6e17d75bdbbdf11eed54f7d",
+    "capture_layer0.json": "428d9913a25f0115f19231f700fb3d60bfc274a16b9a63816821e80c72d407d2",
+    "capture_layer0_ck0234.json": "0bdf8b7e2f4ba09268aadbb6055be742195599eaf81824f57c05d2ae34ba666e",
+    "quality_layer0.json": "3ea10f4c95ed69e3100ec6896a96fa88e23ce8235f34a18f379a9f23c8ac9886",
+    "reduction_check.json": "acb3ce313f84a208f8eaa3fd0cfc59f699577379afb82a2d2c533fe628b61494",
+    "repaired/quality_layer0.json": "f1c4dc760205763a0a1e5b46f995c0150b3d65f944aa925f51a5fb7a79c9796a",
+    "repaired/replay_layer0.json": "bd451689fe3536023f581e577b557527856795dc17936b4328f42d18a2993b2d",
+    "repaired/capture_layers17_35.json": "60216bdf37dc4c4ad708acea056e25d3095fa7bb8e537e669b612acfcb1a40d0",
+    "repaired/replay_layers17_35.json": "4c4f418036c1bf565eff90039937d4face24ee38d807d0e22443b66cde58cd8f"
+  },
+  "validation": {
+    "py_compile": true,
+    "critical_ruff": "passed: E9,F63,F7,F82 --no-cache",
+    "numeric_leaf_preservation_count": 2700,
+    "all_original_numeric_leaves_preserved_in_raw_evidence": true
+  },
+  "privacy": "Local absolute paths removed; model tensor/weight/latent files are not included. Their original checksums and public-model basenames are retained. No private media names are present.",
+  "raw_evidence": {
+    "plan.json": {
+      "production_kernel_baseline_commit": "7bd9809",
+      "repository_commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "mechanism": "Fuse QKV INT8 GEMM FP16 output directly into headwise RMSNorm/RoPE; retain original Q/K/V strides and actual Torch Flash dispatch",
+      "contract": {
+        "M": 7188,
+        "K": 2048,
+        "N": 6144,
+        "heads": 32,
+        "head_dim": 64,
+        "rotary_dim": 48,
+        "weight_layout": "head-major interleaved Q64/K64/V64",
+        "accumulator": "INT8xINT8->INT32; absolute bound 33554432",
+        "epilogue": "FP32(acc)*FP32(act_scale), explicit fma(value,weight_scale,FP32(bias)), FP16 rounding before RMSNorm",
+        "norm_rope": "Original FP32 squared sum/rsqrt, normalized FP16 rounding, separate FP16 cos/sin products before FP16 final sum",
+        "shapes": "original Q/K contiguous BNHD; V retains BNH(3D) stride backing",
+        "candidates": [
+          {
+            "BM": 128,
+            "BN": 128,
+            "BK": 64,
+            "warps": 4,
+            "stages": 4
+          },
+          {
+            "BM": 64,
+            "BN": 128,
+            "BK": 64,
+            "warps": 4,
+            "stages": 4
+          }
+        ]
+      },
+      "historical_coverage": {
+        "plain_exact_qkv_triton_best_ms": 0.403199998040994,
+        "its_ck_reference_ms": 0.39778666694959003,
+        "source": "h3vae_decode_gemm_20261002/replay_fma.json",
+        "already_rejected": [
+          "unfused tile/stage variants",
+          "transposed weights",
+          "row-split CK launches",
+          "cuBLAS INT32 plus separate epilogue",
+          "attention-side QKV/V packing"
+        ],
+        "new_boundary": "No previous local QKV GEMM fused with the headwise norm/RoPE consumer found"
+      },
+      "diagnostic_budget": {
+        "prior_profile_qk_rope_seconds": 0.144232321,
+        "calls": 1764,
+        "mean_us": 81.76435430839003,
+        "eliminated_qk_write_plus_read_bytes_per_M7188_call": 117768192,
+        "interpretation": "Mechanism budget only, not a promised local or full-decoder saving. New reduction layout/register costs must be measured."
+      },
+      "capture": "Same-call CK QKV linear observed by actual weight pointer and reconstructible q/s/w/ws/b; immediate RoPE input checked by output pointer. Clone to CPU; unchanged compiled tile must stay exact. Flat runtime module import.",
+      "numerical_gate": "First capture layer0 and quality-only. Verify raw GEMM FP16 output, original Q/K/V values and strides, actual Torch Flash kernel and downstream INT8 projection. Do not time/promote failing specialization; STORE_RAW diagnosis is separate from timed kernel.",
+      "timing": "Fresh dynamic input quantization and all output allocations included; complete local chain includes Flash/nan_to_num/output reshape/INT8 projection. No profiler or capture observer during ABBA/BAAB timing.",
+      "source_sha256": {
+        "candidate.py": "5a35b2e5010491d4b637fa761f048665ef32289199fc80a18f29f0d7748de8a1",
+        "driver.py": "51cc0a5bc21653e4206f1c2193f8f0a3698f983ed50dfd3ff20dde36d261da60",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/kitchen_int8.py": "8501411c07e5e36a4152fd7514196c509ca681df758140fce30975db81fdd065"
+      }
+    },
+    "capture_layer0.json": {
+      "scope": "Bounded exact QKV GEMM -> FP16 -> RMSNorm/RoPE fusion capture/replay.\n\nAll GPU work, including model loading and compilation, holds one common flock.\nCaptures same-call linear_x/q/s/w/ws/b and QKV/cos/sin at real layers 0/17/35.\nPreserves original Q/K/V layouts and verifies the actual Flash dispatch and\nINT8 output projection. No production edits or full-decode speedup claims.\n",
+      "status": "failed",
+      "mode": "capture",
+      "settings": {
+        "mode": "capture",
+        "repo": "repository",
+        "model_code_dir": "model_code/video_vae",
+        "weights": "model_weights/minimax_h3_video_vae_fp16.safetensors",
+        "latent": "cached_latent/fp16_latent.pt",
+        "manifest": null,
+        "output": "qkv_experiment/capture_layer0.json",
+        "layers": [
+          0
+        ],
+        "blocks": 6,
+        "quality_only": false,
+        "repeat": 10,
+        "warmup": 3,
+        "tile_batch": 4,
+        "seed": 20261003
+      },
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.31",
+        "comfy_kitchen_file": "default_environment/comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "82, 736, 73415"
+        }
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "source_sha256": {
+        "qkv_experiment/driver.py": "51cc0a5bc21653e4206f1c2193f8f0a3698f983ed50dfd3ff20dde36d261da60",
+        "qkv_experiment/candidate.py": "5a35b2e5010491d4b637fa761f048665ef32289199fc80a18f29f0d7748de8a1",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      },
+      "notes": [
+        "No production repository edits.",
+        "Cached FP16 latent is for local capture only; not fresh formal quality.",
+        "Only local repeated observations; not independent full-video performance blocks.",
+        "Dynamic input quantization and all per-call output allocations are included in measured chains.",
+        "Existing compiled Flash ATen op and scale .125 retained; no backend/precision/softmax changes."
+      ],
+      "error": "RuntimeError: int8_decode requires comfy-kitchen==0.2.34; found 0.2.31"
+    },
+    "capture_layer0_ck0234.json": {
+      "scope": "Bounded exact QKV GEMM -> FP16 -> RMSNorm/RoPE fusion capture/replay.\n\nAll GPU work, including model loading and compilation, holds one common flock.\nCaptures same-call linear_x/q/s/w/ws/b and QKV/cos/sin at real layers 0/17/35.\nPreserves original Q/K/V layouts and verifies the actual Flash dispatch and\nINT8 output projection. No production edits or full-decode speedup claims.\n",
+      "status": "passed",
+      "mode": "capture",
+      "settings": {
+        "mode": "capture",
+        "repo": "repository",
+        "model_code_dir": "model_code/video_vae",
+        "weights": "model_weights/minimax_h3_video_vae_fp16.safetensors",
+        "latent": "cached_latent/fp16_latent.pt",
+        "manifest": null,
+        "output": "qkv_experiment/capture_layer0_ck0234.json",
+        "layers": [
+          0
+        ],
+        "blocks": 6,
+        "quality_only": false,
+        "repeat": 10,
+        "warmup": 3,
+        "tile_batch": 4,
+        "seed": 20261003
+      },
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.34",
+        "comfy_kitchen_file": "ck_0.2.34_overlay/comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "83, 736, 73415"
+        }
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "source_sha256": {
+        "qkv_experiment/driver.py": "51cc0a5bc21653e4206f1c2193f8f0a3698f983ed50dfd3ff20dde36d261da60",
+        "qkv_experiment/candidate.py": "5a35b2e5010491d4b637fa761f048665ef32289199fc80a18f29f0d7748de8a1",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      },
+      "notes": [
+        "No production repository edits.",
+        "Cached FP16 latent is for local capture only; not fresh formal quality.",
+        "Only local repeated observations; not independent full-video performance blocks.",
+        "Dynamic input quantization and all per-call output allocations are included in measured chains.",
+        "Existing compiled Flash ATen op and scale .125 retained; no backend/precision/softmax changes."
+      ],
+      "latent": {
+        "path": "cached_latent/fp16_latent.pt",
+        "sha256": "5ac65a57f30931128332fcf8f588ca7ec35f921b63b192dae3c63035912020f2",
+        "shape": [
+          1,
+          24,
+          37,
+          48,
+          84
+        ],
+        "stride": [
+          3580416,
+          1,
+          96768,
+          2016,
+          24
+        ]
+      },
+      "weights_sha256": "7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522",
+      "capture_hooks_quality": {
+        "equal": true,
+        "finite": true,
+        "max_abs": 0.0,
+        "shape": [
+          4,
+          3,
+          28,
+          256,
+          256
+        ],
+        "stride": [
+          5505024,
+          1835008,
+          65536,
+          256,
+          1
+        ],
+        "dtype": "torch.float16"
+      },
+      "calls": {
+        "qkv": 36,
+        "qk": 36
+      },
+      "records": [
+        {
+          "layer": 0,
+          "file": "qkv_experiment/capture_layer0_ck0234_tensors/layer0.pt",
+          "sha256": "284fc8db51b51b8d5724ba5b3b8d7f07a8e5e875fe89cb43717f81c51e19b3af",
+          "shape": [
+            4,
+            1797,
+            6144
+          ],
+          "stride": [
+            11040768,
+            6144,
+            1
+          ],
+          "cos_shape": [
+            4,
+            1797,
+            1,
+            48
+          ],
+          "cos_stride": [
+            86256,
+            48,
+            48,
+            1
+          ],
+          "linear_shape": [
+            4,
+            1797,
+            2048
+          ],
+          "linear_stride": [
+            3680256,
+            2048,
+            1
+          ],
+          "q_shape": [
+            7188,
+            2048
+          ],
+          "q_scale_reconstructs_same_call_qkv": {
+            "equal": true,
+            "finite": true,
+            "max_abs": 0.0,
+            "shape": [
+              7188,
+              6144
+            ],
+            "stride": [
+              6144,
+              1
+            ],
+            "dtype": "torch.float16"
+          },
+          "same_output_pointer_to_qk": true,
+          "grid": [
+            28752
+          ],
+          "launch_kwargs": {
+            "num_warps": 4,
+            "enable_fp_fusion": false
+          }
+        }
+      ]
+    },
+    "quality_layer0.json": {
+      "scope": "Bounded exact QKV GEMM -> FP16 -> RMSNorm/RoPE fusion capture/replay.\n\nAll GPU work, including model loading and compilation, holds one common flock.\nCaptures same-call linear_x/q/s/w/ws/b and QKV/cos/sin at real layers 0/17/35.\nPreserves original Q/K/V layouts and verifies the actual Flash dispatch and\nINT8 output projection. No production edits or full-decode speedup claims.\n",
+      "status": "passed",
+      "mode": "replay",
+      "settings": {
+        "mode": "replay",
+        "repo": "repository",
+        "model_code_dir": null,
+        "weights": null,
+        "latent": "cached_latent/fp16_latent.pt",
+        "manifest": "qkv_experiment/capture_layer0_ck0234.json",
+        "output": "qkv_experiment/quality_layer0.json",
+        "layers": [
+          0
+        ],
+        "blocks": 6,
+        "quality_only": true,
+        "repeat": 10,
+        "warmup": 3,
+        "tile_batch": 4,
+        "seed": 20261003
+      },
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.34",
+        "comfy_kitchen_file": "ck_0.2.34_overlay/comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "82, 736, 73415"
+        }
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "source_sha256": {
+        "qkv_experiment/driver.py": "51cc0a5bc21653e4206f1c2193f8f0a3698f983ed50dfd3ff20dde36d261da60",
+        "qkv_experiment/candidate.py": "5a35b2e5010491d4b637fa761f048665ef32289199fc80a18f29f0d7748de8a1",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      },
+      "notes": [
+        "No production repository edits.",
+        "Cached FP16 latent is for local capture only; not fresh formal quality.",
+        "Only local repeated observations; not independent full-video performance blocks.",
+        "Dynamic input quantization and all per-call output allocations are included in measured chains.",
+        "Existing compiled Flash ATen op and scale .125 retained; no backend/precision/softmax changes."
+      ],
+      "capture_manifest_sha256": "0bdf8b7e2f4ba09268aadbb6055be742195599eaf81824f57c05d2ae34ba666e",
+      "replays": [
+        {
+          "record": {
+            "layer": 0,
+            "file": "qkv_experiment/capture_layer0_ck0234_tensors/layer0.pt",
+            "sha256": "284fc8db51b51b8d5724ba5b3b8d7f07a8e5e875fe89cb43717f81c51e19b3af",
+            "shape": [
+              4,
+              1797,
+              6144
+            ],
+            "stride": [
+              11040768,
+              6144,
+              1
+            ],
+            "cos_shape": [
+              4,
+              1797,
+              1,
+              48
+            ],
+            "cos_stride": [
+              86256,
+              48,
+              48,
+              1
+            ],
+            "linear_shape": [
+              4,
+              1797,
+              2048
+            ],
+            "linear_stride": [
+              3680256,
+              2048,
+              1
+            ],
+            "q_shape": [
+              7188,
+              2048
+            ],
+            "q_scale_reconstructs_same_call_qkv": {
+              "equal": true,
+              "finite": true,
+              "max_abs": 0.0,
+              "shape": [
+                7188,
+                6144
+              ],
+              "stride": [
+                6144,
+                1
+              ],
+              "dtype": "torch.float16"
+            },
+            "same_output_pointer_to_qk": true,
+            "grid": [
+              28752
+            ],
+            "launch_kwargs": {
+              "num_warps": 4,
+              "enable_fp_fusion": false
+            }
+          },
+          "quality": {
+            "production": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "triton_unfused_m128": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "fused_m128": {
+              "q": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "passed": false
+            },
+            "fused_m64": {
+              "q": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "passed": false
+            }
+          },
+          "samples": [],
+          "summaries": {},
+          "resources": {
+            "triton_unfused_m128": {
+              "n_regs": 210,
+              "n_spills": 0,
+              "shared": 49152,
+              "ttgir_sha256": "7a49fa7e3851e32f769c69ee78617db29e2d81dbfd4b7006920539aae830876d",
+              "ptx_sha256": "d832622c6b7c25612d037c5973ef32b46c7fad9f0dd30f1f948a96e19cb7d967"
+            },
+            "fused_m128": {
+              "n_regs": 255,
+              "n_spills": 2,
+              "shared": 49152,
+              "ttgir_sha256": "4da2002b0577c5cfbc81f8bb0ffc8f206e0906f095349051859f68af0746033c",
+              "ptx_sha256": "aaa244f74879daee1f470328ce70d6d18fa7bd5645bd279f3d44421ef970805d"
+            },
+            "fused_m64": {
+              "n_regs": 132,
+              "n_spills": 0,
+              "shared": 36864,
+              "ttgir_sha256": "645ac6016ccc210ae8f7067bc92e767f5652dbdeaa1433e6766793a4a4680ecf",
+              "ptx_sha256": "bf1a80e0d50bc01b71594eec99dd2ef1ba15f56099098d22caf3fa4bd31f2512"
+            }
+          },
+          "diagnostics": {
+            "triton_unfused_m128": {
+              "raw_gemm": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  6144
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  1
+                ],
+                "dtype": "torch.float16"
+              }
+            },
+            "fused_m128": {
+              "q": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": [
+                  {
+                    "index": [
+                      0,
+                      2,
+                      7,
+                      31
+                    ],
+                    "reference": -0.1319580078125,
+                    "candidate": -0.1318359375
+                  },
+                  {
+                    "index": [
+                      0,
+                      5,
+                      8,
+                      56
+                    ],
+                    "reference": 0.99169921875,
+                    "candidate": 0.9921875
+                  },
+                  {
+                    "index": [
+                      0,
+                      27,
+                      19,
+                      9
+                    ],
+                    "reference": -1.423828125,
+                    "candidate": -1.4248046875
+                  },
+                  {
+                    "index": [
+                      0,
+                      27,
+                      19,
+                      33
+                    ],
+                    "reference": -0.2274169921875,
+                    "candidate": -0.2276611328125
+                  },
+                  {
+                    "index": [
+                      0,
+                      80,
+                      30,
+                      28
+                    ],
+                    "reference": 0.00872802734375,
+                    "candidate": 0.00873565673828125
+                  },
+                  {
+                    "index": [
+                      0,
+                      87,
+                      27,
+                      45
+                    ],
+                    "reference": -0.0164794921875,
+                    "candidate": -0.0164642333984375
+                  },
+                  {
+                    "index": [
+                      0,
+                      110,
+                      12,
+                      44
+                    ],
+                    "reference": 0.07550048828125,
+                    "candidate": 0.075439453125
+                  },
+                  {
+                    "index": [
+                      0,
+                      116,
+                      2,
+                      31
+                    ],
+                    "reference": -0.00650787353515625,
+                    "candidate": -0.006500244140625
+                  },
+                  {
+                    "index": [
+                      0,
+                      153,
+                      21,
+                      18
+                    ],
+                    "reference": 1.08203125,
+                    "candidate": 1.080078125
+                  },
+                  {
+                    "index": [
+                      0,
+                      153,
+                      21,
+                      42
+                    ],
+                    "reference": -3.203125,
+                    "candidate": -3.201171875
+                  },
+                  {
+                    "index": [
+                      0,
+                      182,
+                      11,
+                      22
+                    ],
+                    "reference": 0.0062408447265625,
+                    "candidate": 0.006244659423828125
+                  },
+                  {
+                    "index": [
+                      0,
+                      182,
+                      13,
+                      46
+                    ],
+                    "reference": 0.00559234619140625,
+                    "candidate": 0.005584716796875
+                  },
+                  {
+                    "index": [
+                      0,
+                      193,
+                      2,
+                      6
+                    ],
+                    "reference": 0.006732940673828125,
+                    "candidate": 0.0067291259765625
+                  },
+                  {
+                    "index": [
+                      0,
+                      193,
+                      2,
+                      30
+                    ],
+                    "reference": -0.0035305023193359375,
+                    "candidate": -0.003528594970703125
+                  },
+                  {
+                    "index": [
+                      0,
+                      194,
+                      24,
+                      57
+                    ],
+                    "reference": 0.00273895263671875,
+                    "candidate": 0.0027408599853515625
+                  },
+                  {
+                    "index": [
+                      0,
+                      202,
+                      31,
+                      58
+                    ],
+                    "reference": 1.3505859375,
+                    "candidate": 1.3515625
+                  }
+                ]
+              },
+              "k": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": [
+                  {
+                    "index": [
+                      0,
+                      32,
+                      22,
+                      47
+                    ],
+                    "reference": 0.00811767578125,
+                    "candidate": 0.00812530517578125
+                  },
+                  {
+                    "index": [
+                      0,
+                      36,
+                      8,
+                      57
+                    ],
+                    "reference": 0.8388671875,
+                    "candidate": 0.83935546875
+                  },
+                  {
+                    "index": [
+                      0,
+                      46,
+                      21,
+                      22
+                    ],
+                    "reference": -0.055419921875,
+                    "candidate": -0.05548095703125
+                  },
+                  {
+                    "index": [
+                      0,
+                      50,
+                      26,
+                      59
+                    ],
+                    "reference": 0.00800323486328125,
+                    "candidate": 0.00799560546875
+                  },
+                  {
+                    "index": [
+                      0,
+                      96,
+                      20,
+                      2
+                    ],
+                    "reference": 1.19140625,
+                    "candidate": 1.1923828125
+                  },
+                  {
+                    "index": [
+                      0,
+                      96,
+                      20,
+                      26
+                    ],
+                    "reference": 2.24609375,
+                    "candidate": 2.248046875
+                  },
+                  {
+                    "index": [
+                      0,
+                      105,
+                      19,
+                      33
+                    ],
+                    "reference": -0.251953125,
+                    "candidate": -0.252197265625
+                  },
+                  {
+                    "index": [
+                      0,
+                      106,
+                      7,
+                      40
+                    ],
+                    "reference": 0.01171875,
+                    "candidate": 0.0126953125
+                  },
+                  {
+                    "index": [
+                      0,
+                      118,
+                      10,
+                      63
+                    ],
+                    "reference": -0.0016183853149414062,
+                    "candidate": -0.001617431640625
+                  },
+                  {
+                    "index": [
+                      0,
+                      131,
+                      0,
+                      49
+                    ],
+                    "reference": 0.003978729248046875,
+                    "candidate": 0.00397491455078125
+                  },
+                  {
+                    "index": [
+                      0,
+                      135,
+                      7,
+                      50
+                    ],
+                    "reference": 0.411865234375,
+                    "candidate": 0.412109375
+                  },
+                  {
+                    "index": [
+                      0,
+                      155,
+                      26,
+                      25
+                    ],
+                    "reference": 1.3955078125,
+                    "candidate": 1.39453125
+                  },
+                  {
+                    "index": [
+                      0,
+                      168,
+                      8,
+                      20
+                    ],
+                    "reference": 0.6591796875,
+                    "candidate": 0.65966796875
+                  },
+                  {
+                    "index": [
+                      0,
+                      191,
+                      9,
+                      41
+                    ],
+                    "reference": 1.2236328125,
+                    "candidate": 1.224609375
+                  },
+                  {
+                    "index": [
+                      0,
+                      199,
+                      17,
+                      39
+                    ],
+                    "reference": 0.51953125,
+                    "candidate": 0.51904296875
+                  },
+                  {
+                    "index": [
+                      0,
+                      203,
+                      2,
+                      50
+                    ],
+                    "reference": 0.09490966796875,
+                    "candidate": 0.094970703125
+                  }
+                ]
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": []
+              },
+              "raw_gemm": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  6144
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": []
+              },
+              "first_stage": "post_gemm_norm_or_rope",
+              "debug_file": "qkv_experiment/failure_layer0_fused_m128.pt"
+            },
+            "fused_m64": {
+              "q": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": [
+                  {
+                    "index": [
+                      0,
+                      27,
+                      19,
+                      9
+                    ],
+                    "reference": -1.423828125,
+                    "candidate": -1.4248046875
+                  },
+                  {
+                    "index": [
+                      0,
+                      27,
+                      19,
+                      33
+                    ],
+                    "reference": -0.2274169921875,
+                    "candidate": -0.2276611328125
+                  },
+                  {
+                    "index": [
+                      0,
+                      56,
+                      3,
+                      30
+                    ],
+                    "reference": 0.3203125,
+                    "candidate": 0.320556640625
+                  },
+                  {
+                    "index": [
+                      0,
+                      61,
+                      20,
+                      55
+                    ],
+                    "reference": -0.0009698867797851562,
+                    "candidate": -0.0009694099426269531
+                  },
+                  {
+                    "index": [
+                      0,
+                      66,
+                      1,
+                      10
+                    ],
+                    "reference": -1.7421875,
+                    "candidate": -1.744140625
+                  },
+                  {
+                    "index": [
+                      0,
+                      66,
+                      1,
+                      34
+                    ],
+                    "reference": -3.302734375,
+                    "candidate": -3.3046875
+                  },
+                  {
+                    "index": [
+                      0,
+                      87,
+                      27,
+                      45
+                    ],
+                    "reference": -0.0164794921875,
+                    "candidate": -0.0164642333984375
+                  },
+                  {
+                    "index": [
+                      0,
+                      90,
+                      25,
+                      11
+                    ],
+                    "reference": 0.0296478271484375,
+                    "candidate": 0.029632568359375
+                  },
+                  {
+                    "index": [
+                      0,
+                      90,
+                      25,
+                      35
+                    ],
+                    "reference": 0.00238037109375,
+                    "candidate": 0.00237274169921875
+                  },
+                  {
+                    "index": [
+                      0,
+                      95,
+                      31,
+                      3
+                    ],
+                    "reference": 1.162109375,
+                    "candidate": 1.1630859375
+                  },
+                  {
+                    "index": [
+                      0,
+                      95,
+                      31,
+                      27
+                    ],
+                    "reference": -0.6328125,
+                    "candidate": -0.63232421875
+                  },
+                  {
+                    "index": [
+                      0,
+                      110,
+                      12,
+                      44
+                    ],
+                    "reference": 0.07550048828125,
+                    "candidate": 0.075439453125
+                  },
+                  {
+                    "index": [
+                      0,
+                      116,
+                      2,
+                      31
+                    ],
+                    "reference": -0.00650787353515625,
+                    "candidate": -0.006500244140625
+                  },
+                  {
+                    "index": [
+                      0,
+                      153,
+                      21,
+                      18
+                    ],
+                    "reference": 1.08203125,
+                    "candidate": 1.080078125
+                  },
+                  {
+                    "index": [
+                      0,
+                      153,
+                      21,
+                      42
+                    ],
+                    "reference": -3.203125,
+                    "candidate": -3.201171875
+                  },
+                  {
+                    "index": [
+                      0,
+                      182,
+                      11,
+                      22
+                    ],
+                    "reference": 0.0062408447265625,
+                    "candidate": 0.006244659423828125
+                  }
+                ]
+              },
+              "k": {
+                "equal": false,
+                "finite": true,
+                "max_abs": 0.00390625,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": [
+                  {
+                    "index": [
+                      0,
+                      2,
+                      12,
+                      60
+                    ],
+                    "reference": 0.192626953125,
+                    "candidate": 0.1925048828125
+                  },
+                  {
+                    "index": [
+                      0,
+                      38,
+                      26,
+                      21
+                    ],
+                    "reference": 0.00579833984375,
+                    "candidate": 0.005859375
+                  },
+                  {
+                    "index": [
+                      0,
+                      46,
+                      21,
+                      22
+                    ],
+                    "reference": -0.055419921875,
+                    "candidate": -0.05548095703125
+                  },
+                  {
+                    "index": [
+                      0,
+                      83,
+                      10,
+                      5
+                    ],
+                    "reference": -0.0211334228515625,
+                    "candidate": -0.021148681640625
+                  },
+                  {
+                    "index": [
+                      0,
+                      83,
+                      10,
+                      29
+                    ],
+                    "reference": 0.00460052490234375,
+                    "candidate": 0.004608154296875
+                  },
+                  {
+                    "index": [
+                      0,
+                      96,
+                      20,
+                      2
+                    ],
+                    "reference": 1.19140625,
+                    "candidate": 1.1923828125
+                  },
+                  {
+                    "index": [
+                      0,
+                      96,
+                      20,
+                      26
+                    ],
+                    "reference": 2.24609375,
+                    "candidate": 2.248046875
+                  },
+                  {
+                    "index": [
+                      0,
+                      105,
+                      19,
+                      33
+                    ],
+                    "reference": -0.251953125,
+                    "candidate": -0.252197265625
+                  },
+                  {
+                    "index": [
+                      0,
+                      108,
+                      24,
+                      31
+                    ],
+                    "reference": -0.01395416259765625,
+                    "candidate": -0.0139617919921875
+                  },
+                  {
+                    "index": [
+                      0,
+                      131,
+                      0,
+                      49
+                    ],
+                    "reference": 0.003978729248046875,
+                    "candidate": 0.00397491455078125
+                  },
+                  {
+                    "index": [
+                      0,
+                      155,
+                      26,
+                      25
+                    ],
+                    "reference": 1.3955078125,
+                    "candidate": 1.39453125
+                  },
+                  {
+                    "index": [
+                      0,
+                      163,
+                      23,
+                      54
+                    ],
+                    "reference": 0.0220184326171875,
+                    "candidate": 0.02203369140625
+                  },
+                  {
+                    "index": [
+                      0,
+                      178,
+                      6,
+                      63
+                    ],
+                    "reference": 0.01007843017578125,
+                    "candidate": 0.01007080078125
+                  },
+                  {
+                    "index": [
+                      0,
+                      189,
+                      0,
+                      4
+                    ],
+                    "reference": 0.01190948486328125,
+                    "candidate": 0.01190185546875
+                  },
+                  {
+                    "index": [
+                      0,
+                      189,
+                      0,
+                      28
+                    ],
+                    "reference": 0.00823974609375,
+                    "candidate": 0.00823211669921875
+                  },
+                  {
+                    "index": [
+                      0,
+                      199,
+                      17,
+                      39
+                    ],
+                    "reference": 0.51953125,
+                    "candidate": 0.51904296875
+                  }
+                ]
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": []
+              },
+              "raw_gemm": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  6144
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  1
+                ],
+                "dtype": "torch.float16",
+                "first_mismatches": []
+              },
+              "first_stage": "post_gemm_norm_or_rope",
+              "debug_file": "qkv_experiment/failure_layer0_fused_m64.pt"
+            }
+          },
+          "actual_kernel_dispatch": {
+            "production": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "triton_unfused_m128": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            }
+          }
+        }
+      ],
+      "first_numerical_failure": {
+        "layer": 0,
+        "candidate": "fused_m128",
+        "stage": "post_gemm_norm_or_rope"
+      }
+    },
+    "reduction_check.json": {
+      "scope": "One real layer0 raw Q/K; verify FP32 sum and pre-RoPE FP16 norm bits before replaying fused repair",
+      "candidates": [
+        {
+          "ROWS": 64,
+          "registers": 127,
+          "spills": 0,
+          "checks": {
+            "q_sum": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            },
+            "k_sum": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            },
+            "q_norm": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            },
+            "k_norm": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            }
+          }
+        },
+        {
+          "ROWS": 128,
+          "registers": 168,
+          "spills": 0,
+          "checks": {
+            "q_sum": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            },
+            "k_sum": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            },
+            "q_norm": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            },
+            "k_norm": {
+              "bitwise_equal": true,
+              "different": 0,
+              "max_abs": 0.0
+            }
+          }
+        }
+      ],
+      "source_sha256": {
+        "check_reduction.py": "b5bbf0504d42bef93ccb3d8a75a20971234d69cf2907b1b22dd2b893f8dc932c",
+        "candidate_repaired.py": "670f326801d283e5f24920cb6181ec9778145e96499d3c4a72ca87bcd65203c6"
+      },
+      "passed": true
+    },
+    "repaired/quality_layer0.json": {
+      "scope": "Bounded exact QKV GEMM -> FP16 -> RMSNorm/RoPE fusion capture/replay.\n\nAll GPU work, including model loading and compilation, holds one common flock.\nCaptures same-call linear_x/q/s/w/ws/b and QKV/cos/sin at real layers 0/17/35.\nPreserves original Q/K/V layouts and verifies the actual Flash dispatch and\nINT8 output projection. No production edits or full-decode speedup claims.\n",
+      "status": "passed",
+      "mode": "replay",
+      "settings": {
+        "mode": "replay",
+        "repo": "repository",
+        "model_code_dir": null,
+        "weights": null,
+        "latent": "cached_latent/fp16_latent.pt",
+        "manifest": "qkv_experiment/capture_layer0_ck0234.json",
+        "output": "qkv_experiment/repaired/quality_layer0.json",
+        "layers": [
+          0
+        ],
+        "blocks": 6,
+        "quality_only": true,
+        "repeat": 10,
+        "warmup": 3,
+        "tile_batch": 4,
+        "seed": 20261003
+      },
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.34",
+        "comfy_kitchen_file": "ck_0.2.34_overlay/comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "82, 736, 73415"
+        }
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "source_sha256": {
+        "qkv_experiment/driver_repaired.py": "be2fb2f3182a0aa72f021469ccdb33a8475a45c9d57c0820ca5700d444c940a4",
+        "qkv_experiment/candidate_repaired.py": "670f326801d283e5f24920cb6181ec9778145e96499d3c4a72ca87bcd65203c6",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      },
+      "notes": [
+        "No production repository edits.",
+        "Cached FP16 latent is for local capture only; not fresh formal quality.",
+        "Only local repeated observations; not independent full-video performance blocks.",
+        "Dynamic input quantization and all per-call output allocations are included in measured chains.",
+        "Existing compiled Flash ATen op and scale .125 retained; no backend/precision/softmax changes."
+      ],
+      "capture_manifest_sha256": "0bdf8b7e2f4ba09268aadbb6055be742195599eaf81824f57c05d2ae34ba666e",
+      "replays": [
+        {
+          "record": {
+            "layer": 0,
+            "file": "qkv_experiment/capture_layer0_ck0234_tensors/layer0.pt",
+            "sha256": "284fc8db51b51b8d5724ba5b3b8d7f07a8e5e875fe89cb43717f81c51e19b3af",
+            "shape": [
+              4,
+              1797,
+              6144
+            ],
+            "stride": [
+              11040768,
+              6144,
+              1
+            ],
+            "cos_shape": [
+              4,
+              1797,
+              1,
+              48
+            ],
+            "cos_stride": [
+              86256,
+              48,
+              48,
+              1
+            ],
+            "linear_shape": [
+              4,
+              1797,
+              2048
+            ],
+            "linear_stride": [
+              3680256,
+              2048,
+              1
+            ],
+            "q_shape": [
+              7188,
+              2048
+            ],
+            "q_scale_reconstructs_same_call_qkv": {
+              "equal": true,
+              "finite": true,
+              "max_abs": 0.0,
+              "shape": [
+                7188,
+                6144
+              ],
+              "stride": [
+                6144,
+                1
+              ],
+              "dtype": "torch.float16"
+            },
+            "same_output_pointer_to_qk": true,
+            "grid": [
+              28752
+            ],
+            "launch_kwargs": {
+              "num_warps": 4,
+              "enable_fp_fusion": false
+            }
+          },
+          "quality": {
+            "production": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "triton_unfused_m128": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "fused_m128": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "fused_m64": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            }
+          },
+          "samples": [],
+          "summaries": {},
+          "resources": {
+            "triton_unfused_m128": {
+              "n_regs": 210,
+              "n_spills": 0,
+              "shared": 49152,
+              "ttgir_sha256": "edad0046504ad7916b237a6acd8b78e8404730c1012c06723aeca78de0442e7f",
+              "ptx_sha256": "bee995cd428080983e94e0b6b56906a4ca99bc447e66fdaf15ae3d7adbadea73"
+            },
+            "fused_m128": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 49152,
+              "ttgir_sha256": "0fb0bf1b7aef40da08368ae29538b4c0372991dcc86779f0e6b37f72398722a0",
+              "ptx_sha256": "819661d85204b781a288280e2dd5091fcec4c95ff16c904405a2f31ecef90f66"
+            },
+            "fused_m64": {
+              "n_regs": 164,
+              "n_spills": 0,
+              "shared": 36864,
+              "ttgir_sha256": "7a8610d65b1b26a6fd30d203cc884fa599f70a5b0cd109d653af07b983943e3d",
+              "ptx_sha256": "8216ca736e106951b7279dbc2bf7decabbf3efb3b403ebe015bb082960db069d"
+            }
+          },
+          "diagnostics": {
+            "triton_unfused_m128": {
+              "raw_gemm": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  6144
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  1
+                ],
+                "dtype": "torch.float16"
+              }
+            }
+          },
+          "actual_kernel_dispatch": {
+            "production": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "triton_unfused_m128": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "fused_m128": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "fused_m64": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            }
+          }
+        }
+      ]
+    },
+    "repaired/replay_layer0.json": {
+      "scope": "Bounded exact QKV GEMM -> FP16 -> RMSNorm/RoPE fusion capture/replay.\n\nAll GPU work, including model loading and compilation, holds one common flock.\nCaptures same-call linear_x/q/s/w/ws/b and QKV/cos/sin at real layers 0/17/35.\nPreserves original Q/K/V layouts and verifies the actual Flash dispatch and\nINT8 output projection. No production edits or full-decode speedup claims.\n",
+      "status": "passed",
+      "mode": "replay",
+      "settings": {
+        "mode": "replay",
+        "repo": "repository",
+        "model_code_dir": null,
+        "weights": null,
+        "latent": "cached_latent/fp16_latent.pt",
+        "manifest": "qkv_experiment/capture_layer0_ck0234.json",
+        "output": "qkv_experiment/repaired/replay_layer0.json",
+        "layers": [
+          0
+        ],
+        "blocks": 6,
+        "quality_only": false,
+        "repeat": 10,
+        "warmup": 3,
+        "tile_batch": 4,
+        "seed": 20261003
+      },
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.34",
+        "comfy_kitchen_file": "ck_0.2.34_overlay/comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "82, 736, 73415"
+        }
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "source_sha256": {
+        "qkv_experiment/driver_repaired.py": "7375615894ed5ba561a7a89d89555b842f18143afa26a36d6125647d58d99e70",
+        "qkv_experiment/candidate_repaired.py": "670f326801d283e5f24920cb6181ec9778145e96499d3c4a72ca87bcd65203c6",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      },
+      "notes": [
+        "No production repository edits.",
+        "Cached FP16 latent is for local capture only; not fresh formal quality.",
+        "Only local repeated observations; not independent full-video performance blocks.",
+        "Dynamic input quantization and all per-call output allocations are included in measured chains.",
+        "Existing compiled Flash ATen op and scale .125 retained; no backend/precision/softmax changes."
+      ],
+      "capture_manifest_sha256": "0bdf8b7e2f4ba09268aadbb6055be742195599eaf81824f57c05d2ae34ba666e",
+      "replays": [
+        {
+          "record": {
+            "layer": 0,
+            "file": "qkv_experiment/capture_layer0_ck0234_tensors/layer0.pt",
+            "sha256": "284fc8db51b51b8d5724ba5b3b8d7f07a8e5e875fe89cb43717f81c51e19b3af",
+            "shape": [
+              4,
+              1797,
+              6144
+            ],
+            "stride": [
+              11040768,
+              6144,
+              1
+            ],
+            "cos_shape": [
+              4,
+              1797,
+              1,
+              48
+            ],
+            "cos_stride": [
+              86256,
+              48,
+              48,
+              1
+            ],
+            "linear_shape": [
+              4,
+              1797,
+              2048
+            ],
+            "linear_stride": [
+              3680256,
+              2048,
+              1
+            ],
+            "q_shape": [
+              7188,
+              2048
+            ],
+            "q_scale_reconstructs_same_call_qkv": {
+              "equal": true,
+              "finite": true,
+              "max_abs": 0.0,
+              "shape": [
+                7188,
+                6144
+              ],
+              "stride": [
+                6144,
+                1
+              ],
+              "dtype": "torch.float16"
+            },
+            "same_output_pointer_to_qk": true,
+            "grid": [
+              28752
+            ],
+            "launch_kwargs": {
+              "num_warps": 4,
+              "enable_fp_fusion": false
+            }
+          },
+          "quality": {
+            "production": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "triton_unfused_m128": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "fused_m128": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "fused_m64": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            }
+          },
+          "samples": [
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 0,
+              "position": 0,
+              "label": "production",
+              "ms": 1.476915168762207,
+              "wall_seconds": 0.014996742829680443,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 0,
+              "position": 1,
+              "label": "triton_unfused_m128",
+              "ms": 1.5077216148376464,
+              "wall_seconds": 0.015237189829349518,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 0,
+              "position": 2,
+              "label": "triton_unfused_m128",
+              "ms": 1.5089792251586913,
+              "wall_seconds": 0.015215095598250628,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 0,
+              "position": 3,
+              "label": "production",
+              "ms": 1.4974431991577148,
+              "wall_seconds": 0.015098740346729755,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 1,
+              "position": 0,
+              "label": "triton_unfused_m128",
+              "ms": 1.5088576316833495,
+              "wall_seconds": 0.015214927028864622,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 1,
+              "position": 1,
+              "label": "production",
+              "ms": 1.4642399787902831,
+              "wall_seconds": 0.014772721100598574,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 1,
+              "position": 2,
+              "label": "production",
+              "ms": 1.4763615608215332,
+              "wall_seconds": 0.014794465154409409,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 1,
+              "position": 3,
+              "label": "triton_unfused_m128",
+              "ms": 1.514908790588379,
+              "wall_seconds": 0.015276609919965267,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 2,
+              "position": 0,
+              "label": "production",
+              "ms": 1.5060704231262207,
+              "wall_seconds": 0.015185301192104816,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 2,
+              "position": 1,
+              "label": "triton_unfused_m128",
+              "ms": 1.515721607208252,
+              "wall_seconds": 0.015283368993550539,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 2,
+              "position": 2,
+              "label": "triton_unfused_m128",
+              "ms": 1.5185088157653808,
+              "wall_seconds": 0.015306885819882154,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 2,
+              "position": 3,
+              "label": "production",
+              "ms": 1.4648287773132325,
+              "wall_seconds": 0.014838691800832748,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 3,
+              "position": 0,
+              "label": "triton_unfused_m128",
+              "ms": 1.4791584014892578,
+              "wall_seconds": 0.014914327766746283,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 3,
+              "position": 1,
+              "label": "production",
+              "ms": 1.511171245574951,
+              "wall_seconds": 0.015239023137837648,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 3,
+              "position": 2,
+              "label": "production",
+              "ms": 1.5125887870788575,
+              "wall_seconds": 0.015250579919666052,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 3,
+              "position": 3,
+              "label": "triton_unfused_m128",
+              "ms": 1.521280002593994,
+              "wall_seconds": 0.015336320269852877,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 4,
+              "position": 0,
+              "label": "production",
+              "ms": 1.5057472229003905,
+              "wall_seconds": 0.015183037146925926,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 4,
+              "position": 1,
+              "label": "triton_unfused_m128",
+              "ms": 1.5155296325683594,
+              "wall_seconds": 0.015279455110430717,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 4,
+              "position": 2,
+              "label": "triton_unfused_m128",
+              "ms": 1.5139712333679198,
+              "wall_seconds": 0.015263869892805815,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 4,
+              "position": 3,
+              "label": "production",
+              "ms": 1.471008014678955,
+              "wall_seconds": 0.01483400585129857,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 5,
+              "position": 0,
+              "label": "triton_unfused_m128",
+              "ms": 1.5176383972167968,
+              "wall_seconds": 0.015303230378776789,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 5,
+              "position": 1,
+              "label": "production",
+              "ms": 1.4779680252075196,
+              "wall_seconds": 0.014971515629440546,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 5,
+              "position": 2,
+              "label": "production",
+              "ms": 1.505174446105957,
+              "wall_seconds": 0.015186031814664602,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "triton_unfused_m128",
+              "block": 5,
+              "position": 3,
+              "label": "triton_unfused_m128",
+              "ms": 1.5174431800842285,
+              "wall_seconds": 0.015296869911253452,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 0,
+              "label": "production",
+              "ms": 1.514425563812256,
+              "wall_seconds": 0.015344663988798857,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4943519592285157,
+              "wall_seconds": 0.015066951047629118,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.4604960441589356,
+              "wall_seconds": 0.014734083320945501,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 3,
+              "label": "production",
+              "ms": 1.5145759582519531,
+              "wall_seconds": 0.015277271158993244,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.4959199905395508,
+              "wall_seconds": 0.015092350076884031,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 1,
+              "label": "production",
+              "ms": 1.5148544311523438,
+              "wall_seconds": 0.015283159911632538,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 2,
+              "label": "production",
+              "ms": 1.5154751777648925,
+              "wall_seconds": 0.015309008304029703,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4986207962036133,
+              "wall_seconds": 0.01511739706620574,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 0,
+              "label": "production",
+              "ms": 1.517244815826416,
+              "wall_seconds": 0.015297872014343739,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.442751979827881,
+              "wall_seconds": 0.014459214173257351,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.4959487915039062,
+              "wall_seconds": 0.01507891807705164,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 3,
+              "label": "production",
+              "ms": 1.5174528121948243,
+              "wall_seconds": 0.015309439040720463,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.4998496055603028,
+              "wall_seconds": 0.01517387293279171,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 1,
+              "label": "production",
+              "ms": 1.517308807373047,
+              "wall_seconds": 0.015296631027013063,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 2,
+              "label": "production",
+              "ms": 1.4911456108093262,
+              "wall_seconds": 0.01509397104382515,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4661727905273438,
+              "wall_seconds": 0.014785221312195063,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 0,
+              "label": "production",
+              "ms": 1.5030271530151367,
+              "wall_seconds": 0.015062452759593725,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4997376441955566,
+              "wall_seconds": 0.01512348698452115,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.5000191688537599,
+              "wall_seconds": 0.015127953141927719,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 3,
+              "label": "production",
+              "ms": 1.5164799690246582,
+              "wall_seconds": 0.015285452827811241,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.5014880180358887,
+              "wall_seconds": 0.015141463838517666,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 1,
+              "label": "production",
+              "ms": 1.5185536384582519,
+              "wall_seconds": 0.015316881239414215,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 2,
+              "label": "production",
+              "ms": 1.4841119766235351,
+              "wall_seconds": 0.014967259019613266,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.5007200241088867,
+              "wall_seconds": 0.015142234042286873,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 0,
+              "position": 0,
+              "label": "production",
+              "ms": 1.517692756652832,
+              "wall_seconds": 0.015327196102589369,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 0,
+              "position": 1,
+              "label": "fused_m64",
+              "ms": 1.610710334777832,
+              "wall_seconds": 0.016235191375017166,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 0,
+              "position": 2,
+              "label": "fused_m64",
+              "ms": 1.6107072830200195,
+              "wall_seconds": 0.016234328038990498,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 0,
+              "position": 3,
+              "label": "production",
+              "ms": 1.5180704116821289,
+              "wall_seconds": 0.015306175220757723,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 1,
+              "position": 0,
+              "label": "fused_m64",
+              "ms": 1.610723114013672,
+              "wall_seconds": 0.01623182510957122,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 1,
+              "position": 1,
+              "label": "production",
+              "ms": 1.4513504028320312,
+              "wall_seconds": 0.014704699162393808,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 1,
+              "position": 2,
+              "label": "production",
+              "ms": 1.516102409362793,
+              "wall_seconds": 0.01528423186391592,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 1,
+              "position": 3,
+              "label": "fused_m64",
+              "ms": 1.612860870361328,
+              "wall_seconds": 0.016252857632935047,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 2,
+              "position": 0,
+              "label": "production",
+              "ms": 1.5147168159484863,
+              "wall_seconds": 0.015340826939791441,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 2,
+              "position": 1,
+              "label": "fused_m64",
+              "ms": 1.6143327713012696,
+              "wall_seconds": 0.016340890433639288,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 2,
+              "position": 2,
+              "label": "fused_m64",
+              "ms": 1.6115039825439452,
+              "wall_seconds": 0.016240918077528477,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 2,
+              "position": 3,
+              "label": "production",
+              "ms": 1.4871871948242188,
+              "wall_seconds": 0.015063565224409103,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 3,
+              "position": 0,
+              "label": "fused_m64",
+              "ms": 1.5983648300170898,
+              "wall_seconds": 0.016016227193176746,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 3,
+              "position": 1,
+              "label": "production",
+              "ms": 1.5145407676696778,
+              "wall_seconds": 0.01527057122439146,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 3,
+              "position": 2,
+              "label": "production",
+              "ms": 1.5119711875915527,
+              "wall_seconds": 0.015244450885802507,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 3,
+              "position": 3,
+              "label": "fused_m64",
+              "ms": 1.5974720001220704,
+              "wall_seconds": 0.016099173109978437,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 4,
+              "position": 0,
+              "label": "production",
+              "ms": 1.5140352249145508,
+              "wall_seconds": 0.015264039859175682,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 4,
+              "position": 1,
+              "label": "fused_m64",
+              "ms": 1.6154176712036132,
+              "wall_seconds": 0.016281080897897482,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 4,
+              "position": 2,
+              "label": "fused_m64",
+              "ms": 1.5721983909606934,
+              "wall_seconds": 0.015844864770770073,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 4,
+              "position": 3,
+              "label": "production",
+              "ms": 1.5134048461914062,
+              "wall_seconds": 0.015260424930602312,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 5,
+              "position": 0,
+              "label": "fused_m64",
+              "ms": 1.6133119583129882,
+              "wall_seconds": 0.016258716117590666,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 5,
+              "position": 1,
+              "label": "production",
+              "ms": 1.5113920211791991,
+              "wall_seconds": 0.015238801017403603,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 5,
+              "position": 2,
+              "label": "production",
+              "ms": 1.5137087821960449,
+              "wall_seconds": 0.015267356764525175,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m64",
+              "block": 5,
+              "position": 3,
+              "label": "fused_m64",
+              "ms": 1.5981375694274902,
+              "wall_seconds": 0.0161139452829957,
+              "peak_allocated_bytes": 504950784
+            }
+          ],
+          "summaries": {
+            "triton_unfused_m128": {
+              "mean_ms": {
+                "production": 1.4891264041264851,
+                "triton_unfused_m128": 1.5116432110468545
+              },
+              "reduction_percent": -1.5120816377960589,
+              "block_savings_ms": [
+                -0.02117123603820792,
+                -0.04158244132995592,
+                -0.03166561126708989,
+                0.01166081428527832,
+                -0.02637281417846693,
+                -0.02596955299377446
+              ],
+              "positive_blocks": 1
+            },
+            "fused_m128": {
+              "mean_ms": {
+                "production": 1.5103879928588868,
+                "fused_m128": 1.4880064010620118
+              },
+              "reduction_percent": 1.4818438641392317,
+              "block_savings_ms": [
+                0.03707675933837873,
+                0.017894411087036044,
+                0.04799842834472656,
+                0.021216011047363148,
+                0.009875154495239347,
+                0.00022878646850577056
+              ],
+              "positive_blocks": 6
+            },
+            "fused_m64": {
+              "mean_ms": {
+                "production": 1.5070144017537435,
+                "fused_m64": 1.6054783980051677
+              },
+              "reduction_percent": -6.533713024695698,
+              "block_savings_ms": [
+                -0.09282722473144545,
+                -0.1280655860900879,
+                -0.11196637153625488,
+                -0.08466243743896484,
+                -0.0800879955291749,
+                -0.09317436218261732
+              ],
+              "positive_blocks": 0
+            }
+          },
+          "resources": {
+            "triton_unfused_m128": {
+              "n_regs": 210,
+              "n_spills": 0,
+              "shared": 49152,
+              "ttgir_sha256": "edad0046504ad7916b237a6acd8b78e8404730c1012c06723aeca78de0442e7f",
+              "ptx_sha256": "bee995cd428080983e94e0b6b56906a4ca99bc447e66fdaf15ae3d7adbadea73"
+            },
+            "fused_m128": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 49152,
+              "ttgir_sha256": "0fb0bf1b7aef40da08368ae29538b4c0372991dcc86779f0e6b37f72398722a0",
+              "ptx_sha256": "819661d85204b781a288280e2dd5091fcec4c95ff16c904405a2f31ecef90f66"
+            },
+            "fused_m64": {
+              "n_regs": 164,
+              "n_spills": 0,
+              "shared": 36864,
+              "ttgir_sha256": "7a8610d65b1b26a6fd30d203cc884fa599f70a5b0cd109d653af07b983943e3d",
+              "ptx_sha256": "8216ca736e106951b7279dbc2bf7decabbf3efb3b403ebe015bb082960db069d"
+            }
+          },
+          "diagnostics": {
+            "triton_unfused_m128": {
+              "raw_gemm": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  6144
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  1
+                ],
+                "dtype": "torch.float16"
+              }
+            },
+            "fused_m128": {
+              "debug_specialization_checks": {
+                "raw_gemm": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    6144
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "q": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "k": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "v": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    192,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                }
+              }
+            },
+            "fused_m64": {
+              "debug_specialization_checks": {
+                "raw_gemm": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    6144
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "q": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "k": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "v": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    192,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                }
+              }
+            }
+          },
+          "actual_kernel_dispatch": {
+            "production": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "triton_unfused_m128": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "fused_m128": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "fused_m64": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            }
+          },
+          "diagnostic_preparation": {
+            "production": {
+              "ms": 0.6391232013702393,
+              "wall_seconds": 0.006538941990584135,
+              "peak_allocated_bytes": 474587648
+            },
+            "triton_unfused_m128": {
+              "ms": 0.6512000083923339,
+              "wall_seconds": 0.006656921003013849,
+              "peak_allocated_bytes": 489337856
+            },
+            "fused_m128": {
+              "ms": 0.5723519802093506,
+              "wall_seconds": 0.0058695608749985695,
+              "peak_allocated_bytes": 489337856
+            },
+            "fused_m64": {
+              "ms": 0.7258624076843262,
+              "wall_seconds": 0.007491572294384241,
+              "peak_allocated_bytes": 489337856
+            }
+          }
+        }
+      ]
+    },
+    "repaired/capture_layers17_35.json": {
+      "scope": "Bounded exact QKV GEMM -> FP16 -> RMSNorm/RoPE fusion capture/replay.\n\nAll GPU work, including model loading and compilation, holds one common flock.\nCaptures same-call linear_x/q/s/w/ws/b and QKV/cos/sin at real layers 0/17/35.\nPreserves original Q/K/V layouts and verifies the actual Flash dispatch and\nINT8 output projection. No production edits or full-decode speedup claims.\n",
+      "status": "passed",
+      "mode": "capture",
+      "settings": {
+        "mode": "capture",
+        "repo": "repository",
+        "model_code_dir": "model_code/video_vae",
+        "weights": "model_weights/minimax_h3_video_vae_fp16.safetensors",
+        "latent": "cached_latent/fp16_latent.pt",
+        "manifest": null,
+        "output": "qkv_experiment/repaired/capture_layers17_35.json",
+        "layers": [
+          17,
+          35
+        ],
+        "blocks": 6,
+        "quality_only": false,
+        "repeat": 10,
+        "warmup": 3,
+        "tile_batch": 4,
+        "seed": 20261003
+      },
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.34",
+        "comfy_kitchen_file": "ck_0.2.34_overlay/comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "82, 736, 73415"
+        }
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "source_sha256": {
+        "qkv_experiment/driver_followup.py": "7e5ac955c4298f97bd2799c7d4031487c7bcca6bb7e81caa5d834e26b7c32cf8",
+        "qkv_experiment/candidate_repaired.py": "670f326801d283e5f24920cb6181ec9778145e96499d3c4a72ca87bcd65203c6",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      },
+      "notes": [
+        "No production repository edits.",
+        "Cached FP16 latent is for local capture only; not fresh formal quality.",
+        "Only local repeated observations; not independent full-video performance blocks.",
+        "Dynamic input quantization and all per-call output allocations are included in measured chains.",
+        "Existing compiled Flash ATen op and scale .125 retained; no backend/precision/softmax changes."
+      ],
+      "latent": {
+        "path": "cached_latent/fp16_latent.pt",
+        "sha256": "5ac65a57f30931128332fcf8f588ca7ec35f921b63b192dae3c63035912020f2",
+        "shape": [
+          1,
+          24,
+          37,
+          48,
+          84
+        ],
+        "stride": [
+          3580416,
+          1,
+          96768,
+          2016,
+          24
+        ]
+      },
+      "weights_sha256": "7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522",
+      "capture_hooks_quality": {
+        "equal": true,
+        "finite": true,
+        "max_abs": 0.0,
+        "shape": [
+          4,
+          3,
+          28,
+          256,
+          256
+        ],
+        "stride": [
+          5505024,
+          1835008,
+          65536,
+          256,
+          1
+        ],
+        "dtype": "torch.float16"
+      },
+      "calls": {
+        "qkv": 36,
+        "qk": 36
+      },
+      "records": [
+        {
+          "layer": 17,
+          "file": "qkv_experiment/repaired/capture_layers17_35_tensors/layer17.pt",
+          "sha256": "6c57a682612d1f9180758d8d70c463de85de7b54eb4462da32107a8a25cbc8cc",
+          "shape": [
+            4,
+            1797,
+            6144
+          ],
+          "stride": [
+            11040768,
+            6144,
+            1
+          ],
+          "cos_shape": [
+            4,
+            1797,
+            1,
+            48
+          ],
+          "cos_stride": [
+            86256,
+            48,
+            48,
+            1
+          ],
+          "linear_shape": [
+            4,
+            1797,
+            2048
+          ],
+          "linear_stride": [
+            3680256,
+            2048,
+            1
+          ],
+          "q_shape": [
+            7188,
+            2048
+          ],
+          "q_scale_reconstructs_same_call_qkv": {
+            "equal": true,
+            "finite": true,
+            "max_abs": 0.0,
+            "shape": [
+              7188,
+              6144
+            ],
+            "stride": [
+              6144,
+              1
+            ],
+            "dtype": "torch.float16"
+          },
+          "same_output_pointer_to_qk": true,
+          "grid": [
+            28752
+          ],
+          "launch_kwargs": {
+            "num_warps": 4,
+            "enable_fp_fusion": false
+          }
+        },
+        {
+          "layer": 35,
+          "file": "qkv_experiment/repaired/capture_layers17_35_tensors/layer35.pt",
+          "sha256": "bed4a53252eae46b15a5da0238a2fd581084f95d0ee69cb28498f6b628b39e65",
+          "shape": [
+            4,
+            1797,
+            6144
+          ],
+          "stride": [
+            11040768,
+            6144,
+            1
+          ],
+          "cos_shape": [
+            4,
+            1797,
+            1,
+            48
+          ],
+          "cos_stride": [
+            86256,
+            48,
+            48,
+            1
+          ],
+          "linear_shape": [
+            4,
+            1797,
+            2048
+          ],
+          "linear_stride": [
+            3680256,
+            2048,
+            1
+          ],
+          "q_shape": [
+            7188,
+            2048
+          ],
+          "q_scale_reconstructs_same_call_qkv": {
+            "equal": true,
+            "finite": true,
+            "max_abs": 0.0,
+            "shape": [
+              7188,
+              6144
+            ],
+            "stride": [
+              6144,
+              1
+            ],
+            "dtype": "torch.float16"
+          },
+          "same_output_pointer_to_qk": true,
+          "grid": [
+            28752
+          ],
+          "launch_kwargs": {
+            "num_warps": 4,
+            "enable_fp_fusion": false
+          }
+        }
+      ]
+    },
+    "repaired/replay_layers17_35.json": {
+      "scope": "Bounded exact QKV GEMM -> FP16 -> RMSNorm/RoPE fusion capture/replay.\n\nAll GPU work, including model loading and compilation, holds one common flock.\nCaptures same-call linear_x/q/s/w/ws/b and QKV/cos/sin at real layers 0/17/35.\nPreserves original Q/K/V layouts and verifies the actual Flash dispatch and\nINT8 output projection. No production edits or full-decode speedup claims.\n",
+      "status": "passed",
+      "mode": "replay",
+      "settings": {
+        "mode": "replay",
+        "repo": "repository",
+        "model_code_dir": null,
+        "weights": null,
+        "latent": "cached_latent/fp16_latent.pt",
+        "manifest": "qkv_experiment/repaired/capture_layers17_35.json",
+        "output": "qkv_experiment/repaired/replay_layers17_35.json",
+        "layers": [
+          17,
+          35
+        ],
+        "blocks": 6,
+        "quality_only": false,
+        "repeat": 10,
+        "warmup": 3,
+        "tile_batch": 4,
+        "seed": 20261003
+      },
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.34",
+        "comfy_kitchen_file": "ck_0.2.34_overlay/comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "82, 736, 73415"
+        }
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "source_sha256": {
+        "qkv_experiment/driver_followup.py": "7e5ac955c4298f97bd2799c7d4031487c7bcca6bb7e81caa5d834e26b7c32cf8",
+        "qkv_experiment/candidate_repaired.py": "670f326801d283e5f24920cb6181ec9778145e96499d3c4a72ca87bcd65203c6",
+        "opt/decoder_fused_qk_rope.py": "440d7969a359d1d835038f7bd8c3f334f8dd76feb448ece92bd45021b7c91d9e",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198",
+        "h3vae_runtime.py": "875e009580fdc9797f49f64d0d27a0a4257399b3009a5414342f0d1906b03fce"
+      },
+      "notes": [
+        "No production repository edits.",
+        "Cached FP16 latent is for local capture only; not fresh formal quality.",
+        "Only local repeated observations; not independent full-video performance blocks.",
+        "Dynamic input quantization and all per-call output allocations are included in measured chains.",
+        "Existing compiled Flash ATen op and scale .125 retained; no backend/precision/softmax changes."
+      ],
+      "capture_manifest_sha256": "60216bdf37dc4c4ad708acea056e25d3095fa7bb8e537e669b612acfcb1a40d0",
+      "replays": [
+        {
+          "record": {
+            "layer": 17,
+            "file": "qkv_experiment/repaired/capture_layers17_35_tensors/layer17.pt",
+            "sha256": "6c57a682612d1f9180758d8d70c463de85de7b54eb4462da32107a8a25cbc8cc",
+            "shape": [
+              4,
+              1797,
+              6144
+            ],
+            "stride": [
+              11040768,
+              6144,
+              1
+            ],
+            "cos_shape": [
+              4,
+              1797,
+              1,
+              48
+            ],
+            "cos_stride": [
+              86256,
+              48,
+              48,
+              1
+            ],
+            "linear_shape": [
+              4,
+              1797,
+              2048
+            ],
+            "linear_stride": [
+              3680256,
+              2048,
+              1
+            ],
+            "q_shape": [
+              7188,
+              2048
+            ],
+            "q_scale_reconstructs_same_call_qkv": {
+              "equal": true,
+              "finite": true,
+              "max_abs": 0.0,
+              "shape": [
+                7188,
+                6144
+              ],
+              "stride": [
+                6144,
+                1
+              ],
+              "dtype": "torch.float16"
+            },
+            "same_output_pointer_to_qk": true,
+            "grid": [
+              28752
+            ],
+            "launch_kwargs": {
+              "num_warps": 4,
+              "enable_fp_fusion": false
+            }
+          },
+          "quality": {
+            "production": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "fused_m128": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            }
+          },
+          "samples": [
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 0,
+              "label": "production",
+              "ms": 1.4661408424377442,
+              "wall_seconds": 0.014890831895172596,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4809311866760253,
+              "wall_seconds": 0.014966527931392193,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.4839072227478027,
+              "wall_seconds": 0.014970012940466404,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 3,
+              "label": "production",
+              "ms": 1.4572192192077638,
+              "wall_seconds": 0.01477219071239233,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.4808159828186036,
+              "wall_seconds": 0.014967810362577438,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 1,
+              "label": "production",
+              "ms": 1.4978079795837402,
+              "wall_seconds": 0.015117377042770386,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 2,
+              "label": "production",
+              "ms": 1.4513952255249023,
+              "wall_seconds": 0.01454659691080451,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4786911964416505,
+              "wall_seconds": 0.014918542932718992,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 0,
+              "label": "production",
+              "ms": 1.5086784362792969,
+              "wall_seconds": 0.015220384113490582,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4914912223815917,
+              "wall_seconds": 0.015042444225400686,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.4827775955200195,
+              "wall_seconds": 0.014969561714679003,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 3,
+              "label": "production",
+              "ms": 1.5122207641601562,
+              "wall_seconds": 0.015262797940522432,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.458841609954834,
+              "wall_seconds": 0.014728123787790537,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 1,
+              "label": "production",
+              "ms": 1.4942239761352538,
+              "wall_seconds": 0.01497315801680088,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 2,
+              "label": "production",
+              "ms": 1.5118047714233398,
+              "wall_seconds": 0.015256518963724375,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4939935684204102,
+              "wall_seconds": 0.015077176038175821,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 0,
+              "label": "production",
+              "ms": 1.5071167945861816,
+              "wall_seconds": 0.015211279969662428,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4955679893493652,
+              "wall_seconds": 0.015091899316757917,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.4953632354736328,
+              "wall_seconds": 0.01508211437612772,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 3,
+              "label": "production",
+              "ms": 1.4816896438598632,
+              "wall_seconds": 0.01495232479646802,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.4954527854919433,
+              "wall_seconds": 0.015097706113010645,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 1,
+              "label": "production",
+              "ms": 1.5177536010742188,
+              "wall_seconds": 0.015309781301766634,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 2,
+              "label": "production",
+              "ms": 1.515552043914795,
+              "wall_seconds": 0.015285973902791739,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4977952003479005,
+              "wall_seconds": 0.01510530011728406,
+              "peak_allocated_bytes": 504950784
+            }
+          ],
+          "summaries": {
+            "fused_m128": {
+              "mean_ms": {
+                "production": 1.4934669415156046,
+                "fused_m128": 1.4863023996353149
+              },
+              "reduction_percent": 0.47972550855520657,
+              "block_savings_ms": [
+                -0.020739173889160023,
+                -0.005151987075805664,
+                0.0233151912689209,
+                0.026596784591674583,
+                -0.0010623931884765625,
+                0.02002882957458496
+              ],
+              "positive_blocks": 3
+            }
+          },
+          "resources": {
+            "fused_m128": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 49152,
+              "ttgir_sha256": "0fb0bf1b7aef40da08368ae29538b4c0372991dcc86779f0e6b37f72398722a0",
+              "ptx_sha256": "819661d85204b781a288280e2dd5091fcec4c95ff16c904405a2f31ecef90f66"
+            }
+          },
+          "diagnostics": {
+            "fused_m128": {
+              "debug_specialization_checks": {
+                "raw_gemm": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    6144
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "q": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "k": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "v": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    192,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                }
+              }
+            }
+          },
+          "actual_kernel_dispatch": {
+            "production": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "fused_m128": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            }
+          },
+          "diagnostic_preparation": {
+            "production": {
+              "ms": 0.6270624160766601,
+              "wall_seconds": 0.006437717005610466,
+              "peak_allocated_bytes": 474587648
+            },
+            "fused_m128": {
+              "ms": 0.6063168048858643,
+              "wall_seconds": 0.0062202150002121925,
+              "peak_allocated_bytes": 489337856
+            }
+          }
+        },
+        {
+          "record": {
+            "layer": 35,
+            "file": "qkv_experiment/repaired/capture_layers17_35_tensors/layer35.pt",
+            "sha256": "bed4a53252eae46b15a5da0238a2fd581084f95d0ee69cb28498f6b628b39e65",
+            "shape": [
+              4,
+              1797,
+              6144
+            ],
+            "stride": [
+              11040768,
+              6144,
+              1
+            ],
+            "cos_shape": [
+              4,
+              1797,
+              1,
+              48
+            ],
+            "cos_stride": [
+              86256,
+              48,
+              48,
+              1
+            ],
+            "linear_shape": [
+              4,
+              1797,
+              2048
+            ],
+            "linear_stride": [
+              3680256,
+              2048,
+              1
+            ],
+            "q_shape": [
+              7188,
+              2048
+            ],
+            "q_scale_reconstructs_same_call_qkv": {
+              "equal": true,
+              "finite": true,
+              "max_abs": 0.0,
+              "shape": [
+                7188,
+                6144
+              ],
+              "stride": [
+                6144,
+                1
+              ],
+              "dtype": "torch.float16"
+            },
+            "same_output_pointer_to_qk": true,
+            "grid": [
+              28752
+            ],
+            "launch_kwargs": {
+              "num_warps": 4,
+              "enable_fp_fusion": false
+            }
+          },
+          "quality": {
+            "production": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            },
+            "fused_m128": {
+              "q": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "k": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "v": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  11040768,
+                  6144,
+                  192,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "layouts_preserved": true,
+              "attention": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  32,
+                  64
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  64,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "projection": {
+                "equal": true,
+                "finite": true,
+                "max_abs": 0.0,
+                "shape": [
+                  4,
+                  1797,
+                  2048
+                ],
+                "stride": [
+                  3680256,
+                  2048,
+                  1
+                ],
+                "dtype": "torch.float16"
+              },
+              "passed": true
+            }
+          },
+          "samples": [
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 0,
+              "label": "production",
+              "ms": 1.4416735649108887,
+              "wall_seconds": 0.014647962991148233,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4807456016540528,
+              "wall_seconds": 0.014935149811208248,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.4659008026123046,
+              "wall_seconds": 0.014782206155359745,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 0,
+              "position": 3,
+              "label": "production",
+              "ms": 1.501471996307373,
+              "wall_seconds": 0.015144389122724533,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.4303135871887207,
+              "wall_seconds": 0.01443217322230339,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 1,
+              "label": "production",
+              "ms": 1.4969023704528808,
+              "wall_seconds": 0.015107221901416779,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 2,
+              "label": "production",
+              "ms": 1.5007136344909668,
+              "wall_seconds": 0.01514715189114213,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 1,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4105024337768555,
+              "wall_seconds": 0.01429180009290576,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 0,
+              "label": "production",
+              "ms": 1.501574420928955,
+              "wall_seconds": 0.015144950244575739,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4810175895690918,
+              "wall_seconds": 0.014936542138457298,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.476649570465088,
+              "wall_seconds": 0.014894407708197832,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 2,
+              "position": 3,
+              "label": "production",
+              "ms": 1.5072383880615234,
+              "wall_seconds": 0.015197109431028366,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.485574436187744,
+              "wall_seconds": 0.014982471708208323,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 1,
+              "label": "production",
+              "ms": 1.5051136016845703,
+              "wall_seconds": 0.01517751906067133,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 2,
+              "label": "production",
+              "ms": 1.4698335647583007,
+              "wall_seconds": 0.01487012067809701,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 3,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4771615982055664,
+              "wall_seconds": 0.014904262963682413,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 0,
+              "label": "production",
+              "ms": 1.4627552032470703,
+              "wall_seconds": 0.014826484955847263,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 1,
+              "label": "fused_m128",
+              "ms": 1.4777631759643555,
+              "wall_seconds": 0.01490663643926382,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 2,
+              "label": "fused_m128",
+              "ms": 1.4865951538085938,
+              "wall_seconds": 0.014996553305536509,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 4,
+              "position": 3,
+              "label": "production",
+              "ms": 1.506118392944336,
+              "wall_seconds": 0.01518392888829112,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 0,
+              "label": "fused_m128",
+              "ms": 1.487007999420166,
+              "wall_seconds": 0.014996583107858896,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 1,
+              "label": "production",
+              "ms": 1.4749119758605957,
+              "wall_seconds": 0.014871823135763407,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 2,
+              "label": "production",
+              "ms": 1.5073535919189454,
+              "wall_seconds": 0.015208965633064508,
+              "peak_allocated_bytes": 504950784
+            },
+            {
+              "candidate_pair": "fused_m128",
+              "block": 5,
+              "position": 3,
+              "label": "fused_m128",
+              "ms": 1.4885791778564452,
+              "wall_seconds": 0.015080790966749191,
+              "peak_allocated_bytes": 504950784
+            }
+          ],
+          "summaries": {
+            "fused_m128": {
+              "mean_ms": {
+                "production": 1.4896383921305338,
+                "fused_m128": 1.4706509272257486
+              },
+              "reduction_percent": 1.2746358448528339,
+              "block_savings_ms": [
+                -0.0017504215240480292,
+                0.07839999198913583,
+                0.02557282447814946,
+                0.006105566024780407,
+                0.00225763320922856,
+                0.003339195251464977
+              ],
+              "positive_blocks": 5
+            }
+          },
+          "resources": {
+            "fused_m128": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 49152,
+              "ttgir_sha256": "0fb0bf1b7aef40da08368ae29538b4c0372991dcc86779f0e6b37f72398722a0",
+              "ptx_sha256": "819661d85204b781a288280e2dd5091fcec4c95ff16c904405a2f31ecef90f66"
+            }
+          },
+          "diagnostics": {
+            "fused_m128": {
+              "debug_specialization_checks": {
+                "raw_gemm": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    6144
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "q": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "k": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    3680256,
+                    2048,
+                    64,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                },
+                "v": {
+                  "equal": true,
+                  "finite": true,
+                  "max_abs": 0.0,
+                  "shape": [
+                    4,
+                    1797,
+                    32,
+                    64
+                  ],
+                  "stride": [
+                    11040768,
+                    6144,
+                    192,
+                    1
+                  ],
+                  "dtype": "torch.float16"
+                }
+              }
+            }
+          },
+          "actual_kernel_dispatch": {
+            "production": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            },
+            "fused_m128": {
+              "void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::half_t, Flash_kernel_traits<64, 128, 128, 4, cutlass::half_t> >, false, false, false, false, false, true, false, false>(pytorch_flash::Flash_fwd_params)": 1
+            }
+          },
+          "diagnostic_preparation": {
+            "production": {
+              "ms": 0.6316864013671875,
+              "wall_seconds": 0.006506890989840031,
+              "peak_allocated_bytes": 474587648
+            },
+            "fused_m128": {
+              "ms": 0.5993152141571045,
+              "wall_seconds": 0.006132701877504587,
+              "peak_allocated_bytes": 489337856
+            }
+          }
+        }
+      ]
+    }
+  }
+}

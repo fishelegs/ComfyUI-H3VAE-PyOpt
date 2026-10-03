@@ -163,7 +163,7 @@ Earlier iterations are collected here; competitor charts show only the current f
 | 2026-10-02 · GEMM scheduling replay | No new change adopted | Candidates did not consistently outperform existing CUTLASS; [unsuccessful experiments retained](docs/int8_norm_producer_2026-10-02.md) |
 | 2026-10-02 · GEMM＋SwiGLU fusion / FP16 finalizer replay | No new change adopted | Local gains were not established as full-decode improvements; [numerical gates and findings](docs/int8_causal_zero_2026-10-02.md#其他候选与剩余空间) |
 | **2026-10-03 · INT8 FFN-up/SwiGLU fusion** | **6.640 → 6.509 s** | **1.98% lower latency** with matched norm schedules; [full-video, Nsight and integration evidence](docs/decoder_int8_ffn_2026-10-03.md) |
-| 2026-10-03 · FFN and attention follow-up | No new change adopted | Scheduling, quantizer, lookup and attention candidates did not justify replacement; [local timings and rejected candidates](docs/decoder_followup_2026-10-03.md) |
+| 2026-10-03 · FFN and attention follow-up | No new change adopted | [Initial screening](docs/decoder_followup_2026-10-03.md) and [GEMM scheduling / exact QKV fusion](docs/decoder_gemm_followup_2026-10-03.md) did not establish sufficient gains for production adoption |
 
 Further encoder addressing/BK32 and FP16 CTA-group candidates were not adopted; [measurements and remaining directions](docs/encoder_fp16_followup_2026-10-03.md).
 
@@ -368,7 +368,7 @@ ComfyUI wrapper 和 CPU offload/CUDA reload 已验证；精度与性能测试分
 | 2026-10-02 · GEMM 调度回放 | 未采用新改动 | 候选没有稳定胜过现有 CUTLASS，[保留失败实验](docs/int8_norm_producer_2026-10-02.md) |
 | 2026-10-02 · GEMM＋SwiGLU 融合 / FP16 finalizer 回放 | 未采用新改动 | 局部收益尚未验证为完整 decode 提升，[数值门禁与实验结论](docs/int8_causal_zero_2026-10-02.md#其他候选与剩余空间) |
 | **2026-10-03 · INT8 FFN-up/SwiGLU 融合** | **6.640 → 6.509 s** | 固定相同 norm 调度，**耗时降低 1.98%**；[完整视频、Nsight 与集成证据](docs/decoder_int8_ffn_2026-10-03.md) |
-| 2026-10-03 · FFN 与 attention 后续筛选 | 未采用新改动 | 调度、量化器、查表及 attention 候选均未达到采用标准；[局部计时与否决依据](docs/decoder_followup_2026-10-03.md) |
+| 2026-10-03 · FFN 与 attention 后续筛选 | 未采用新改动 | [初轮筛选](docs/decoder_followup_2026-10-03.md)及 [GEMM 调度 / 精确 QKV 融合](docs/decoder_gemm_followup_2026-10-03.md)均未建立足够的生产采用收益 |
 
 本轮 encoder 地址计算 / BK32 和 FP16 CTA 分组候选均未采用；[原始测量与后续方向](docs/encoder_fp16_followup_2026-10-03.md)。
 

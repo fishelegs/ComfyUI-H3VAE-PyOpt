@@ -14,9 +14,11 @@ quantization. These durations guided bounded local experiments using the ACA
 workflow. They do not establish bandwidth, occupancy or warp-stall bottlenecks:
 NCU hardware counters remain unavailable (`ERR_NVGPUCTRPERM`).
 
-The machine and stack match that report: historical RTX PRO 5000 72GB identity,
+The machine and PyTorch/Triton stack match that report: historical RTX PRO 5000 72GB identity,
 SM120 (driver 580.82.07 reports NVIDIA Graphics Device), Linux, Python 3.12.14,
-PyTorch 2.11.0+cu130, CUDA 13.0, Triton 3.6.0 and comfy-kitchen 0.2.34.
+PyTorch 2.11.0+cu130, CUDA 13.0 and Triton 3.6.0. Decoder capture and attention
+replay use comfy-kitchen 0.2.34; the quantizer-only process has a different
+installed CK version, described below.
 Experiments used one GPU lock and did not stop unrelated GPU tasks. All results
 below are CUDA-event **local component or chain** timings, excluding compilation,
 capture and numerical checks. Different timing scopes must not be combined.
@@ -68,6 +70,13 @@ All retain FP32 scales, FP16 denominator/division rounding, `tl.div_rn`,
 nearbyint and NaN→-128 handling. q/scale checks pass on real M7188, a repeated-row
 M14376 extension and synthetic M17 tail/tiny/nonfinite cases. M14376 is not an
 independent real capture. None was promoted to a full decoder experiment.
+
+The quantizer-only process recorded installed comfy-kitchen **0.2.31**. It
+executed only repository Triton producers and quantizers, including the
+CK-compatible reference quantizer; it did not invoke a CK kernel. Its captured
+linear output came from the earlier 0.2.34 experiment. The original environment
+metadata is retained, and this local result is not a comparison between CK
+versions.
 
 ## Attention results
 
@@ -148,3 +157,7 @@ FFN 候选的真实输入 q/scale、attention 三层的中间结果和下游投�
 完整阶段。因此 README 和竞品柱状图仍采用此前验证的 **INT8 encode 8.458 s / decode
 6.509 s / FP16 decode 10.923 s**。后续优先寻找能降低 FFN-up、FFN-down、QKV GEMM
 实际成本的新机制，通过局部筛选后再做完整视频验证。
+
+环境记录补充：独立量化器回放的宿主安装 CK 0.2.31，但实际只执行仓库内的 Triton
+producer/quantizer，未调用 CK kernel；参考 linear 输出来自此前 0.2.34 的捕获。
+Decoder 捕获及 attention 回放仍使用 0.2.34，不能把所有独立回放的安装环境混称为同一栈。

@@ -1,0 +1,1039 @@
+{
+  "schema_version": 1,
+  "scope": "Rejected isolated dual-dot INT8 FFN-up candidates; no production edits or new full-decode claim.",
+  "limits": [
+    "One previously captured real FFN-up input; local repetitions only.",
+    "Activation, INT8 output and FP32 scales were exact and finite for both configurations.",
+    "Unchanged production quantizer and matched transient ACT lifetime/allocation costs.",
+    "All GPU operations finished before this CPU-only packaging step.",
+    "Weight pair-packing was reviewed but not GPU-tested; an additional 36-matrix copy would cost 1.125 GiB."
+  ],
+  "privacy": "Absolute paths use relative names or experiment role labels. Private tensors, weights, binaries and GPU UUIDs are not included.",
+  "plan": "# FFN-up dual-accumulator mechanism audit \u2014 2026-10-03\n\nThis is an isolated experiment; production files are unchanged. The first\nscreen uses one previously captured real M7188/K2048/N16384 INT8 FFN-up call.\n\n## Existing evidence and the new mechanism\n\nCurrent fused producer totals 2.268903350 s across 1764 calls in the prior full\nNsight trace; row quantization adds .273163420 s. This is diagnostic budget,\nnot an isolated causal model. Production uses BM128/BN64/BK64, 4 warps,\n4 stages, grouped-M8 and one [128,128] INT32 accumulator containing alternating\ngate/up columns. Its kernel reports 238 registers and 49152 shared bytes.\n\nProduction TTGIR contains FP16-rounded accumulator MMA\u2192blocked conversion\nbefore reshape/split. The matching PTX attributes 8 bar.sync, 16 vector\nshared stores and 16 ldmatrix loads to the activation conversion source line.\nThose static instructions move 32 KiB of FP16 values through shared memory\nper CTA (32 KiB write plus 32 KiB read), rather than a free metadata reshape.\nThis is compiled-code evidence, not a counter measurement or a timing\nattribution. Scale/bias layout conversions are additional and remain relevant.\n\nCandidate: two [BM,BN] INT32 dot accumulators, one for contiguous gate rows and\none for up rows at +N. The same activation tile is reused. Dequantize each\naccumulator separately, preserve FP16 linear rounding, evaluate SwiGLU, and\nwrite the same FP16 activation for the unchanged quantizer. This may let the\ncompiler execute the elementwise epilogue in MMA layout and move only the\nfinal [BM,BN] result. Inspect resulting TTGIR/PTX; do not assume this occurs.\n\nThe accumulator count is unchanged: two BM\u00d7BN arrays have the same number of\nINT32 values as BM\u00d72BN. Register use does NOT automatically halve. Separate\nweight pointers, two asynchronous load streams or poor A reuse may increase\nregister/shared-memory pressure or inhibit pipelining. Actual resource and\npaired latency evidence determine the outcome.\n\n## Exactly two configurations\n\n1. (BM128, BN64, BK64, warps4, stages4): hold production tile/CTA grid fixed;\n   isolate independent accumulators versus the interleaved accumulator.\n2. (BM64, BN64, BK64, warps4, stages4): bounded lower-accumulator-lifetime\n   alternative if the first hits register pressure; it nearly doubles the M CTA\n   count and may worsen activation/weight reuse, so it has no assumed gain.\n\nNo grouping/cache/LUT search and no third automatic tuning batch.\n\n## Static packing assessment \u2014 do not GPU-test now\n\nA pure row-pair permutation P[2*c+p,k]=W[c+p*N,k] puts gate/up rows next to\neach other. It preserves INT8 values and scale/bias correspondence exactly,\nbut current K-axis loads are already vectorized 16-byte cp.async operations.\nIt does not remove the interleaved MMA\u2192blocked activation conversion, reduce\nGEMM arithmetic, or reduce total weight bytes. Only address arithmetic/cache\nlocality changes, without measured memory-stall evidence.\n\nEach w1 matrix is 16384\u00d72048 bytes = 32 MiB; retaining an additional packed\ncopy for 36 decoder blocks costs 1152 MiB = 1.125 GiB, excluding allocator\nalignment. FP32 scales add only 64 KiB/layer if duplicated. A replacement-only\nlayout can avoid steady-state duplication but breaks the existing qweight\nlayout/API unless every CK fallback and state transition has a canonical\nrepresentation. Do not mutate checkpoints or silently pass packed rows to CK.\n\nA packed tensor would need registered-buffer accounting, CPU import safety,\nexplicit SM120 selection, invalidation on source mutation/state_dict load,\nand CUDA\u2192CPU\u2192CUDA behavior in _apply. CPU conversion/reconstruction, cold GPU\nupload/pack latency and temporary memory peaks must be recorded separately.\nAn invisible global cache or pointer-keyed cache would break module ownership\nand Comfy offload. No such cache is proposed in this experiment.\n\nHistory already includes ordinary W.T.contiguous() prepacking in Oct2\nreplay_transposed.json. For the same M7188/N16384/K2048 pure GEMM it was exact\nbut baseline 1.014287998 ms versus best transpose 1.356274664 ms, even with\ntranspose setup excluded. This does not prove pair-packing impossible, but\nrules out treating plain transpose as a new untested method. Prior fused-up\nscreens varied tile/BK and partial maxima; the recent screens varied grouping,\nstore cache policy, warps and SiLU LUT. None used dual independent accumulators.\n\n## Numerical contract and deployment cost\n\nINT8 products accumulate in INT32. K2048 bounds the absolute accumulator by\n33,554,432, below signed INT32 overflow; separating output columns cannot\nchange these integer sums. Preserve separate FP32 acc\u00d7activation_scale,\nexplicit FP32 FMA(weight_scale,bias), FP16 round, FP32 libdevice exp/div and\nFP16 activation round. Reuse the production row quantizer exactly. No precision\nreduction, scale narrowing, changed norm schedule or approximation is allowed.\n\nDual accumulators require no new persistent weights/buffers and no checkpoint,\nstate_dict or offload changes. If adopted, only the current SM120 opt-in fused\nproducer would change. At this stage no adoption or performance claim exists.\n\n## Bounded evaluation and promotion gate\n\nThe script holds the one shared flock, with no outer/nested lock. First compare\nFP16 activation, q and FP32 row scales exactly and finite on actual captured\nweights; preserve all resource/compile failures. Keep allocation/lifetime\nmatched and delete quality ACT buffers before timing. Record candidate TTGIR\nand PTX, register/spill/shared metadata, 3 warmups, 6 alternating ABBA/BAAB\nblocks, 5 complete up+SwiGLU+quant calls per sample. No profiler callback in\nsample timing. Compare all raw samples and memory peaks, not best samples.\n\nPlanning: a 5% improvement in the producer's 2.269 s budget would transfer at\nmost approximately .113 s if everything else stayed fixed; this is not a\npredicted or measured full-stage improvement. Require at least .03 ms local\nchain savings with consistent paired wins (approximately .053 s when naively\nmultiplied by 1764, used only as a screening budget) before further engineering.\nA passing local candidate still needs several real-layer captures/tail/zero/\nbias tests, actual full-stage same-input paired decode, controlled unrelated\nnormalization schedules, multi-video RGB exactness and Comfy load/offload.\n\nArtifacts: dual_accumulator.py and replay.py were only CPU syntax/lint checked\nwhen this plan was prepared. GPU testing requires the parent's assigned slot.\n",
+  "evidence": {
+    "raw_replay": {
+      "scope": "Bounded real-input dual-accumulator screen; run only in an assigned GPU slot.",
+      "status": "passed",
+      "settings": {
+        "blocks": 6,
+        "repeat": 5,
+        "warmup": 3
+      },
+      "commit": "c223906fe6eb206d13a452b1da9d3806d1a28404",
+      "environment": {
+        "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:46:43) [GCC 14.3.0]",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "torch_cuda": "13.0",
+        "torch_hip": null,
+        "triton": "3.6.0",
+        "comfy_kitchen_version": "0.2.34",
+        "comfy_kitchen_file": "comfy_kitchen/__init__.py",
+        "sdpa_backend_env": "auto",
+        "fp32_norm_env": "1",
+        "allow_fp16_accumulation": false,
+        "gpu_before_runtime": {
+          "available": true,
+          "device_index": 0,
+          "name": "NVIDIA Graphics Device",
+          "capability": [
+            12,
+            0
+          ],
+          "memory_allocated_bytes": 0,
+          "memory_reserved_bytes": 0,
+          "nvidia_smi": "82, 736, 73415"
+        }
+      },
+      "capture_sha256": "14c51202e9cb118fea9e968da98ba50bfffe5b0ce616b0cfb0c0b309f778e815",
+      "source_sha256": {
+        "dual-accumulator-experiment/replay.py": "0d53eec2d4d7f733690459cb7cc6a907501a46eb673709a56ad746a95d1f685f",
+        "dual-accumulator-experiment/dual_accumulator.py": "99b9ab1e534ea4e94512a48d931b6f4a55c15ec931d9f0019683208ee3b4d9b5",
+        "opt/int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198"
+      },
+      "variants": {
+        "dual_128_64_64_4_4": {
+          "config": [
+            128,
+            64,
+            64,
+            4,
+            4
+          ],
+          "first_compile_and_call_seconds": 0.585085020866245,
+          "act": {
+            "equal": true,
+            "finite": true,
+            "mismatch_count": 0,
+            "max_abs": 0.0
+          },
+          "q": {
+            "equal": true,
+            "finite": true,
+            "mismatch_count": 0,
+            "max_abs": 0.0
+          },
+          "scale": {
+            "equal": true,
+            "finite": true,
+            "mismatch_count": 0,
+            "max_abs": 0.0
+          },
+          "resources": {
+            "registers": 255,
+            "spills": 0,
+            "shared_bytes": 49152
+          },
+          "asm_sha256": {
+            "ttgir": "8f0b68ddc37ef322d362eea6e69484ed76873e9e7d4246b328e8d9d155dd967d",
+            "ptx": "5a3efb2e556c46dce8ec2a0b741ac077924725dbccf244acfe34db5fb101041c"
+          },
+          "passed": true,
+          "timing": {
+            "means_ms": {
+              "production": 1.3283301273981731,
+              "dual_128_64_64_4_4": 1.3210074663162232
+            },
+            "block_savings_ms": [
+              -0.050748777389526545,
+              0.00818557739257808,
+              0.013273572921752796,
+              0.010207986831665128,
+              0.04820480346679701,
+              0.014812803268432484
+            ],
+            "reduction_percent": 0.551268162252172,
+            "positive_blocks": 5
+          }
+        },
+        "dual_64_64_64_4_4": {
+          "config": [
+            64,
+            64,
+            64,
+            4,
+            4
+          ],
+          "first_compile_and_call_seconds": 0.36741528008133173,
+          "act": {
+            "equal": true,
+            "finite": true,
+            "mismatch_count": 0,
+            "max_abs": 0.0
+          },
+          "q": {
+            "equal": true,
+            "finite": true,
+            "mismatch_count": 0,
+            "max_abs": 0.0
+          },
+          "scale": {
+            "equal": true,
+            "finite": true,
+            "mismatch_count": 0,
+            "max_abs": 0.0
+          },
+          "resources": {
+            "registers": 150,
+            "spills": 0,
+            "shared_bytes": 36864
+          },
+          "asm_sha256": {
+            "ttgir": "e30ea66ab5fb749007ce66440244f855804c3b3d60f31b4b8d214d0708af51c7",
+            "ptx": "14c3d8ade26af0a5e62ed78ed78c9360641f04c9306c243903569ee64dadeb46"
+          },
+          "passed": true,
+          "timing": {
+            "means_ms": {
+              "production": 1.3514602740605672,
+              "dual_64_64_64_4_4": 1.726692803700765
+            },
+            "block_savings_ms": [
+              -0.3947200298309326,
+              -0.35339841842651376,
+              -0.3885887145996092,
+              -0.38539204597473153,
+              -0.38256325721740714,
+              -0.3467327117919923
+            ],
+            "reduction_percent": -27.764969258976624,
+            "positive_blocks": 0
+          }
+        }
+      },
+      "samples": [
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 0,
+          "position": 0,
+          "label": "production",
+          "ms": 1.3332287788391113,
+          "wall_seconds": 0.006903645116835833,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 0,
+          "position": 1,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3718591690063477,
+          "wall_seconds": 0.006983217317610979,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 0,
+          "position": 2,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3216383934020997,
+          "wall_seconds": 0.006760598160326481,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 0,
+          "position": 3,
+          "label": "production",
+          "ms": 1.2587712287902832,
+          "wall_seconds": 0.006456834729760885,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 1,
+          "position": 0,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3206015586853028,
+          "wall_seconds": 0.006760467775166035,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 1,
+          "position": 1,
+          "label": "production",
+          "ms": 1.3283455848693848,
+          "wall_seconds": 0.006805086042732,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 1,
+          "position": 2,
+          "label": "production",
+          "ms": 1.3284799575805664,
+          "wall_seconds": 0.006768320221453905,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 1,
+          "position": 3,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3198528289794922,
+          "wall_seconds": 0.006766024976968765,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 2,
+          "position": 0,
+          "label": "production",
+          "ms": 1.3315967559814452,
+          "wall_seconds": 0.006821409799158573,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 2,
+          "position": 1,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3194432258605957,
+          "wall_seconds": 0.006752044893801212,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 2,
+          "position": 2,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3161791801452636,
+          "wall_seconds": 0.006746756378561258,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 2,
+          "position": 3,
+          "label": "production",
+          "ms": 1.3305727958679199,
+          "wall_seconds": 0.006815371103584766,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 3,
+          "position": 0,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3200511932373047,
+          "wall_seconds": 0.006762630771845579,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 3,
+          "position": 1,
+          "label": "production",
+          "ms": 1.3305791854858398,
+          "wall_seconds": 0.006821641232818365,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 3,
+          "position": 2,
+          "label": "production",
+          "ms": 1.3339839935302735,
+          "wall_seconds": 0.00683973915874958,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 3,
+          "position": 3,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3240960121154786,
+          "wall_seconds": 0.006774948909878731,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 4,
+          "position": 0,
+          "label": "production",
+          "ms": 1.3381248474121095,
+          "wall_seconds": 0.0068162730894982815,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 4,
+          "position": 1,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3279680252075194,
+          "wall_seconds": 0.00681640300899744,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 4,
+          "position": 2,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.2540736198425293,
+          "wall_seconds": 0.0064463489688932896,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 4,
+          "position": 3,
+          "label": "production",
+          "ms": 1.3403264045715333,
+          "wall_seconds": 0.006875821854919195,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 5,
+          "position": 0,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.3281472206115723,
+          "wall_seconds": 0.006814038846641779,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 5,
+          "position": 1,
+          "label": "production",
+          "ms": 1.343398380279541,
+          "wall_seconds": 0.006886539980769157,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 5,
+          "position": 2,
+          "label": "production",
+          "ms": 1.3425536155700684,
+          "wall_seconds": 0.0068806009367108345,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_128_64_64_4_4",
+          "block": 5,
+          "position": 3,
+          "label": "dual_128_64_64_4_4",
+          "ms": 1.328179168701172,
+          "wall_seconds": 0.00681320670992136,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 0,
+          "position": 0,
+          "label": "production",
+          "ms": 1.393388843536377,
+          "wall_seconds": 0.007106976117938757,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 0,
+          "position": 1,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7945024490356445,
+          "wall_seconds": 0.009102695155888796,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 0,
+          "position": 2,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7319232940673828,
+          "wall_seconds": 0.00881816167384386,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 0,
+          "position": 3,
+          "label": "production",
+          "ms": 1.343596839904785,
+          "wall_seconds": 0.006873828824609518,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 1,
+          "position": 0,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7317119598388673,
+          "wall_seconds": 0.008819282986223698,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 1,
+          "position": 1,
+          "label": "production",
+          "ms": 1.346656036376953,
+          "wall_seconds": 0.006896784994751215,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 1,
+          "position": 2,
+          "label": "production",
+          "ms": 1.3442367553710937,
+          "wall_seconds": 0.006916965823620558,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 1,
+          "position": 3,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.665977668762207,
+          "wall_seconds": 0.00848913099616766,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 2,
+          "position": 0,
+          "label": "production",
+          "ms": 1.3445376396179198,
+          "wall_seconds": 0.006882663816213608,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 2,
+          "position": 1,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7325567245483398,
+          "wall_seconds": 0.008831642102450132,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 2,
+          "position": 2,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.733087921142578,
+          "wall_seconds": 0.008831623010337353,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 2,
+          "position": 3,
+          "label": "production",
+          "ms": 1.3439295768737793,
+          "wall_seconds": 0.0068832337856292725,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 3,
+          "position": 0,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7330368041992188,
+          "wall_seconds": 0.008831303101032972,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 3,
+          "position": 1,
+          "label": "production",
+          "ms": 1.346662425994873,
+          "wall_seconds": 0.006887590978294611,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 3,
+          "position": 2,
+          "label": "production",
+          "ms": 1.3476991653442383,
+          "wall_seconds": 0.006902534049004316,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 3,
+          "position": 3,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7321088790893555,
+          "wall_seconds": 0.008822157979011536,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 4,
+          "position": 0,
+          "label": "production",
+          "ms": 1.3492032051086427,
+          "wall_seconds": 0.00690043019130826,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 4,
+          "position": 1,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7326080322265625,
+          "wall_seconds": 0.008826143573969603,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 4,
+          "position": 2,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7326528549194335,
+          "wall_seconds": 0.008822227828204632,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 4,
+          "position": 3,
+          "label": "production",
+          "ms": 1.350931167602539,
+          "wall_seconds": 0.006919189356267452,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 5,
+          "position": 0,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.668191909790039,
+          "wall_seconds": 0.008509461767971516,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 5,
+          "position": 1,
+          "label": "production",
+          "ms": 1.3518400192260742,
+          "wall_seconds": 0.006922714877873659,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 5,
+          "position": 2,
+          "label": "production",
+          "ms": 1.3548416137695312,
+          "wall_seconds": 0.0069391801953315735,
+          "peak_allocated_bytes": 225084416
+        },
+        {
+          "candidate": "dual_64_64_64_4_4",
+          "block": 5,
+          "position": 3,
+          "label": "dual_64_64_64_4_4",
+          "ms": 1.7319551467895509,
+          "wall_seconds": 0.008810679893940687,
+          "peak_allocated_bytes": 225084416
+        }
+      ],
+      "contract": "Same original weight storage, input strides, FP32 scaling/FMA, two FP16 rounds and unchanged quantizer; two dot accumulators only.",
+      "limits": "One previously captured real FFN-up call; local repeated observations only, not full decode performance/quality.",
+      "input": {
+        "shape": [
+          7188,
+          2048
+        ],
+        "stride": [
+          2048,
+          1
+        ],
+        "weight_shape": [
+          16384,
+          2048
+        ],
+        "weight_stride": [
+          2048,
+          1
+        ]
+      },
+      "production_resources": {
+        "registers": 238,
+        "spills": 0,
+        "shared_bytes": 49152
+      }
+    },
+    "cpu_audit": {
+      "stage": "CPU compiled-artifact audit before the new GPU result",
+      "production_producer_seconds_nsight": 2.26890335,
+      "production_quantizer_seconds_nsight": 0.27316342,
+      "calls_nsight": 1764,
+      "production_config": [
+        128,
+        64,
+        64,
+        4,
+        4
+      ],
+      "production_resource_metadata": {
+        "registers": 238,
+        "spills": 0,
+        "shared_bytes": 49152
+      },
+      "production_static_ptx_counts_by_source_line": {
+        "68": {
+          "bar.sync": 4,
+          "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+        },
+        "69": {
+          "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+        },
+        "67": {
+          "bar.sync": 1
+        },
+        "75": {
+          "st.shared.b32": 1,
+          "bar.sync": 1,
+          "ld.shared.v2.b32": 4
+        },
+        "78": {
+          "bar.sync": 4,
+          "st.shared.b16": 1,
+          "ld.shared.v4.b32": 6,
+          "st.shared.b32": 1
+        },
+        "83": {
+          "bar.sync": 8,
+          "st.shared.v4.b32": 16,
+          "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 16
+        }
+      },
+      "production_ir_sha256": {
+        "up_swiglu.ptx": "f469d217ddfe9b908601703a75c3af3c5a7cd06e6d537312ca4c2cbc124871e3",
+        "up_swiglu.ttgir": "19d1f3480c58ebaabc950f132a716a4d7d1e35c2c02b6cd5105638d66821c52e",
+        "up_swiglu.json": "511023713f52df2517fb428c93bb36bd3bd34046ee27d1ecf6fb293f3ddb1afe"
+      },
+      "weight_pack_memory": {
+        "per_layer_bytes": 33554432,
+        "layers": 36,
+        "additional_canonical_plus_packed_bytes": 1207959552
+      },
+      "packing_decision": "Do not GPU test pair packing in this bounded round; low evidence and high deployment/storage burden.",
+      "ordinary_transpose_history": {
+        "baseline_pure_gemm_ms": 1.0142879982789357,
+        "best_transposed_pure_gemm_ms": 1.356274664402008,
+        "equal": true,
+        "packing_setup_in_timing": false
+      },
+      "new_mechanism": "Two INT32 dot accumulators avoid an interleaved accumulator reshape/split; unchanged original weight storage and unchanged quantizer.",
+      "caveat": "Static PTX instruction counts and Nsight resource metadata do not measure conversion duration or memory/occupancy bottlenecks."
+    },
+    "analysis": {
+      "decision": "reject_both_no_full_decode",
+      "mechanism_confirmed_in_compiled_ir": true,
+      "mechanism": "Dual INT32 accumulators remove interleaved reshape/split and retain the activation epilogue in MMA layout; only final FP16 activations convert to blocked layout.",
+      "production_to_dual128_epilogue": {
+        "reordered_fp16_elements_per_cta": [
+          16384,
+          8192
+        ],
+        "static_bar_sync": [
+          8,
+          4
+        ],
+        "static_shared_vector_stores": [
+          16,
+          8
+        ],
+        "static_ldmatrix_loads": [
+          16,
+          8
+        ]
+      },
+      "tradeoffs": {
+        "registers": [
+          238,
+          255
+        ],
+        "shared_bytes": [
+          49152,
+          49152
+        ],
+        "spills_reported": [
+          0,
+          0
+        ],
+        "mma_warps_per_cta": [
+          [
+            2,
+            2
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "static_k_loop_ldmatrix_total": [
+          16,
+          20
+        ],
+        "static_k_loop_ldmatrix_activation": [
+          8,
+          4
+        ],
+        "static_k_loop_ldmatrix_weights": [
+          8,
+          16
+        ],
+        "static_mma_count": [
+          64,
+          64
+        ]
+      },
+      "causal_limit": "These are compiled-code/resource changes, not hardware stall or bandwidth measurements. They plausibly offset the smaller epilogue transfer; no causal latency attribution is claimed.",
+      "variants": {
+        "dual_128_64_64_4_4": {
+          "quality": {
+            "act": {
+              "equal": true,
+              "finite": true,
+              "mismatch_count": 0,
+              "max_abs": 0.0
+            },
+            "q": {
+              "equal": true,
+              "finite": true,
+              "mismatch_count": 0,
+              "max_abs": 0.0
+            },
+            "scale": {
+              "equal": true,
+              "finite": true,
+              "mismatch_count": 0,
+              "max_abs": 0.0
+            }
+          },
+          "resources": {
+            "registers": 255,
+            "spills": 0,
+            "shared_bytes": 49152
+          },
+          "timing": {
+            "means_ms": {
+              "production": 1.3283301273981731,
+              "dual_128_64_64_4_4": 1.3210074663162232
+            },
+            "block_savings_ms": [
+              -0.050748777389526545,
+              0.00818557739257808,
+              0.013273572921752796,
+              0.010207986831665128,
+              0.04820480346679701,
+              0.014812803268432484
+            ],
+            "reduction_percent": 0.551268162252172,
+            "positive_blocks": 5
+          }
+        },
+        "dual_64_64_64_4_4": {
+          "quality": {
+            "act": {
+              "equal": true,
+              "finite": true,
+              "mismatch_count": 0,
+              "max_abs": 0.0
+            },
+            "q": {
+              "equal": true,
+              "finite": true,
+              "mismatch_count": 0,
+              "max_abs": 0.0
+            },
+            "scale": {
+              "equal": true,
+              "finite": true,
+              "mismatch_count": 0,
+              "max_abs": 0.0
+            }
+          },
+          "resources": {
+            "registers": 150,
+            "spills": 0,
+            "shared_bytes": 36864
+          },
+          "timing": {
+            "means_ms": {
+              "production": 1.3514602740605672,
+              "dual_64_64_64_4_4": 1.726692803700765
+            },
+            "block_savings_ms": [
+              -0.3947200298309326,
+              -0.35339841842651376,
+              -0.3885887145996092,
+              -0.38539204597473153,
+              -0.38256325721740714,
+              -0.3467327117919923
+            ],
+            "reduction_percent": -27.764969258976624,
+            "positive_blocks": 0
+          }
+        }
+      },
+      "promotion_gate": {
+        "minimum_local_chain_saving_ms": 0.03,
+        "minimum_met": false,
+        "reason": "Dual128 saves only 0.007322661 ms on the mean with one negative block; dual64 regresses 27.76%. No further parameter batch."
+      },
+      "allocation_peaks_by_pair_and_variant": {
+        "dual_128_64_64_4_4/production": [
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416
+        ],
+        "dual_128_64_64_4_4/dual_128_64_64_4_4": [
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416
+        ],
+        "dual_64_64_64_4_4/production": [
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416
+        ],
+        "dual_64_64_64_4_4/dual_64_64_64_4_4": [
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416,
+          225084416
+        ]
+      },
+      "static_ir": {
+        "production": {
+          "ptx": {
+            "static_shared_instructions_by_source_line": {
+              "68": {
+                "bar.sync": 4,
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+              },
+              "69": {
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+              },
+              "67": {
+                "bar.sync": 1
+              },
+              "75": {
+                "st.shared.b32": 1,
+                "bar.sync": 1,
+                "ld.shared.v2.b32": 4
+              },
+              "78": {
+                "bar.sync": 4,
+                "st.shared.b16": 1,
+                "ld.shared.v4.b32": 6,
+                "st.shared.b32": 1
+              },
+              "83": {
+                "bar.sync": 8,
+                "st.shared.v4.b32": 16,
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 16
+              }
+            },
+            "static_mma_instruction_count": 64,
+            "sha256": "f469d217ddfe9b908601703a75c3af3c5a7cd06e6d537312ca4c2cbc124871e3"
+          },
+          "ttgir_sha256": "19d1f3480c58ebaabc950f132a716a4d7d1e35c2c02b6cd5105638d66821c52e",
+          "mma_warps_per_cta": [
+            2,
+            2
+          ],
+          "reshape_present": true,
+          "split_present": true,
+          "activation_fp32_layout": "blocked"
+        },
+        "dual128": {
+          "ptx": {
+            "static_shared_instructions_by_source_line": {
+              "40": {
+                "bar.sync": 4,
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 4
+              },
+              "41": {
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+              },
+              "42": {
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+              },
+              "39": {
+                "bar.sync": 1
+              },
+              "51": {
+                "st.shared.b32": 1,
+                "bar.sync": 1,
+                "ld.shared.v2.b32": 2
+              },
+              "65": {
+                "bar.sync": 4,
+                "st.shared.v4.b32": 8,
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+              }
+            },
+            "static_mma_instruction_count": 64,
+            "sha256": "5a3efb2e556c46dce8ec2a0b741ac077924725dbccf244acfe34db5fb101041c"
+          },
+          "ttgir_sha256": "8f0b68ddc37ef322d362eea6e69484ed76873e9e7d4246b328e8d9d155dd967d",
+          "mma_warps_per_cta": [
+            4,
+            1
+          ],
+          "reshape_present": false,
+          "split_present": false,
+          "activation_fp32_layout": "mma"
+        },
+        "dual64": {
+          "ptx": {
+            "static_shared_instructions_by_source_line": {
+              "40": {
+                "bar.sync": 4,
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 2
+              },
+              "41": {
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+              },
+              "42": {
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 8
+              },
+              "39": {
+                "bar.sync": 1
+              },
+              "65": {
+                "st.shared.v4.b32": 4,
+                "bar.sync": 1,
+                "ldmatrix.sync.aligned.m8n8.x4.shared.b16": 4
+              }
+            },
+            "static_mma_instruction_count": 32,
+            "sha256": "14c3d8ade26af0a5e62ed78ed78c9360641f04c9306c243903569ee64dadeb46"
+          },
+          "ttgir_sha256": "e30ea66ab5fb749007ce66440244f855804c3b3d60f31b4b8d214d0708af51c7",
+          "mma_warps_per_cta": [
+            4,
+            1
+          ],
+          "reshape_present": false,
+          "split_present": false,
+          "activation_fp32_layout": "mma"
+        }
+      }
+    }
+  },
+  "integrity": {
+    "raw_replay": {
+      "original_file_sha256": "627867d417c8458a105229cdd12a1f6886e8c61965d6a4641b7539a84d6fa587",
+      "numeric_and_boolean_leaves": 325,
+      "numeric_and_boolean_values_unchanged": true
+    },
+    "cpu_audit": {
+      "original_file_sha256": "41db586509121cf1ee547c19b00c6fdd178007787b549fd49e68a67db07cc15f",
+      "numeric_and_boolean_leaves": 32,
+      "numeric_and_boolean_values_unchanged": true
+    },
+    "analysis": {
+      "original_file_sha256": "795898decfbc73e2f7021bd82ff1b46cd659059a71b250767c9f76e194b45fcf",
+      "numeric_and_boolean_leaves": 175,
+      "numeric_and_boolean_values_unchanged": true
+    }
+  }
+}

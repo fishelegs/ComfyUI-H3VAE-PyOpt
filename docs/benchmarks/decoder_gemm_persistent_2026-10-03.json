@@ -1,0 +1,1383 @@
+{
+  "baseline_commit": "c223906",
+  "decision": "rejected_performance",
+  "timings_are_full_decode": false,
+  "all_quality_checks_exact": true,
+  "valid_timing_source": "replay_v2.json",
+  "invalidated_timing_source": "replay.json",
+  "timing_correction": "replay.json quality/resource data remain valid, but its timing is invalidated: candidate accidentally returned ACT with q/scale, retaining the FP16 intermediate between launches. replay_v2 releases ACT at return like production; only v2 timing supports decisions. No production edits.",
+  "plan": {
+    "baseline_commit": "c223906",
+    "family": "persistent_int8_up_swiglu",
+    "contract": "Real captured M7188 K2048 N16384; actual INT8 q/weights, FP32 scales, FP16 bias, current fused arithmetic and rounding unchanged. Full up/SwiGLU/quantization chain with all transient allocation included.",
+    "mechanism": "A fixed device-SM-count-sized grid processes multiple tiles per CTA, rather than starting one CTA per output tile. A bounded flattened-loop variant tests overlap across tile boundaries.",
+    "history": "Earlier tile/BK sweeps, GROUP_M4/8/16, store cache and warp4/8 variants did not test persistent CTA loops. No repeated parameter sweep.",
+    "candidates": [
+      "SM_count CTAs",
+      "2*SM_count CTAs",
+      "2*SM_count CTAs with outer flatten"
+    ],
+    "target_profile_seconds": 2.268903,
+    "planning_only": "A hypothetical 5 percent decrease in this region is about 0.11 seconds, before any full-stage interactions; not a measured speedup. Require at least 3 percent local chain gain before further capture/full-stage investment.",
+    "quality_gate": "ACT FP16 bits, q and FP32 scale bits exact against production; real M7188 and M1/17/129 tails; failed quality means no timing.",
+    "timing": "3 warmups; 6 alternating ABBA/BAAB local blocks, 10 calls per sample, include fresh outputs. No full-stage claim.",
+    "resource_reason": "Same BM128 BN64 BK64 W4 stages4 as production; existing per-CTA resource238registers/49152shared. New outer loops may raise resource costs; record actual compiler metadata.",
+    "production_source_sha256": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198"
+  },
+  "valid_replay": {
+    "status": "completed",
+    "baseline_commit": "c223906",
+    "scope": "Local complete up+SwiGLU+quantization with transient allocation; no full-decode claim",
+    "warmup": 3,
+    "blocks": 6,
+    "repeat": 10,
+    "variants": {
+      "persistent_1sm": {
+        "config": [
+          110,
+          false
+        ],
+        "quality": [
+          {
+            "m": 7188,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 1,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 17,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 129,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          }
+        ],
+        "samples": [
+          {
+            "block": 0,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3687840461730958,
+                "wall_ms": 1.3940082862973213
+              },
+              {
+                "label": "B",
+                "ms": 1.717750358581543,
+                "wall_ms": 1.7427134793251753
+              },
+              {
+                "label": "B",
+                "ms": 1.713987159729004,
+                "wall_ms": 1.7392782028764486
+              },
+              {
+                "label": "A",
+                "ms": 1.3648063659667968,
+                "wall_ms": 1.3905711006373167
+              }
+            ]
+          },
+          {
+            "block": 1,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.709440040588379,
+                "wall_ms": 1.724656019359827
+              },
+              {
+                "label": "A",
+                "ms": 1.3664992332458497,
+                "wall_ms": 1.3913822825998068
+              },
+              {
+                "label": "A",
+                "ms": 1.3760671615600586,
+                "wall_ms": 1.3790145050734282
+              },
+              {
+                "label": "B",
+                "ms": 1.7189472198486329,
+                "wall_ms": 1.7442779149860144
+              }
+            ]
+          },
+          {
+            "block": 2,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3931455612182617,
+                "wall_ms": 1.4089851174503565
+              },
+              {
+                "label": "B",
+                "ms": 1.7215871810913086,
+                "wall_ms": 1.7472103703767061
+              },
+              {
+                "label": "B",
+                "ms": 1.7191455841064454,
+                "wall_ms": 1.7444170080125332
+              },
+              {
+                "label": "A",
+                "ms": 1.368607997894287,
+                "wall_ms": 1.3934144750237465
+              }
+            ]
+          },
+          {
+            "block": 3,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.6754079818725587,
+                "wall_ms": 1.691281097009778
+              },
+              {
+                "label": "A",
+                "ms": 1.3667936325073242,
+                "wall_ms": 1.391966175287962
+              },
+              {
+                "label": "A",
+                "ms": 1.3677311897277833,
+                "wall_ms": 1.3931761030107737
+              },
+              {
+                "label": "B",
+                "ms": 1.7180095672607423,
+                "wall_ms": 1.7433194909244776
+              }
+            ]
+          },
+          {
+            "block": 4,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.391145610809326,
+                "wall_ms": 1.4045223128050566
+              },
+              {
+                "label": "B",
+                "ms": 1.7197759628295899,
+                "wall_ms": 1.7447056248784065
+              },
+              {
+                "label": "B",
+                "ms": 1.716636848449707,
+                "wall_ms": 1.7418921925127506
+              },
+              {
+                "label": "A",
+                "ms": 1.3287008285522461,
+                "wall_ms": 1.3543558772653341
+              }
+            ]
+          },
+          {
+            "block": 5,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.7106624603271485,
+                "wall_ms": 1.7285249195992947
+              },
+              {
+                "label": "A",
+                "ms": 1.365334415435791,
+                "wall_ms": 1.3903058134019375
+              },
+              {
+                "label": "A",
+                "ms": 1.3660639762878417,
+                "wall_ms": 1.3913413044065237
+              },
+              {
+                "label": "B",
+                "ms": 1.7196191787719726,
+                "wall_ms": 1.74526940099895
+              }
+            ]
+          }
+        ],
+        "status": "completed",
+        "resource": {
+          "registers": 232,
+          "spills": 0,
+          "shared": 49152,
+          "ptx_sha256": "1588bc47c0b1983fa06ee2746dc008c96b085b65fbc960f43ef1aa0951e35340"
+        },
+        "summary": {
+          "production_ms": 1.3686400016148885,
+          "candidate_ms": 1.7134141286214193,
+          "local_reduction_percent": -25.191001768158472,
+          "block_savings_ms": [
+            -0.3490735530853273,
+            -0.3429104328155519,
+            -0.33948960304260245,
+            -0.3294463634490967,
+            -0.3582831859588622,
+            -0.34944162368774423
+          ],
+          "positive_blocks": 0
+        }
+      },
+      "persistent_2sm": {
+        "config": [
+          220,
+          false
+        ],
+        "quality": [
+          {
+            "m": 7188,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 1,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 17,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 129,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          }
+        ],
+        "samples": [
+          {
+            "block": 0,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3659135818481445,
+                "wall_ms": 1.390744373202324
+              },
+              {
+                "label": "B",
+                "ms": 1.3625280380249023,
+                "wall_ms": 1.3876736629754305
+              },
+              {
+                "label": "B",
+                "ms": 1.398038387298584,
+                "wall_ms": 1.423674589022994
+              },
+              {
+                "label": "A",
+                "ms": 1.3670720100402831,
+                "wall_ms": 1.392178377136588
+              }
+            ]
+          },
+          {
+            "block": 1,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.3986207962036132,
+                "wall_ms": 1.4168140944093466
+              },
+              {
+                "label": "A",
+                "ms": 1.3655808448791504,
+                "wall_ms": 1.390840532258153
+              },
+              {
+                "label": "A",
+                "ms": 1.3657440185546874,
+                "wall_ms": 1.391349220648408
+              },
+              {
+                "label": "B",
+                "ms": 1.3990431785583497,
+                "wall_ms": 1.4243185985833406
+              }
+            ]
+          },
+          {
+            "block": 2,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.369926357269287,
+                "wall_ms": 1.3900052290409803
+              },
+              {
+                "label": "B",
+                "ms": 1.4068927764892578,
+                "wall_ms": 1.4099394902586937
+              },
+              {
+                "label": "B",
+                "ms": 1.4027520179748536,
+                "wall_ms": 1.4278840273618698
+              },
+              {
+                "label": "A",
+                "ms": 1.3649696350097655,
+                "wall_ms": 1.390483882278204
+              }
+            ]
+          },
+          {
+            "block": 3,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.404195213317871,
+                "wall_ms": 1.424533873796463
+              },
+              {
+                "label": "A",
+                "ms": 1.3713120460510253,
+                "wall_ms": 1.3958422001451254
+              },
+              {
+                "label": "A",
+                "ms": 1.371782398223877,
+                "wall_ms": 1.397152105346322
+              },
+              {
+                "label": "B",
+                "ms": 1.405833625793457,
+                "wall_ms": 1.4312881045043468
+              }
+            ]
+          },
+          {
+            "block": 4,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.340275192260742,
+                "wall_ms": 1.3600636273622513
+              },
+              {
+                "label": "B",
+                "ms": 1.4075679779052734,
+                "wall_ms": 1.4330557081848383
+              },
+              {
+                "label": "B",
+                "ms": 1.409705638885498,
+                "wall_ms": 1.4350999146699905
+              },
+              {
+                "label": "A",
+                "ms": 1.3762495994567872,
+                "wall_ms": 1.4015408232808113
+              }
+            ]
+          },
+          {
+            "block": 5,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.410108757019043,
+                "wall_ms": 1.4301092829555273
+              },
+              {
+                "label": "A",
+                "ms": 1.3766976356506349,
+                "wall_ms": 1.4019204303622246
+              },
+              {
+                "label": "A",
+                "ms": 1.3791168212890625,
+                "wall_ms": 1.4041798189282417
+              },
+              {
+                "label": "B",
+                "ms": 1.3758655548095704,
+                "wall_ms": 1.4019865076988935
+              }
+            ]
+          }
+        ],
+        "status": "completed",
+        "resource": {
+          "registers": 232,
+          "spills": 0,
+          "shared": 49152,
+          "ptx_sha256": "34d4686ddd44f7c781e11b4f27a733fd61fd6829a767f3369b12150c681c49b4"
+        },
+        "summary": {
+          "production_ms": 1.3678866783777872,
+          "candidate_ms": 1.3984293301900228,
+          "local_reduction_percent": -2.2328349486126164,
+          "block_savings_ms": [
+            -0.013790416717529563,
+            -0.03316955566406232,
+            -0.03737440109252943,
+            -0.0334671974182128,
+            -0.050374412536621005,
+            -0.015079927444457741
+          ],
+          "positive_blocks": 0
+        }
+      },
+      "flatten_2sm": {
+        "config": [
+          220,
+          true
+        ],
+        "quality": [
+          {
+            "m": 7188,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 1,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 17,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 129,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          }
+        ],
+        "samples": [
+          {
+            "block": 0,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3805567741394043,
+                "wall_ms": 1.4049820136278868
+              },
+              {
+                "label": "B",
+                "ms": 1.699216079711914,
+                "wall_ms": 1.724596880376339
+              },
+              {
+                "label": "B",
+                "ms": 1.6982784271240234,
+                "wall_ms": 1.7233609687536955
+              },
+              {
+                "label": "A",
+                "ms": 1.36278076171875,
+                "wall_ms": 1.3878109864890575
+              }
+            ]
+          },
+          {
+            "block": 1,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.7227327346801757,
+                "wall_ms": 1.7373273149132729
+              },
+              {
+                "label": "A",
+                "ms": 1.3314687728881835,
+                "wall_ms": 1.3559234328567982
+              },
+              {
+                "label": "A",
+                "ms": 1.3681695938110352,
+                "wall_ms": 1.3933854177594185
+              },
+              {
+                "label": "B",
+                "ms": 1.697577667236328,
+                "wall_ms": 1.7233318649232388
+              }
+            ]
+          },
+          {
+            "block": 2,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3925791740417481,
+                "wall_ms": 1.4103672932833433
+              },
+              {
+                "label": "B",
+                "ms": 1.6985376358032227,
+                "wall_ms": 1.723805721849203
+              },
+              {
+                "label": "B",
+                "ms": 1.696486473083496,
+                "wall_ms": 1.7215311992913485
+              },
+              {
+                "label": "A",
+                "ms": 1.367587184906006,
+                "wall_ms": 1.392897590994835
+              }
+            ]
+          },
+          {
+            "block": 3,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.661849594116211,
+                "wall_ms": 1.6804114915430546
+              },
+              {
+                "label": "A",
+                "ms": 1.3645631790161132,
+                "wall_ms": 1.38978180475533
+              },
+              {
+                "label": "A",
+                "ms": 1.366703987121582,
+                "wall_ms": 1.3918471056967974
+              },
+              {
+                "label": "B",
+                "ms": 1.6966720581054688,
+                "wall_ms": 1.722260331735015
+              }
+            ]
+          },
+          {
+            "block": 4,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3664352416992187,
+                "wall_ms": 1.384500926360488
+              },
+              {
+                "label": "B",
+                "ms": 1.6990367889404296,
+                "wall_ms": 1.7242043279111385
+              },
+              {
+                "label": "B",
+                "ms": 1.6526176452636718,
+                "wall_ms": 1.677903812378645
+              },
+              {
+                "label": "A",
+                "ms": 1.365116786956787,
+                "wall_ms": 1.390701299533248
+              }
+            ]
+          },
+          {
+            "block": 5,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.6897632598876953,
+                "wall_ms": 1.7061106860637665
+              },
+              {
+                "label": "A",
+                "ms": 1.3648256301879882,
+                "wall_ms": 1.388556882739067
+              },
+              {
+                "label": "A",
+                "ms": 1.3673184394836426,
+                "wall_ms": 1.3925440143793821
+              },
+              {
+                "label": "B",
+                "ms": 1.6980096817016601,
+                "wall_ms": 1.7226788681000471
+              }
+            ]
+          }
+        ],
+        "status": "completed",
+        "resource": {
+          "registers": 232,
+          "spills": 0,
+          "shared": 57344,
+          "ptx_sha256": "18ca2cd86f98ad0970d02aa2b4af694c3f068910fd1de28c2c8fd5ab41f66fc5"
+        },
+        "summary": {
+          "production_ms": 1.3665087938308715,
+          "candidate_ms": 1.692564837137858,
+          "local_reduction_percent": -23.860515554599605,
+          "block_savings_ms": [
+            -0.32707848548889173,
+            -0.36033601760864253,
+            -0.31742887496948224,
+            -0.3136272430419922,
+            -0.31005120277404785,
+            -0.32781443595886217
+          ],
+          "positive_blocks": 0
+        }
+      }
+    },
+    "environment": {
+      "torch": "2.11.0+cu130",
+      "cuda": "13.0",
+      "triton": "3.6.0"
+    },
+    "source_sha256": {
+      "replay_v2.py": "85a405697f8c47129bbc2eafe020e4635d8b4a3aa5244be34a35057243a134b3",
+      "persistent.py": "d01c2977f888b766188851beba547effc7159617746424ae1d17bd28104f94f6",
+      "int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198"
+    },
+    "sm_count": 110,
+    "gpu_name": "NVIDIA Graphics Device",
+    "shape_mnk": [
+      7188,
+      16384,
+      2048
+    ]
+  },
+  "invalidated_replay": {
+    "status": "completed",
+    "baseline_commit": "c223906",
+    "scope": "Local complete up+SwiGLU+quantization with transient allocation; no full-decode claim",
+    "warmup": 3,
+    "blocks": 6,
+    "repeat": 10,
+    "variants": {
+      "persistent_1sm": {
+        "config": [
+          110,
+          false
+        ],
+        "quality": [
+          {
+            "m": 7188,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 1,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 17,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 129,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          }
+        ],
+        "samples": [
+          {
+            "block": 0,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3676416397094726,
+                "wall_ms": 1.3925060164183378
+              },
+              {
+                "label": "B",
+                "ms": 1.722275161743164,
+                "wall_ms": 1.7473655752837658
+              },
+              {
+                "label": "B",
+                "ms": 1.7125503540039062,
+                "wall_ms": 1.7371239140629768
+              },
+              {
+                "label": "A",
+                "ms": 1.3660096168518066,
+                "wall_ms": 1.3911078218370676
+              }
+            ]
+          },
+          {
+            "block": 1,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.685807991027832,
+                "wall_ms": 1.699579693377018
+              },
+              {
+                "label": "A",
+                "ms": 1.3656607627868653,
+                "wall_ms": 1.3904750347137451
+              },
+              {
+                "label": "A",
+                "ms": 1.368246364593506,
+                "wall_ms": 1.3934765011072159
+              },
+              {
+                "label": "B",
+                "ms": 1.7192895889282227,
+                "wall_ms": 1.7448398284614086
+              }
+            ]
+          },
+          {
+            "block": 2,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3931072235107422,
+                "wall_ms": 1.4120779000222683
+              },
+              {
+                "label": "B",
+                "ms": 1.72325439453125,
+                "wall_ms": 1.7479714937508106
+              },
+              {
+                "label": "B",
+                "ms": 1.681648063659668,
+                "wall_ms": 1.7066275235265493
+              },
+              {
+                "label": "A",
+                "ms": 1.3675552368164063,
+                "wall_ms": 1.392617216333747
+              }
+            ]
+          },
+          {
+            "block": 3,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.710371208190918,
+                "wall_ms": 1.7289734911173582
+              },
+              {
+                "label": "A",
+                "ms": 1.3681407928466798,
+                "wall_ms": 1.392760407179594
+              },
+              {
+                "label": "A",
+                "ms": 1.3695679664611817,
+                "wall_ms": 1.3950829859822989
+              },
+              {
+                "label": "B",
+                "ms": 1.7200416564941405,
+                "wall_ms": 1.7452212981879711
+              }
+            ]
+          },
+          {
+            "block": 4,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3890368461608886,
+                "wall_ms": 1.4044852927327156
+              },
+              {
+                "label": "B",
+                "ms": 1.6740671157836915,
+                "wall_ms": 1.6988927032798529
+              },
+              {
+                "label": "B",
+                "ms": 1.7161855697631836,
+                "wall_ms": 1.7413354013115168
+              },
+              {
+                "label": "A",
+                "ms": 1.362502384185791,
+                "wall_ms": 1.387643488124013
+              }
+            ]
+          },
+          {
+            "block": 5,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.7438720703125,
+                "wall_ms": 1.7572766169905663
+              },
+              {
+                "label": "A",
+                "ms": 1.364521598815918,
+                "wall_ms": 1.389243919402361
+              },
+              {
+                "label": "A",
+                "ms": 1.3669024467468263,
+                "wall_ms": 1.3922685757279396
+              },
+              {
+                "label": "B",
+                "ms": 1.683718490600586,
+                "wall_ms": 1.709234481677413
+              }
+            ]
+          }
+        ],
+        "status": "completed",
+        "resource": {
+          "registers": 232,
+          "spills": 0,
+          "shared": 49152,
+          "ptx_sha256": "1588bc47c0b1983fa06ee2746dc008c96b085b65fbc960f43ef1aa0951e35340"
+        },
+        "summary": {
+          "production_ms": 1.370741073290507,
+          "candidate_ms": 1.707756805419922,
+          "local_reduction_percent": -24.586388975738373,
+          "block_savings_ms": [
+            -0.3505871295928955,
+            -0.33559522628784166,
+            -0.3221199989318846,
+            -0.34635205268859837,
+            -0.3193567276000977,
+            -0.3480832576751709
+          ],
+          "positive_blocks": 0
+        }
+      },
+      "persistent_2sm": {
+        "config": [
+          220,
+          false
+        ],
+        "quality": [
+          {
+            "m": 7188,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 1,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 17,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 129,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          }
+        ],
+        "samples": [
+          {
+            "block": 0,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3664896011352539,
+                "wall_ms": 1.3907404150813818
+              },
+              {
+                "label": "B",
+                "ms": 1.396063995361328,
+                "wall_ms": 1.4213569927960634
+              },
+              {
+                "label": "B",
+                "ms": 1.3981375694274902,
+                "wall_ms": 1.4235743321478367
+              },
+              {
+                "label": "A",
+                "ms": 1.3668671607971192,
+                "wall_ms": 1.3920033350586891
+              }
+            ]
+          },
+          {
+            "block": 1,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.4223679542541503,
+                "wall_ms": 1.437667803838849
+              },
+              {
+                "label": "A",
+                "ms": 1.366979217529297,
+                "wall_ms": 1.391538605093956
+              },
+              {
+                "label": "A",
+                "ms": 1.3287903785705566,
+                "wall_ms": 1.3540434185415506
+              },
+              {
+                "label": "B",
+                "ms": 1.4004032135009765,
+                "wall_ms": 1.4258537907153368
+              }
+            ]
+          },
+          {
+            "block": 2,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3977408409118652,
+                "wall_ms": 1.4178405981510878
+              },
+              {
+                "label": "B",
+                "ms": 1.402444839477539,
+                "wall_ms": 1.4251768123358488
+              },
+              {
+                "label": "B",
+                "ms": 1.4026176452636718,
+                "wall_ms": 1.4279711060225964
+              },
+              {
+                "label": "A",
+                "ms": 1.3727168083190917,
+                "wall_ms": 1.398068480193615
+              }
+            ]
+          },
+          {
+            "block": 3,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.4051136016845702,
+                "wall_ms": 1.4254852198064327
+              },
+              {
+                "label": "A",
+                "ms": 1.3729567527770996,
+                "wall_ms": 1.39798941090703
+              },
+              {
+                "label": "A",
+                "ms": 1.3728320121765136,
+                "wall_ms": 1.3758777175098658
+              },
+              {
+                "label": "B",
+                "ms": 1.407686424255371,
+                "wall_ms": 1.4329855795949697
+              }
+            ]
+          },
+          {
+            "block": 4,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3743935585021974,
+                "wall_ms": 1.3940042816102505
+              },
+              {
+                "label": "B",
+                "ms": 1.407545566558838,
+                "wall_ms": 1.4328153803944588
+              },
+              {
+                "label": "B",
+                "ms": 1.409017562866211,
+                "wall_ms": 1.4338701032102108
+              },
+              {
+                "label": "A",
+                "ms": 1.3761119842529297,
+                "wall_ms": 1.401344407349825
+              }
+            ]
+          },
+          {
+            "block": 5,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.4089152336120605,
+                "wall_ms": 1.4266510028392076
+              },
+              {
+                "label": "A",
+                "ms": 1.3442591667175292,
+                "wall_ms": 1.368933217599988
+              },
+              {
+                "label": "A",
+                "ms": 1.3807616233825684,
+                "wall_ms": 1.4061849098652601
+              },
+              {
+                "label": "B",
+                "ms": 1.4372896194458007,
+                "wall_ms": 1.4624996110796928
+              }
+            ]
+          }
+        ],
+        "status": "completed",
+        "resource": {
+          "registers": 232,
+          "spills": 0,
+          "shared": 49152,
+          "ptx_sha256": "34d4686ddd44f7c781e11b4f27a733fd61fd6829a767f3369b12150c681c49b4"
+        },
+        "summary": {
+          "production_ms": 1.3684082587560018,
+          "candidate_ms": 1.4081336021423339,
+          "local_reduction_percent": -2.9030330043787966,
+          "block_savings_ms": [
+            -0.030422401428222834,
+            -0.06350078582763663,
+            -0.017302417755127086,
+            -0.033505630493163796,
+            -0.03302879333496089,
+            -0.0605920314788817
+          ],
+          "positive_blocks": 0
+        }
+      },
+      "flatten_2sm": {
+        "config": [
+          220,
+          true
+        ],
+        "quality": [
+          {
+            "m": 7188,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 1,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 17,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          },
+          {
+            "m": 129,
+            "act_bits_exact": true,
+            "q_exact": true,
+            "scale_bits_exact": true,
+            "finite": true
+          }
+        ],
+        "samples": [
+          {
+            "block": 0,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3795583724975586,
+                "wall_ms": 1.404379215091467
+              },
+              {
+                "label": "B",
+                "ms": 1.700307273864746,
+                "wall_ms": 1.725516328588128
+              },
+              {
+                "label": "B",
+                "ms": 1.6954496383666993,
+                "wall_ms": 1.7201641108840704
+              },
+              {
+                "label": "A",
+                "ms": 1.3395584106445313,
+                "wall_ms": 1.3644822873175144
+              }
+            ]
+          },
+          {
+            "block": 1,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.691324806213379,
+                "wall_ms": 1.7073837108910084
+              },
+              {
+                "label": "A",
+                "ms": 1.36778564453125,
+                "wall_ms": 1.392435934394598
+              },
+              {
+                "label": "A",
+                "ms": 1.368166446685791,
+                "wall_ms": 1.3936158269643784
+              },
+              {
+                "label": "B",
+                "ms": 1.6983039855957032,
+                "wall_ms": 1.723556173965335
+              }
+            ]
+          },
+          {
+            "block": 2,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3923328399658204,
+                "wall_ms": 1.4077343046665192
+              },
+              {
+                "label": "B",
+                "ms": 1.6985055923461914,
+                "wall_ms": 1.7233559861779213
+              },
+              {
+                "label": "B",
+                "ms": 1.6702047348022462,
+                "wall_ms": 1.6735110897570848
+              },
+              {
+                "label": "A",
+                "ms": 1.366044807434082,
+                "wall_ms": 1.3909616973251104
+              }
+            ]
+          },
+          {
+            "block": 3,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.7227712631225587,
+                "wall_ms": 1.7381074838340282
+              },
+              {
+                "label": "A",
+                "ms": 1.3654784202575683,
+                "wall_ms": 1.3901344034820795
+              },
+              {
+                "label": "A",
+                "ms": 1.367679977416992,
+                "wall_ms": 1.3932582922279835
+              },
+              {
+                "label": "B",
+                "ms": 1.696726417541504,
+                "wall_ms": 1.7221440095454454
+              }
+            ]
+          },
+          {
+            "block": 4,
+            "order": "ABBA",
+            "samples": [
+              {
+                "label": "A",
+                "ms": 1.3553088188171387,
+                "wall_ms": 1.369043393060565
+              },
+              {
+                "label": "B",
+                "ms": 1.6984640121459962,
+                "wall_ms": 1.723409118130803
+              },
+              {
+                "label": "B",
+                "ms": 1.6955072402954101,
+                "wall_ms": 1.7199608031660318
+              },
+              {
+                "label": "A",
+                "ms": 1.363593578338623,
+                "wall_ms": 1.388779329136014
+              }
+            ]
+          },
+          {
+            "block": 5,
+            "order": "BAAB",
+            "samples": [
+              {
+                "label": "B",
+                "ms": 1.6908512115478516,
+                "wall_ms": 1.7098323907703161
+              },
+              {
+                "label": "A",
+                "ms": 1.3649375915527344,
+                "wall_ms": 1.389535516500473
+              },
+              {
+                "label": "A",
+                "ms": 1.3654335975646972,
+                "wall_ms": 1.390782417729497
+              },
+              {
+                "label": "B",
+                "ms": 1.661689567565918,
+                "wall_ms": 1.686733216047287
+              }
+            ]
+          }
+        ],
+        "status": "completed",
+        "resource": {
+          "registers": 232,
+          "spills": 0,
+          "shared": 57344,
+          "ptx_sha256": "18ca2cd86f98ad0970d02aa2b4af694c3f068910fd1de28c2c8fd5ab41f66fc5"
+        },
+        "summary": {
+          "production_ms": 1.366323208808899,
+          "candidate_ms": 1.693342145284017,
+          "local_reduction_percent": -23.934229790343586,
+          "block_savings_ms": [
+            -0.3383200645446778,
+            -0.3268383502960206,
+            -0.30516633987426744,
+            -0.34316964149475115,
+            -0.33753442764282227,
+            -0.31108479499816877
+          ],
+          "positive_blocks": 0
+        }
+      }
+    },
+    "environment": {
+      "torch": "2.11.0+cu130",
+      "cuda": "13.0",
+      "triton": "3.6.0"
+    },
+    "source_sha256": {
+      "replay.py": "af630b2f41454213993b22775a82f75e15dee1f156dabc74d8a3aa78249a454b",
+      "persistent.py": "d01c2977f888b766188851beba547effc7159617746424ae1d17bd28104f94f6",
+      "int8_ffn_up_fused.py": "dbcf2b355596fe0b800868f66582fe253d40b447f691b339438d223b25bd5198"
+    },
+    "sm_count": 110,
+    "gpu_name": "NVIDIA Graphics Device",
+    "shape_mnk": [
+      7188,
+      16384,
+      2048
+    ]
+  },
+  "source_sha256": {
+    "persistent.py": "d01c2977f888b766188851beba547effc7159617746424ae1d17bd28104f94f6",
+    "replay.py": "af630b2f41454213993b22775a82f75e15dee1f156dabc74d8a3aa78249a454b",
+    "replay_v2.py": "85a405697f8c47129bbc2eafe020e4635d8b4a3aa5244be34a35057243a134b3",
+    "prepare.py": "084c1c27414c631dc685dc596e1bc77bf62dbce3987ff47c2765d4ba7d045fc6"
+  },
+  "notes": [
+    "All three variants lost every one of six local paired blocks; no full-stage promotion.",
+    "Use only corrected v2 timings. Original v1 is retained for audit, not comparative conclusions.",
+    "No persistent GPU tensor cache: persistent refers to CTA scheduling inside one kernel invocation.",
+    "Hardware counters unavailable; metadata does not establish occupancy or a bandwidth bottleneck."
+  ]
+}
