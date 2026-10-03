@@ -3,7 +3,7 @@
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg role="img" aria-labelledby="chart-title chart-description" xmlns:xlink="http://www.w3.org/1999/xlink" width="1008pt" height="576pt" viewBox="0 0 1008 576" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <title id="chart-title">H3 VAE encode: fastest recorded configurations</title>
- <desc id="chart-description">768 × 1344 × 124  |  Tile 256  |  One configuration per implementation  |  Independent experiments. PyOpt INT8: 8.458 s  ·  Lowest recorded latency in this comparison. TensorRT rebuilt · FP16: 14.270000 seconds; ComfyUI --fast · FP16: 12.059000 seconds; PyOpt current best · INT8: 8.458108 seconds. PyOpt uses mixed INT8; references use FP16. ComfyUI --fast enables FP16 accumulation. ComfyUI 387f98a / TensorRT 11.2.1.2: 2026-09-18. PyOpt: 2026-10-02. Inputs, stacks and batches differ; historical references were not rerun. No paired speedup ratio claimed. Encode and decode winners use separate PyOpt modes; these times are not a combined pipeline result.</desc>
+ <desc id="chart-description">768 × 1344 × 124  |  Tile 256  |  One configuration per implementation  |  Independent experiments. PyOpt INT8: 8.458 s  ·  Lowest recorded latency in this comparison. TensorRT rebuilt · FP16: 14.270000 seconds; ComfyUI --fast · FP16: 12.059000 seconds; PyOpt current best · INT8: 8.458108 seconds. PyOpt uses mixed INT8; references use FP16. ComfyUI --fast enables FP16 accumulation. ComfyUI 387f98a / TensorRT 11.2.1.2: 2026-09-18. PyOpt: 2026-10-02. Inputs, stacks and batches differ; historical references were not rerun. No paired speedup ratio claimed. PyOpt full-encode mean; encode/decode use separate modes, not a combined pipeline result.</desc>
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
@@ -215,7 +215,7 @@ z
    <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="519.552" transform="rotate(-0 45.36 519.552)">Inputs, stacks and batches differ; historical references were not rerun. No paired speedup ratio claimed.</text>
   </g>
   <g id="text_23">
-   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="537.408" transform="rotate(-0 45.36 537.408)">Encode and decode winners use separate PyOpt modes; these times are not a combined pipeline result.</text>
+   <text style="fill: #607789; font: 10.5px 'DejaVu Sans'; text-anchor: start" x="45.36" y="537.408" transform="rotate(-0 45.36 537.408)">PyOpt full-encode mean; encode/decode use separate modes, not a combined pipeline result.</text>
   </g>
   <g id="text_24">
    <text style="fill: #607789; font: 10px 'DejaVu Sans'; text-anchor: start" x="45.36" y="561.6" transform="rotate(-0 45.36 561.6)">ComfyUI-H3VAE-PyOpt  ·  Measured on RTX PRO 5000 72GB / SM120</text>

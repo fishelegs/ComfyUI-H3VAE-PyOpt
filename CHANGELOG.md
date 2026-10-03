@@ -9,6 +9,11 @@ Versioning for release tags.
 
 ### Changed
 
+- Fuse INT8 FFN-up GEMM/SwiGLU on SM120 in the opt-in decoder fusion profile.
+  Paired full decode: 6.640 → 6.509 s (−1.98%); independent width: −1.96%.
+  With matched normalization schedules, 8 videos / 992 frames retain exact
+  RGB. Independent recompilation may choose different norm reduction orders.
+  See `docs/decoder_int8_ffn_2026-10-03.md`; FP16 defaults and INT8 loss remain.
 - Optimize the existing opt-in INT8 encoder with a larger output-channel tile
   and bounded absmax/contiguous quantization, without changing the eight-layer
   quantization scope, scales, rounding, padding, or default precision.

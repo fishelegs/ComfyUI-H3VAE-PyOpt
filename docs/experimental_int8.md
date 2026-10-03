@@ -38,6 +38,18 @@ been measured; CPU/ROCm are rejected and Windows is unvalidated. Unsupported
 configurations fail explicitly without silently labeling an FP16 fallback
 as INT8. `fast_linear` and `int8_decode` are mutually exclusive.
 
+## Decoder FFN-up/SwiGLU follow-up (unreleased, 2026-10-03)
+
+On SM120, `decode_fusions=true` now fuses INT8 FFN-up GEMM with SwiGLU,
+halving the width of its FP16 intermediate while preserving scales and
+rounding. The full decoder measured **6.640226 → 6.508537 s (−1.98%)** in a
+same-graph paired test. With identical normalization schedules, RGB remained
+bitwise equal on 8 videos / 992 frames; independent recompilation can still
+change normalization reduction order. The benchmark control does not change
+production normalization. Quantization scope, FP16 defaults and original
+INT8 quality loss remain unchanged. See
+[implementation and validation](decoder_int8_ffn_2026-10-03.md).
+
 ## Causal-zero convolution follow-up (unreleased, 2026-10-02)
 
 The SM120 fused norm producer guarantees two leading zero temporal planes.

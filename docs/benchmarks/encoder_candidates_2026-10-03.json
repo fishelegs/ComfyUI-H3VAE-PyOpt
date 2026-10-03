@@ -1,0 +1,2791 @@
+{
+  "date": "2026-10-02",
+  "scope": "Bounded encoder INT8 convolution micro-replays after causal-zero optimization; no new production change.",
+  "baseline_commit": "dbd49e0",
+  "timings_full": false,
+  "timing_scope": {
+    "includes": [
+      "one prequantized INT8 convolution into a preallocated FP16 output"
+    ],
+    "excludes": [
+      "norm producer",
+      "activation quantization",
+      "allocation",
+      "compilation",
+      "model load",
+      "video encode/decode",
+      "media I/O"
+    ],
+    "inputs": "Synthetic INT8 tensors at three captured full-size H3 geometries and one short shape; first two temporal planes set exactly zero for causal runs.",
+    "comparison": "Each replay has its own paired current-production baseline; do not combine independent absolute baselines into a new speedup."
+  },
+  "decision": "Reject all tested encoder candidates. Keep production causal-zero pipeline unchanged; no end-to-end speedup claim.",
+  "current_profile_context": {
+    "source": "Latest causal-zero encode Nsight Systems trace",
+    "int8_conv_calls": 1792,
+    "int8_conv_total_ns": 3812488195,
+    "int8_conv_percent_kernel_time": 45.48946557057725,
+    "recompute_pack_total_ns": 1032374897,
+    "hardware_counter_claim": false
+  },
+  "validation_scope": {
+    "all_operator_checks_exact": true,
+    "checks": [
+      "bias/no-bias at C128->128 D17 H256, C256->256 D17 H128, C128->256 D17 H128, C128->128 D2 H8 W16",
+      "D2 nonzero temporal prefix with causal skipping disabled"
+    ],
+    "full_video_validation": false,
+    "new_quality_claim": false
+  },
+  "candidates": [
+    {
+      "id": "scalar",
+      "name": "Unaligned scalar address decomposition",
+      "decision": "reject",
+      "reason": "Activation async staging was lost; real-size operator latency increased 60.7%-80.4%."
+    },
+    {
+      "id": "recurrence",
+      "name": "Scalar carries and loop-carried pointer recurrence",
+      "decision": "reject",
+      "reason": "Activation async staging was lost and compiler reported 68-72 spills on real-size shapes; latency increased 559%-602%."
+    },
+    {
+      "id": "aligned",
+      "name": "Scalar decomposition with explicit 16-byte base alignment",
+      "decision": "reject_no_consistent_gain",
+      "reason": "Activation async staging and baseline resource usage were restored, but real-size changes ranged from 0.30% faster to 2.05% slower. Short D2 improvement does not establish full-video gain."
+    },
+    {
+      "id": "bk32",
+      "name": "Original causal kernel with BK32 instead of BK64",
+      "decision": "reject",
+      "reason": "Shared allocation halved, registers remained 254, and real-size latency increased 79.5%-99.1%."
+    }
+  ],
+  "compiler_evidence": {
+    "source": "Static generated PTX and Triton GPU IR, plus loaded-kernel resource metadata; no Nsight Compute counters.",
+    "representative_shape": "C128->128, D17, H=W256, BM=BN=128, four warps, four stages",
+    "baseline": "Both activation and weights use three-buffer async global-to-shared copies with 16-byte contiguity.",
+    "unaligned_scalar_and_carry": "Activation changes to loop-local ordinary tt.load with ld.global.b8 instructions; weights retain async staging. Carry retains a full 128x64 activation pointer matrix across loop iterations.",
+    "minimal_fix": "tl.multiple_of(input_base + tap_offset, 16), guarded by contiguous channel stride and 16-byte-multiple remaining strides, restores activation async copies.",
+    "hardware_stall_inference": false,
+    "notes": [
+      "Static instruction counts are not dynamic execution counts.",
+      "Shared memory/register metadata alone does not prove occupancy, bandwidth, utilization or the dominant warp stall.",
+      "No new NCU permission probe or driver permission change was performed in this round."
+    ],
+    "artifact_metrics": {
+      "baseline": {
+        "ptx_sha256": "2e1586d41ed2caa5d077898827f0e75433234d5529e9f9827244b71f33874676",
+        "ttgir_sha256": "d7242615e0c47e8760bd8ba367a22821912b869fdd7ac3ded74bfb9eab2839fc",
+        "ptx_ld_global_b8_static_count": 0,
+        "ttgir_async_copy_static_count": 8,
+        "ttgir_activation_ordinary_load": false
+      },
+      "scalar": {
+        "ptx_sha256": "5166044bf50ad626a7e5b1552b3c26f2a88aaec77c1f14f45c7fe75cd1afc333",
+        "ttgir_sha256": "26086328bcf85f95841f33beb5c90ab3acefd1938950991f798334c029ab6333",
+        "ptx_ld_global_b8_static_count": 64,
+        "ttgir_async_copy_static_count": 4,
+        "ttgir_activation_ordinary_load": true
+      },
+      "recurrence": {
+        "ptx_sha256": "4d57899d63bd842089c1d29adf9c1246f412e06f5a1b8917307f3b4841463dc6",
+        "ttgir_sha256": "4a915f7f903daa68ba2934b0711f3bb79c2795274bb993c7358f102dfe36c812",
+        "ptx_ld_global_b8_static_count": 64,
+        "ttgir_async_copy_static_count": 4,
+        "ttgir_activation_ordinary_load": true
+      },
+      "aligned": {
+        "ptx_sha256": "8c9cc3bf8c17d02d0fd7366415c80111697a487be8e4a83bef63559951ab0eae",
+        "ttgir_sha256": "03fc09224404100b95bfac353508ca89a514a537ac6575eb007523edd983cbd2",
+        "ptx_ld_global_b8_static_count": 0,
+        "ttgir_async_copy_static_count": 8,
+        "ttgir_activation_ordinary_load": false
+      },
+      "bk32": {
+        "ptx_sha256": "253ea41de603db8f524ee8cf0c7569f89864e6744e63f52cb37524863c0d320a",
+        "ttgir_sha256": "4a7a21a79455add2a06cc89b576995b777783be2d2518a1c8a7670060eaec686",
+        "ptx_ld_global_b8_static_count": 0,
+        "ttgir_async_copy_static_count": 8,
+        "ttgir_activation_ordinary_load": false
+      }
+    }
+  },
+  "next_steps": [
+    "Do not repeat scalar/carry/smaller-K tuning without a new mechanism.",
+    "Prioritize independently validated decoder gains.",
+    "Future encoder work should justify a new producer-consumer fusion or target remaining FP16 convolution work, preserving FP16 rounding and GroupNorm reduction order."
+  ],
+  "replays": [
+    {
+      "evidence_name": "scalar_carry.json",
+      "scope": "Bounded INT8 conv replay after causal-zero production optimization.\n\nSynthetic integer tensors at real H3 geometries; same weights, quantization\nscales and epilogue. Times only the prequantized convolution into preallocated\noutputs. Producer, allocations and whole-video execution are excluded.\n",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "cuda": "13.0",
+        "triton": "3.6.0",
+        "gpu": "NVIDIA Graphics Device",
+        "capability": [
+          12,
+          0
+        ]
+      },
+      "commit": "dbd49e094387b28f3252d34d0cbf8da1ed3b4cc8",
+      "source_sha256": {
+        "opt/encoder_int8_pipeline.py": "1d74bc23d6e382fe4cf947e2cc84e0b47034d3159ae3b8dfce9fa87e88347529",
+        "scalar_address.py": "42302744e780b9df3cfefd3cdc08e2a0e34b02e3161994c1f7e2545c8dc71ca0",
+        "pointer_recurrence.py": "8eacf522f015b62d72efb866de0c4ddd544be1846f3bcb9ecaa29c4d7c17c3cb",
+        "replay.py": "1fa49fd973a0fa9e37a42f054c02a45e45795344c96d117b692763c3d5fa4a15"
+      },
+      "settings": {
+        "warmup": 3,
+        "runs": 12,
+        "seed": 20261002,
+        "candidates": [
+          "scalar",
+          "recurrence"
+        ],
+        "tile_mn": [
+          128,
+          128
+        ],
+        "warps": 4,
+        "stages": 4,
+        "sampling": "rotate four implementations; keep all samples",
+        "allocation_and_quantization_in_timing": false
+      },
+      "cases": [
+        {
+          "ci": 128,
+          "co": 128,
+          "output_dhw": [
+            17,
+            256,
+            256
+          ],
+          "correctness": [
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.9806586702664692,
+              "median_ms": 1.9809120297431946,
+              "samples_ms": [
+                1.9820799827575684,
+                1.9830080270767212,
+                1.9833600521087646,
+                1.981152057647705,
+                1.981376051902771,
+                1.9790079593658447,
+                1.980672001838684,
+                1.978335976600647,
+                1.9804799556732178,
+                1.9812159538269043,
+                1.9767999649047852,
+                1.9804160594940186
+              ]
+            },
+            "scalar": {
+              "mean_ms": 3.5730160077412925,
+              "median_ms": 3.57369601726532,
+              "samples_ms": [
+                3.5734400749206543,
+                3.5757761001586914,
+                3.576064109802246,
+                3.5763518810272217,
+                3.5739519596099854,
+                3.569119930267334,
+                3.5690560340881348,
+                3.5713279247283936,
+                3.5670080184936523,
+                3.575808048248291,
+                3.5727360248565674,
+                3.575551986694336
+              ]
+            },
+            "recurrence": {
+              "mean_ms": 13.908949454625448,
+              "median_ms": 13.929984092712402,
+              "samples_ms": [
+                13.974783897399902,
+                14.006208419799805,
+                13.966496467590332,
+                13.951552391052246,
+                13.918975830078125,
+                13.917856216430664,
+                13.92569637298584,
+                13.892767906188965,
+                13.92512035369873,
+                13.934911727905273,
+                13.934271812438965,
+                13.558752059936523
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "scalar": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "recurrence": {
+              "n_regs": 255,
+              "n_spills": 72,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "scalar": -80.39534329560148,
+            "recurrence": -602.2385867603426
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 1.9820799827575684
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5734400749206543
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.974783897399902
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5757761001586914
+            },
+            {
+              "name": "recurrence",
+              "ms": 14.006208419799805
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9830080270767212
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.966496467590332
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9833600521087646
+            },
+            {
+              "name": "scalar",
+              "ms": 3.576064109802246
+            },
+            {
+              "name": "baseline",
+              "ms": 1.981152057647705
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5763518810272217
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.951552391052246
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5739519596099854
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.918975830078125
+            },
+            {
+              "name": "baseline",
+              "ms": 1.981376051902771
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.917856216430664
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9790079593658447
+            },
+            {
+              "name": "scalar",
+              "ms": 3.569119930267334
+            },
+            {
+              "name": "baseline",
+              "ms": 1.980672001838684
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5690560340881348
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.92569637298584
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5713279247283936
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.892767906188965
+            },
+            {
+              "name": "baseline",
+              "ms": 1.978335976600647
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.92512035369873
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9804799556732178
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5670080184936523
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9812159538269043
+            },
+            {
+              "name": "scalar",
+              "ms": 3.575808048248291
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.934911727905273
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5727360248565674
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.934271812438965
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9767999649047852
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.558752059936523
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9804160594940186
+            },
+            {
+              "name": "scalar",
+              "ms": 3.575551986694336
+            }
+          ]
+        },
+        {
+          "ci": 256,
+          "co": 256,
+          "output_dhw": [
+            17,
+            128,
+            128
+          ],
+          "correctness": [
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.9874746700127919,
+              "median_ms": 1.9664000272750854,
+              "samples_ms": [
+                2.222975969314575,
+                1.9668480157852173,
+                1.96288001537323,
+                1.9664640426635742,
+                1.9660799503326416,
+                1.964735984802246,
+                1.968832015991211,
+                1.9644479751586914,
+                1.9663360118865967,
+                1.9685440063476562,
+                1.9669760465621948,
+                1.964576005935669
+              ]
+            },
+            "scalar": {
+              "mean_ms": 3.5297146836916604,
+              "median_ms": 3.529088020324707,
+              "samples_ms": [
+                3.534048080444336,
+                3.524064064025879,
+                3.5228159427642822,
+                3.533504009246826,
+                3.5311999320983887,
+                3.5203518867492676,
+                3.5269761085510254,
+                3.533184051513672,
+                3.5318400859832764,
+                3.5230720043182373,
+                3.522336006164551,
+                3.5531840324401855
+              ]
+            },
+            "recurrence": {
+              "mean_ms": 13.420954704284668,
+              "median_ms": 13.449071884155273,
+              "samples_ms": [
+                13.423999786376953,
+                13.469023704528809,
+                13.462112426757812,
+                13.438272476196289,
+                13.457728385925293,
+                13.440799713134766,
+                13.111295700073242,
+                13.450016021728516,
+                13.448224067687988,
+                13.449919700622559,
+                13.421600341796875,
+                13.478464126586914
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "scalar": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "recurrence": {
+              "n_regs": 255,
+              "n_spills": 68,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "scalar": -77.59797077911652,
+            "recurrence": -575.276767386338
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 2.222975969314575
+            },
+            {
+              "name": "scalar",
+              "ms": 3.534048080444336
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.423999786376953
+            },
+            {
+              "name": "scalar",
+              "ms": 3.524064064025879
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.469023704528809
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9668480157852173
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.462112426757812
+            },
+            {
+              "name": "baseline",
+              "ms": 1.96288001537323
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5228159427642822
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9664640426635742
+            },
+            {
+              "name": "scalar",
+              "ms": 3.533504009246826
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.438272476196289
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5311999320983887
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.457728385925293
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9660799503326416
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.440799713134766
+            },
+            {
+              "name": "baseline",
+              "ms": 1.964735984802246
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5203518867492676
+            },
+            {
+              "name": "baseline",
+              "ms": 1.968832015991211
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5269761085510254
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.111295700073242
+            },
+            {
+              "name": "scalar",
+              "ms": 3.533184051513672
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.450016021728516
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9644479751586914
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.448224067687988
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9663360118865967
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5318400859832764
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9685440063476562
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5230720043182373
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.449919700622559
+            },
+            {
+              "name": "scalar",
+              "ms": 3.522336006164551
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.421600341796875
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9669760465621948
+            },
+            {
+              "name": "recurrence",
+              "ms": 13.478464126586914
+            },
+            {
+              "name": "baseline",
+              "ms": 1.964576005935669
+            },
+            {
+              "name": "scalar",
+              "ms": 3.5531840324401855
+            }
+          ]
+        },
+        {
+          "ci": 128,
+          "co": 256,
+          "output_dhw": [
+            17,
+            128,
+            128
+          ],
+          "correctness": [
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.005656013886134,
+              "median_ms": 1.0060160160064697,
+              "samples_ms": [
+                1.0056960582733154,
+                1.0037440061569214,
+                1.0064640045166016,
+                1.0037120580673218,
+                1.0039680004119873,
+                1.00764799118042,
+                1.0063040256500244,
+                1.0064640045166016,
+                1.0057920217514038,
+                1.007807970046997,
+                1.0062400102615356,
+                1.004032015800476
+              ]
+            },
+            "scalar": {
+              "mean_ms": 1.6156826615333557,
+              "median_ms": 1.6131359934806824,
+              "samples_ms": [
+                1.6159039735794067,
+                1.6448320150375366,
+                1.6158720254898071,
+                1.6146559715270996,
+                1.6100800037384033,
+                1.6119359731674194,
+                1.6139839887619019,
+                1.6142719984054565,
+                1.6120320558547974,
+                1.6120959520339966,
+                1.612287998199463,
+                1.6102399826049805
+              ]
+            },
+            "recurrence": {
+              "mean_ms": 6.630917350451152,
+              "median_ms": 6.658768177032471,
+              "samples_ms": [
+                6.662047863006592,
+                6.654560089111328,
+                6.660672187805176,
+                6.661280155181885,
+                6.661920070648193,
+                6.647456169128418,
+                6.655327796936035,
+                6.653279781341553,
+                6.6635518074035645,
+                6.656864166259766,
+                6.6669440269470215,
+                6.327104091644287
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "scalar": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "recurrence": {
+              "n_regs": 255,
+              "n_spills": 68,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "scalar": -60.659573375384056,
+            "recurrence": -559.3623723113282
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 1.0056960582733154
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6159039735794067
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.662047863006592
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6448320150375366
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.654560089111328
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0037440061569214
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.660672187805176
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0064640045166016
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6158720254898071
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0037120580673218
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6146559715270996
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.661280155181885
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6100800037384033
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.661920070648193
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0039680004119873
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.647456169128418
+            },
+            {
+              "name": "baseline",
+              "ms": 1.00764799118042
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6119359731674194
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0063040256500244
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6139839887619019
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.655327796936035
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6142719984054565
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.653279781341553
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0064640045166016
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.6635518074035645
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0057920217514038
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6120320558547974
+            },
+            {
+              "name": "baseline",
+              "ms": 1.007807970046997
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6120959520339966
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.656864166259766
+            },
+            {
+              "name": "scalar",
+              "ms": 1.612287998199463
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.6669440269470215
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0062400102615356
+            },
+            {
+              "name": "recurrence",
+              "ms": 6.327104091644287
+            },
+            {
+              "name": "baseline",
+              "ms": 1.004032015800476
+            },
+            {
+              "name": "scalar",
+              "ms": 1.6102399826049805
+            }
+          ]
+        },
+        {
+          "ci": 128,
+          "co": 128,
+          "output_dhw": [
+            2,
+            8,
+            16
+          ],
+          "correctness": [
+            {
+              "candidate": "scalar",
+              "causal": false,
+              "bias": true,
+              "exact": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": false,
+              "bias": true,
+              "exact": true
+            },
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "scalar",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "recurrence",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 0.025087999800841015,
+              "median_ms": 0.02503999974578619,
+              "samples_ms": [
+                0.024831999093294144,
+                0.024927999824285507,
+                0.024927999824285507,
+                0.02521600015461445,
+                0.024831999093294144,
+                0.025087999179959297,
+                0.025312000885605812,
+                0.025439999997615814,
+                0.02534399926662445,
+                0.024992000311613083,
+                0.025151999667286873,
+                0.024992000311613083
+              ]
+            },
+            "scalar": {
+              "mean_ms": 0.045610666585465275,
+              "median_ms": 0.04564799927175045,
+              "samples_ms": [
+                0.045184001326560974,
+                0.0453759990632534,
+                0.04604800045490265,
+                0.04601600021123886,
+                0.045184001326560974,
+                0.04585599899291992,
+                0.04508800059556961,
+                0.04588799923658371,
+                0.04588799923658371,
+                0.04598399996757507,
+                0.04543999955058098,
+                0.0453759990632534
+              ]
+            },
+            "recurrence": {
+              "mean_ms": 0.10113333413998286,
+              "median_ms": 0.10100800171494484,
+              "samples_ms": [
+                0.10118400305509567,
+                0.10063999891281128,
+                0.10063999891281128,
+                0.100832000374794,
+                0.10096000134944916,
+                0.10246399790048599,
+                0.10105600208044052,
+                0.09913600236177444,
+                0.10096000134944916,
+                0.10134399682283401,
+                0.10313600301742554,
+                0.10124800354242325
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "scalar": {
+              "n_regs": 255,
+              "n_spills": 0,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "recurrence": {
+              "n_regs": 255,
+              "n_spills": 66,
+              "shared": 32768,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "scalar": -81.80272220799478,
+            "recurrence": -303.11437716366936
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 0.024831999093294144
+            },
+            {
+              "name": "scalar",
+              "ms": 0.045184001326560974
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10118400305509567
+            },
+            {
+              "name": "scalar",
+              "ms": 0.0453759990632534
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10063999891281128
+            },
+            {
+              "name": "baseline",
+              "ms": 0.024927999824285507
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10063999891281128
+            },
+            {
+              "name": "baseline",
+              "ms": 0.024927999824285507
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04604800045490265
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02521600015461445
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04601600021123886
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.100832000374794
+            },
+            {
+              "name": "scalar",
+              "ms": 0.045184001326560974
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10096000134944916
+            },
+            {
+              "name": "baseline",
+              "ms": 0.024831999093294144
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10246399790048599
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025087999179959297
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04585599899291992
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025312000885605812
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04508800059556961
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10105600208044052
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04588799923658371
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.09913600236177444
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025439999997615814
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10096000134944916
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02534399926662445
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04588799923658371
+            },
+            {
+              "name": "baseline",
+              "ms": 0.024992000311613083
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04598399996757507
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10134399682283401
+            },
+            {
+              "name": "scalar",
+              "ms": 0.04543999955058098
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10313600301742554
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025151999667286873
+            },
+            {
+              "name": "recurrence",
+              "ms": 0.10124800354242325
+            },
+            {
+              "name": "baseline",
+              "ms": 0.024992000311613083
+            },
+            {
+              "name": "scalar",
+              "ms": 0.0453759990632534
+            }
+          ]
+        }
+      ],
+      "status": "complete",
+      "elapsed_s": 11.65281720366329
+    },
+    {
+      "evidence_name": "aligned_scalar.json",
+      "scope": "Bounded INT8 conv replay after causal-zero production optimization.\n\nSynthetic integer tensors at real H3 geometries; same weights, quantization\nscales and epilogue. Times only the prequantized convolution into preallocated\noutputs. Producer, allocations and whole-video execution are excluded.\n",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "cuda": "13.0",
+        "triton": "3.6.0",
+        "gpu": "NVIDIA Graphics Device",
+        "capability": [
+          12,
+          0
+        ]
+      },
+      "commit": "dbd49e094387b28f3252d34d0cbf8da1ed3b4cc8",
+      "source_sha256": {
+        "opt/encoder_int8_pipeline.py": "1d74bc23d6e382fe4cf947e2cc84e0b47034d3159ae3b8dfce9fa87e88347529",
+        "scalar_address.py": "42302744e780b9df3cfefd3cdc08e2a0e34b02e3161994c1f7e2545c8dc71ca0",
+        "pointer_recurrence.py": "8eacf522f015b62d72efb866de0c4ddd544be1846f3bcb9ecaa29c4d7c17c3cb",
+        "aligned_scalar.py": "92edc4da7d6d4edcd8cb22f7e0ab939843594a089964eb54a7e7ec0a7ac98159",
+        "replay.py": "30c0f7faa4debb812e46b2d9612bc65b5201f3be937023381f67ca9b612bb6f7"
+      },
+      "settings": {
+        "warmup": 3,
+        "runs": 12,
+        "seed": 20261002,
+        "candidates": [
+          "aligned"
+        ],
+        "tile_mn": [
+          128,
+          128
+        ],
+        "warps": 4,
+        "stages": 4,
+        "sampling": "rotate selected implementations; keep all samples",
+        "allocation_and_quantization_in_timing": false
+      },
+      "cases": [
+        {
+          "ci": 128,
+          "co": 128,
+          "output_dhw": [
+            17,
+            256,
+            256
+          ],
+          "correctness": [
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.964677333831787,
+              "median_ms": 1.9624000191688538,
+              "samples_ms": [
+                1.9630080461502075,
+                1.9599679708480835,
+                1.9627200365066528,
+                1.9622080326080322,
+                1.9935040473937988,
+                1.9606399536132812,
+                1.9608639478683472,
+                1.962175965309143,
+                1.9625920057296753,
+                1.9608319997787476,
+                1.964735984802246,
+                1.96288001537323
+              ]
+            },
+            "aligned": {
+              "mean_ms": 1.9789839883645375,
+              "median_ms": 1.9788959622383118,
+              "samples_ms": [
+                1.9792640209197998,
+                1.9790400266647339,
+                1.9787839651107788,
+                1.9792640209197998,
+                1.9785280227661133,
+                1.9812480211257935,
+                1.981279969215393,
+                1.9786239862442017,
+                1.9788479804992676,
+                1.978943943977356,
+                1.9769599437713623,
+                1.977023959159851
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "aligned": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "aligned": -0.7281935962913266
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 1.9630080461502075
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9792640209197998
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9790400266647339
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9599679708480835
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9627200365066528
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9787839651107788
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9792640209197998
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9622080326080322
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9935040473937988
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9785280227661133
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9812480211257935
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9606399536132812
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9608639478683472
+            },
+            {
+              "name": "aligned",
+              "ms": 1.981279969215393
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9786239862442017
+            },
+            {
+              "name": "baseline",
+              "ms": 1.962175965309143
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9625920057296753
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9788479804992676
+            },
+            {
+              "name": "aligned",
+              "ms": 1.978943943977356
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9608319997787476
+            },
+            {
+              "name": "baseline",
+              "ms": 1.964735984802246
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9769599437713623
+            },
+            {
+              "name": "aligned",
+              "ms": 1.977023959159851
+            },
+            {
+              "name": "baseline",
+              "ms": 1.96288001537323
+            }
+          ]
+        },
+        {
+          "ci": 256,
+          "co": 256,
+          "output_dhw": [
+            17,
+            128,
+            128
+          ],
+          "correctness": [
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.9493199984232585,
+              "median_ms": 1.9497920274734497,
+              "samples_ms": [
+                1.9497920274734497,
+                1.9481279850006104,
+                1.9518400430679321,
+                1.9497920274734497,
+                1.9541759490966797,
+                1.9477440118789673,
+                1.9477119445800781,
+                1.9498239755630493,
+                1.9442559480667114,
+                1.948415994644165,
+                1.950368046760559,
+                1.9497920274734497
+              ]
+            },
+            "aligned": {
+              "mean_ms": 1.9433759947617848,
+              "median_ms": 1.9441920518875122,
+              "samples_ms": [
+                1.9441920518875122,
+                1.943519949913025,
+                1.9441920518875122,
+                1.9445439577102661,
+                1.9478720426559448,
+                1.9457919597625732,
+                1.9462080001831055,
+                1.946112036705017,
+                1.9383679628372192,
+                1.9418879747390747,
+                1.9374719858169556,
+                1.940351963043213
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "aligned": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "aligned": 0.304927034364888
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 1.9497920274734497
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9441920518875122
+            },
+            {
+              "name": "aligned",
+              "ms": 1.943519949913025
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9481279850006104
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9518400430679321
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9441920518875122
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9445439577102661
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9497920274734497
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9541759490966797
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9478720426559448
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9457919597625732
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9477440118789673
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9477119445800781
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9462080001831055
+            },
+            {
+              "name": "aligned",
+              "ms": 1.946112036705017
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9498239755630493
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9442559480667114
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9383679628372192
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9418879747390747
+            },
+            {
+              "name": "baseline",
+              "ms": 1.948415994644165
+            },
+            {
+              "name": "baseline",
+              "ms": 1.950368046760559
+            },
+            {
+              "name": "aligned",
+              "ms": 1.9374719858169556
+            },
+            {
+              "name": "aligned",
+              "ms": 1.940351963043213
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9497920274734497
+            }
+          ]
+        },
+        {
+          "ci": 128,
+          "co": 256,
+          "output_dhw": [
+            17,
+            128,
+            128
+          ],
+          "correctness": [
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.00048532585303,
+              "median_ms": 0.9986560046672821,
+              "samples_ms": [
+                0.9955520033836365,
+                0.9975039958953857,
+                0.9974719882011414,
+                0.9960640072822571,
+                0.9978560209274292,
+                0.997759997844696,
+                1.0233919620513916,
+                1.0002880096435547,
+                0.999455988407135,
+                1.0000319480895996,
+                1.0003520250320435,
+                1.0000959634780884
+              ]
+            },
+            "aligned": {
+              "mean_ms": 1.0210319956143696,
+              "median_ms": 0.9976960122585297,
+              "samples_ms": [
+                0.993503987789154,
+                0.9975680112838745,
+                0.9997119903564453,
+                0.9995520114898682,
+                0.9980480074882507,
+                0.9960640072822571,
+                1.0219199657440186,
+                1.2594239711761475,
+                0.9975360035896301,
+                0.9978240132331848,
+                0.9955199956893921,
+                0.9957119822502136
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "aligned": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "aligned": -2.053670276855013
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 0.9955520033836365
+            },
+            {
+              "name": "aligned",
+              "ms": 0.993503987789154
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9975680112838745
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9975039958953857
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9974719882011414
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9997119903564453
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9995520114898682
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9960640072822571
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9978560209274292
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9980480074882507
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9960640072822571
+            },
+            {
+              "name": "baseline",
+              "ms": 0.997759997844696
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0233919620513916
+            },
+            {
+              "name": "aligned",
+              "ms": 1.0219199657440186
+            },
+            {
+              "name": "aligned",
+              "ms": 1.2594239711761475
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0002880096435547
+            },
+            {
+              "name": "baseline",
+              "ms": 0.999455988407135
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9975360035896301
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9978240132331848
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0000319480895996
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0003520250320435
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9955199956893921
+            },
+            {
+              "name": "aligned",
+              "ms": 0.9957119822502136
+            },
+            {
+              "name": "baseline",
+              "ms": 1.0000959634780884
+            }
+          ]
+        },
+        {
+          "ci": 128,
+          "co": 128,
+          "output_dhw": [
+            2,
+            8,
+            16
+          ],
+          "correctness": [
+            {
+              "candidate": "aligned",
+              "causal": false,
+              "bias": true,
+              "exact": true
+            },
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "aligned",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 0.024874666705727577,
+              "median_ms": 0.02497600018978119,
+              "samples_ms": [
+                0.025248000398278236,
+                0.02457600086927414,
+                0.02505600079894066,
+                0.02489599958062172,
+                0.023520000278949738,
+                0.025248000398278236,
+                0.02537599951028824,
+                0.024671999737620354,
+                0.02486399933695793,
+                0.02505600079894066,
+                0.025087999179959297,
+                0.02489599958062172
+              ]
+            },
+            "aligned": {
+              "mean_ms": 0.022951999834428232,
+              "median_ms": 0.02286399994045496,
+              "samples_ms": [
+                0.023520000278949738,
+                0.022655999287962914,
+                0.02271999977529049,
+                0.023423999547958374,
+                0.022975999861955643,
+                0.022752000018954277,
+                0.022975999861955643,
+                0.022943999618291855,
+                0.0225600004196167,
+                0.023455999791622162,
+                0.022655999287962914,
+                0.022784000262618065
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "aligned": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "aligned": 7.729417620122869
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 0.025248000398278236
+            },
+            {
+              "name": "aligned",
+              "ms": 0.023520000278949738
+            },
+            {
+              "name": "aligned",
+              "ms": 0.022655999287962914
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02457600086927414
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02505600079894066
+            },
+            {
+              "name": "aligned",
+              "ms": 0.02271999977529049
+            },
+            {
+              "name": "aligned",
+              "ms": 0.023423999547958374
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02489599958062172
+            },
+            {
+              "name": "baseline",
+              "ms": 0.023520000278949738
+            },
+            {
+              "name": "aligned",
+              "ms": 0.022975999861955643
+            },
+            {
+              "name": "aligned",
+              "ms": 0.022752000018954277
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025248000398278236
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02537599951028824
+            },
+            {
+              "name": "aligned",
+              "ms": 0.022975999861955643
+            },
+            {
+              "name": "aligned",
+              "ms": 0.022943999618291855
+            },
+            {
+              "name": "baseline",
+              "ms": 0.024671999737620354
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02486399933695793
+            },
+            {
+              "name": "aligned",
+              "ms": 0.0225600004196167
+            },
+            {
+              "name": "aligned",
+              "ms": 0.023455999791622162
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02505600079894066
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025087999179959297
+            },
+            {
+              "name": "aligned",
+              "ms": 0.022655999287962914
+            },
+            {
+              "name": "aligned",
+              "ms": 0.022784000262618065
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02489599958062172
+            }
+          ]
+        }
+      ],
+      "status": "complete",
+      "elapsed_s": 3.9678440038114786
+    },
+    {
+      "evidence_name": "bk32.json",
+      "scope": "Bounded INT8 conv replay after causal-zero production optimization.\n\nSynthetic integer tensors at real H3 geometries; same weights, quantization\nscales and epilogue. Times only the prequantized convolution into preallocated\noutputs. Producer, allocations and whole-video execution are excluded.\n",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-5.4.241-1-tlinux4-0023.7-x86_64-with-glibc2.38",
+        "torch": "2.11.0+cu130",
+        "cuda": "13.0",
+        "triton": "3.6.0",
+        "gpu": "NVIDIA Graphics Device",
+        "capability": [
+          12,
+          0
+        ]
+      },
+      "commit": "dbd49e094387b28f3252d34d0cbf8da1ed3b4cc8",
+      "source_sha256": {
+        "opt/encoder_int8_pipeline.py": "1d74bc23d6e382fe4cf947e2cc84e0b47034d3159ae3b8dfce9fa87e88347529",
+        "scalar_address.py": "42302744e780b9df3cfefd3cdc08e2a0e34b02e3161994c1f7e2545c8dc71ca0",
+        "pointer_recurrence.py": "8eacf522f015b62d72efb866de0c4ddd544be1846f3bcb9ecaa29c4d7c17c3cb",
+        "aligned_scalar.py": "92edc4da7d6d4edcd8cb22f7e0ab939843594a089964eb54a7e7ec0a7ac98159",
+        "replay.py": "30c0f7faa4debb812e46b2d9612bc65b5201f3be937023381f67ca9b612bb6f7"
+      },
+      "settings": {
+        "warmup": 3,
+        "runs": 12,
+        "seed": 20261002,
+        "candidates": [
+          "bk32"
+        ],
+        "tile_mn": [
+          128,
+          128
+        ],
+        "warps": 4,
+        "stages": 4,
+        "sampling": "rotate selected implementations; keep all samples",
+        "allocation_and_quantization_in_timing": false
+      },
+      "cases": [
+        {
+          "ci": 128,
+          "co": 128,
+          "output_dhw": [
+            17,
+            256,
+            256
+          ],
+          "correctness": [
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.9591600100199382,
+              "median_ms": 1.9583520293235779,
+              "samples_ms": [
+                1.9575999975204468,
+                1.958240032196045,
+                1.9581120014190674,
+                1.9600000381469727,
+                1.9566400051116943,
+                1.9602240324020386,
+                1.9581120014190674,
+                1.9582079648971558,
+                1.9619840383529663,
+                1.962015986442566,
+                1.9584640264511108,
+                1.960319995880127
+              ]
+            },
+            "bk32": {
+              "mean_ms": 3.9003946582476297,
+              "median_ms": 3.903104066848755,
+              "samples_ms": [
+                3.9097280502319336,
+                3.9036800861358643,
+                3.910207986831665,
+                3.9045441150665283,
+                3.9075839519500732,
+                3.90230393409729,
+                3.9159679412841797,
+                3.9025280475616455,
+                3.9002559185028076,
+                3.899359941482544,
+                3.8706560134887695,
+                3.877919912338257
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "bk32": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 24576,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "bk32": -99.08504860753746
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 1.9575999975204468
+            },
+            {
+              "name": "bk32",
+              "ms": 3.9097280502319336
+            },
+            {
+              "name": "bk32",
+              "ms": 3.9036800861358643
+            },
+            {
+              "name": "baseline",
+              "ms": 1.958240032196045
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9581120014190674
+            },
+            {
+              "name": "bk32",
+              "ms": 3.910207986831665
+            },
+            {
+              "name": "bk32",
+              "ms": 3.9045441150665283
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9600000381469727
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9566400051116943
+            },
+            {
+              "name": "bk32",
+              "ms": 3.9075839519500732
+            },
+            {
+              "name": "bk32",
+              "ms": 3.90230393409729
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9602240324020386
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9581120014190674
+            },
+            {
+              "name": "bk32",
+              "ms": 3.9159679412841797
+            },
+            {
+              "name": "bk32",
+              "ms": 3.9025280475616455
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9582079648971558
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9619840383529663
+            },
+            {
+              "name": "bk32",
+              "ms": 3.9002559185028076
+            },
+            {
+              "name": "bk32",
+              "ms": 3.899359941482544
+            },
+            {
+              "name": "baseline",
+              "ms": 1.962015986442566
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9584640264511108
+            },
+            {
+              "name": "bk32",
+              "ms": 3.8706560134887695
+            },
+            {
+              "name": "bk32",
+              "ms": 3.877919912338257
+            },
+            {
+              "name": "baseline",
+              "ms": 1.960319995880127
+            }
+          ]
+        },
+        {
+          "ci": 256,
+          "co": 256,
+          "output_dhw": [
+            17,
+            128,
+            128
+          ],
+          "correctness": [
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 1.9498720069726307,
+              "median_ms": 1.949887990951538,
+              "samples_ms": [
+                1.949887990951538,
+                1.948415994644165,
+                1.946112036705017,
+                1.949887990951538,
+                1.950495958328247,
+                1.9501440525054932,
+                1.9525760412216187,
+                1.9483200311660767,
+                1.9498239755630493,
+                1.9523199796676636,
+                1.9483519792556763,
+                1.9521280527114868
+              ]
+            },
+            "bk32": {
+              "mean_ms": 3.857328017552694,
+              "median_ms": 3.8862239122390747,
+              "samples_ms": [
+                3.886336088180542,
+                3.8863039016723633,
+                3.886143922805786,
+                3.8865599632263184,
+                3.5339839458465576,
+                3.885024070739746,
+                3.876768112182617,
+                3.898560047149658,
+                3.8895680904388428,
+                3.8860158920288086,
+                3.8926401138305664,
+                3.8800320625305176
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "bk32": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 24576,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "bk32": -97.82467791522262
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 1.949887990951538
+            },
+            {
+              "name": "bk32",
+              "ms": 3.886336088180542
+            },
+            {
+              "name": "bk32",
+              "ms": 3.8863039016723633
+            },
+            {
+              "name": "baseline",
+              "ms": 1.948415994644165
+            },
+            {
+              "name": "baseline",
+              "ms": 1.946112036705017
+            },
+            {
+              "name": "bk32",
+              "ms": 3.886143922805786
+            },
+            {
+              "name": "bk32",
+              "ms": 3.8865599632263184
+            },
+            {
+              "name": "baseline",
+              "ms": 1.949887990951538
+            },
+            {
+              "name": "baseline",
+              "ms": 1.950495958328247
+            },
+            {
+              "name": "bk32",
+              "ms": 3.5339839458465576
+            },
+            {
+              "name": "bk32",
+              "ms": 3.885024070739746
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9501440525054932
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9525760412216187
+            },
+            {
+              "name": "bk32",
+              "ms": 3.876768112182617
+            },
+            {
+              "name": "bk32",
+              "ms": 3.898560047149658
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9483200311660767
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9498239755630493
+            },
+            {
+              "name": "bk32",
+              "ms": 3.8895680904388428
+            },
+            {
+              "name": "bk32",
+              "ms": 3.8860158920288086
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9523199796676636
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9483519792556763
+            },
+            {
+              "name": "bk32",
+              "ms": 3.8926401138305664
+            },
+            {
+              "name": "bk32",
+              "ms": 3.8800320625305176
+            },
+            {
+              "name": "baseline",
+              "ms": 1.9521280527114868
+            }
+          ]
+        },
+        {
+          "ci": 128,
+          "co": 256,
+          "output_dhw": [
+            17,
+            128,
+            128
+          ],
+          "correctness": [
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 0.9971786638100942,
+              "median_ms": 0.9976800084114075,
+              "samples_ms": [
+                0.997983992099762,
+                0.9960319995880127,
+                0.9977920055389404,
+                0.998304009437561,
+                0.9956480264663696,
+                0.9979199767112732,
+                0.9955199956893921,
+                0.9975680112838745,
+                0.996288001537323,
+                0.9979519844055176,
+                0.9956799745559692,
+                0.999455988407135
+              ]
+            },
+            "bk32": {
+              "mean_ms": 1.7900479932626088,
+              "median_ms": 1.7903359532356262,
+              "samples_ms": [
+                1.7888000011444092,
+                1.7942719459533691,
+                1.7906880378723145,
+                1.7927680015563965,
+                1.7906240224838257,
+                1.7864960432052612,
+                1.7903039455413818,
+                1.7903679609298706,
+                1.7900480031967163,
+                1.7887359857559204,
+                1.786687970161438,
+                1.7907840013504028
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "bk32": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 24576,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "bk32": -79.5112609432557
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 0.997983992099762
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7888000011444092
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7942719459533691
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9960319995880127
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9977920055389404
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7906880378723145
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7927680015563965
+            },
+            {
+              "name": "baseline",
+              "ms": 0.998304009437561
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9956480264663696
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7906240224838257
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7864960432052612
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9979199767112732
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9955199956893921
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7903039455413818
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7903679609298706
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9975680112838745
+            },
+            {
+              "name": "baseline",
+              "ms": 0.996288001537323
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7900480031967163
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7887359857559204
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9979519844055176
+            },
+            {
+              "name": "baseline",
+              "ms": 0.9956799745559692
+            },
+            {
+              "name": "bk32",
+              "ms": 1.786687970161438
+            },
+            {
+              "name": "bk32",
+              "ms": 1.7907840013504028
+            },
+            {
+              "name": "baseline",
+              "ms": 0.999455988407135
+            }
+          ]
+        },
+        {
+          "ci": 128,
+          "co": 128,
+          "output_dhw": [
+            2,
+            8,
+            16
+          ],
+          "correctness": [
+            {
+              "candidate": "bk32",
+              "causal": false,
+              "bias": true,
+              "exact": true
+            },
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": false,
+              "exact": true,
+              "finite": true
+            },
+            {
+              "candidate": "bk32",
+              "causal": true,
+              "bias": true,
+              "exact": true,
+              "finite": true
+            }
+          ],
+          "timing": {
+            "baseline": {
+              "mean_ms": 0.025018666715671618,
+              "median_ms": 0.025119999423623085,
+              "samples_ms": [
+                0.02502400055527687,
+                0.024927999824285507,
+                0.025280000641942024,
+                0.025312000885605812,
+                0.025151999667286873,
+                0.025087999179959297,
+                0.025439999997615814,
+                0.025248000398278236,
+                0.02489599958062172,
+                0.02348800003528595,
+                0.025087999179959297,
+                0.025280000641942024
+              ]
+            },
+            "bk32": {
+              "mean_ms": 0.027021333420028288,
+              "median_ms": 0.026991999708116055,
+              "samples_ms": [
+                0.027103999629616737,
+                0.02672000043094158,
+                0.02687999978661537,
+                0.026655999943614006,
+                0.027456000447273254,
+                0.026847999542951584,
+                0.027168000116944313,
+                0.0272000003606081,
+                0.02675200067460537,
+                0.027264000847935677,
+                0.02739199995994568,
+                0.026815999299287796
+              ]
+            }
+          },
+          "resources": {
+            "baseline": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 49152,
+              "num_warps": 4,
+              "num_stages": 4
+            },
+            "bk32": {
+              "n_regs": 254,
+              "n_spills": 0,
+              "shared": 24576,
+              "num_warps": 4,
+              "num_stages": 4
+            }
+          },
+          "reduction_percent": {
+            "bk32": -8.004689966560875
+          },
+          "order": [
+            {
+              "name": "baseline",
+              "ms": 0.02502400055527687
+            },
+            {
+              "name": "bk32",
+              "ms": 0.027103999629616737
+            },
+            {
+              "name": "bk32",
+              "ms": 0.02672000043094158
+            },
+            {
+              "name": "baseline",
+              "ms": 0.024927999824285507
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025280000641942024
+            },
+            {
+              "name": "bk32",
+              "ms": 0.02687999978661537
+            },
+            {
+              "name": "bk32",
+              "ms": 0.026655999943614006
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025312000885605812
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025151999667286873
+            },
+            {
+              "name": "bk32",
+              "ms": 0.027456000447273254
+            },
+            {
+              "name": "bk32",
+              "ms": 0.026847999542951584
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025087999179959297
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025439999997615814
+            },
+            {
+              "name": "bk32",
+              "ms": 0.027168000116944313
+            },
+            {
+              "name": "bk32",
+              "ms": 0.0272000003606081
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025248000398278236
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02489599958062172
+            },
+            {
+              "name": "bk32",
+              "ms": 0.02675200067460537
+            },
+            {
+              "name": "bk32",
+              "ms": 0.027264000847935677
+            },
+            {
+              "name": "baseline",
+              "ms": 0.02348800003528595
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025087999179959297
+            },
+            {
+              "name": "bk32",
+              "ms": 0.02739199995994568
+            },
+            {
+              "name": "bk32",
+              "ms": 0.026815999299287796
+            },
+            {
+              "name": "baseline",
+              "ms": 0.025280000641942024
+            }
+          ]
+        }
+      ],
+      "status": "complete",
+      "elapsed_s": 3.9300493337213993
+    }
+  ]
+}

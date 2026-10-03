@@ -36,7 +36,22 @@ Requires NVIDIA CUDA SM80+, Triton, `compile_decoder=true`, and the default
 and `int8_encode` combinations are rejected for these profiles. The batch
 settings above are explicit user choices, not new defaults.
 
-## Measurements
+## SM120 INT8 FFN-up follow-up (2026-10-03)
+
+The INT8 fusion profile now automatically fuses FFN-up GEMM with SwiGLU on
+SM120. It retains the 144-linear quantization scope, FP32 scales and existing
+FP16 rounding. Other supported architectures retain the previous INT8 path.
+A paired full-decode comparison measured **6.640226 → 6.508537 s (−1.98%)**;
+an independent width measured **6.635767 → 6.505977 s (−1.96%)**.
+
+Both variants used identical normalization schedules, with no run observer
+active during timing. With this control, 8 videos / 992 frames retained
+bitwise-equal RGB. Independent Inductor recompilations can select different
+normalization reduction orders; this is not a cross-compilation bitwise
+guarantee. Original INT8 loss remains. See the
+[implementation, Nsight, correctness and Comfy evidence](decoder_int8_ffn_2026-10-03.md).
+
+## Initial measurements (2026-09-24)
 
 2026-09-24: RTX PRO 5000 72GB (user-confirmed model; driver reports NVIDIA
 Graphics Device, 73415 MiB, CC 12.0), Linux 5.4.241, driver 580.82.07,

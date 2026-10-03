@@ -7,6 +7,7 @@ from functools import lru_cache
 
 import torch
 from torch import nn
+from .int8_ffn_up_fused import fused_residual_ffn, supports_fused_ffn_up
 from .int8_swiglu_fused import (
     clone_fused_decoder, prequantized_linear, swiglu_int8_linear,
 )
@@ -94,7 +95,13 @@ class NormQuantBlock(nn.Module):
         self.attn,self.ff = block.attn,block.ff
         self.scale1,self.scale2 = block.scale1,block.scale2
         self.warps = warps
+        self.fuse_ffn_up = supports_fused_ffn_up(self.scale1.device)
         self.train(block.training)
+
+    def _apply(self, fn, recurse=True):
+        result = super()._apply(fn, recurse=recurse)
+        self.fuse_ffn_up = supports_fused_ffn_up(self.scale1.device)
+        return result
 
     def forward(self, hidden_states, rotary_pos_emb=None, pack_info=None):
         if self.training or torch.is_grad_enabled():
@@ -104,6 +111,12 @@ class NormQuantBlock(nn.Module):
         normed = self.norm1(hidden_states.float()).to(hidden_states.dtype)
         attn = self.attn(normed,rotary_pos_emb,pack_info)
         w1,w2 = self.ff.w1,self.ff.w2
+        if self.fuse_ffn_up:
+            h, out = fused_residual_ffn(
+                hidden_states, attn, self.scale1, self.norm2.weight,
+                w1.qweight, w1.weight_scale, w1.bias,
+                w2.qweight, w2.weight_scale, w2.bias, self.norm2.eps, self.warps)
+            return h + out*self.scale2
         h,hidden = residual_rms_linear(hidden_states,attn,self.scale1,self.norm2.weight,
                                        w1.qweight,w1.weight_scale,w1.bias,
                                        self.norm2.eps,self.warps)

@@ -124,7 +124,7 @@ def chart(
 
 def render_current_comparisons(preview_dir):
     """One fastest archived configuration per backend; no old PyOpt bars."""
-    data = json.loads((EVIDENCE / "current_competitor_comparison_2026-10-02.json").read_text())
+    data = json.loads((EVIDENCE / "current_competitor_comparison_2026-10-03.json").read_text())
     for phase in ("encode", "decode"):
         rows = sorted(data[phase], key=lambda row: row["seconds"], reverse=True)
         pyopt = next(row for row in rows if row["implementation"] == "PyOpt")
@@ -140,7 +140,9 @@ def render_current_comparisons(preview_dir):
                 "PyOpt uses mixed INT8; references use FP16. ComfyUI --fast enables FP16 accumulation.",
                 f"ComfyUI 387f98a / TensorRT 11.2.1.2: 2026-09-18. PyOpt: {pyopt['date']}.",
                 "Inputs, stacks and batches differ; historical references were not rerun. No paired speedup ratio claimed.",
-                "Encode and decode winners use separate PyOpt modes; these times are not a combined pipeline result.",
+                ("PyOpt full-decode mean: matched norm schedules; no timing run observer. Separate encode/decode modes."
+                 if phase == "decode" else
+                 "PyOpt full-encode mean; encode/decode use separate modes, not a combined pipeline result."),
             ],
             xmax=17 if phase == "encode" else 15,
             preview_dir=preview_dir,
