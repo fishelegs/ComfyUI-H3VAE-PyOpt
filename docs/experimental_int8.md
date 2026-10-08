@@ -38,6 +38,23 @@ been measured; CPU/ROCm are rejected and Windows is unvalidated. Unsupported
 configurations fail explicitly without silently labeling an FP16 fallback
 as INT8. `fast_linear` and `int8_decode` are mutually exclusive.
 
+## Decoder norm1 follow-up (unreleased, 2026-10-08)
+
+On the measured SM120 / PyTorch 2.11.0 / CUDA 13.0 / Triton 3.6.0 stack,
+`decode_fusions=true` now fuses residual/norm1/QKV activation quantization for
+target FP16 batch4 states. Independently authored block0 RMS and final
+LayerNorm preserve the original compiled arithmetic. The complete decoder
+measured **6.518516 → 6.440266 s (−1.20%)**, winning six of six paired blocks
+with unchanged peak allocated memory and exact natural RGB. Public-factory
+holdouts were also faster by 1.14–1.19%; all 8 native videos / 992 frames and
+both Comfy target/fallback offload/reload smokes passed exactly.
+
+This bounded recipe reuses all 144 real INT8 weights without requantization.
+Other shapes and supported configurations retain the previous real INT8
+implementation. FP16 defaults and original INT8 quality loss remain unchanged.
+The gain includes the norm1 bundle, not norm1 alone, and is a standalone
+decoder result. See [implementation and complete evidence](decoder_norm1_optimization_2026-10-08.md).
+
 ## Decoder FFN-up/SwiGLU follow-up (unreleased, 2026-10-03)
 
 On SM120, `decode_fusions=true` now fuses INT8 FFN-up GEMM with SwiGLU,

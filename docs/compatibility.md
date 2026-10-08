@@ -5,7 +5,23 @@ repository. It is evidence for those specific configurations, not a guarantee
 that every GPU, operating system, driver, tile size, or model revision behaves
 the same way.
 
-## Maintainer-tested environment
+## Latest INT8 norm1 integration (2026-10-08)
+
+Validated on RTX PRO 5000 72GB / SM120, Linux, Python 3.12.14,
+PyTorch 2.11.0+cu130, CUDA 13.0, Triton 3.6.0 and comfy-kitchen 0.2.34.
+The single-device fused INT8 decoder uses tile256/batch4 and FP32 norms;
+its new target states are contiguous FP16 `[4,1797,2048]`.
+
+The complete paired decoder mean is **6.440266 s**, 1.20% lower than its
+same-window 6.518516 s baseline. Eight native videos / 992 frames retained
+bitwise-equal natural RGB. ComfyUI SDK `c1716a45` passed 17×256×256 and
+124×672×672 inputs, including actual encode→decode and CPU offload/CUDA
+reload. All 144 quantized weights retain their contents, and norm1/FFN
+selection is restored after reload. Other supported stacks/shapes retain the
+preceding real INT8 implementation; this does not validate other GPUs or
+Windows. See [the full report](decoder_norm1_optimization_2026-10-08.md).
+
+## Historical maintainer-tested FP16 environment
 
 | Area | Recorded environment / result |
 | --- | --- |

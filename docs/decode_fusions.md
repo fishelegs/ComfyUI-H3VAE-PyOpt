@@ -36,6 +36,23 @@ Requires NVIDIA CUDA SM80+, Triton, `compile_decoder=true`, and the default
 and `int8_encode` combinations are rejected for these profiles. The batch
 settings above are explicit user choices, not new defaults.
 
+## SM120 INT8 norm1 follow-up (2026-10-08)
+
+The INT8 profile now automatically selects the residual/norm1/QKV
+quantization bundle for contiguous FP16 `[4,1797,2048]` states on the validated
+SM120 / PyTorch 2.11.0 / CUDA 13.0 / Triton 3.6.0 stack. It owns the block0
+RMS and final LayerNorm arithmetic and keeps the 144-linear quantization
+scope, FP32 scales and existing FP16 rounding.
+
+The primary six-block comparison measured **6.518516 → 6.440266 s (−1.20%)**
+with unchanged peak allocated memory. Independent public-factory graphs
+retained bitwise-equal natural RGB on 8 videos / 992 frames, including native
+1344 and 1376 widths. Three holdouts were faster; both Comfy target/fallback
+smokes passed actual CPU offload/CUDA reload with **36→0→36** fusion flags
+and unchanged output/weight contents. Other shapes and supported stacks use
+the preceding real INT8 path. Original INT8 loss remains. See
+[implementation, timing and acceptance](decoder_norm1_optimization_2026-10-08.md).
+
 ## SM120 INT8 FFN-up follow-up (2026-10-03)
 
 The INT8 fusion profile now automatically fuses FFN-up GEMM with SwiGLU on

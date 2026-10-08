@@ -369,6 +369,11 @@ class H3VAEPyOptRuntime(torch.nn.Module):
             if int8_decode:
                 from opt.int8_attention_out import from_raw_decoder
                 new_dec = from_raw_decoder(new_dec, warps=8)
+                from opt.int8_norm1_quant import (
+                    clone_norm1_quant_decoder, supports_norm1_quant,
+                )
+                if supports_norm1_quant(device) and not new_dec.spatial_parallel:
+                    new_dec = clone_norm1_quant_decoder(new_dec, enabled=True)
             else:
                 from opt.fp16_swiglu_gemm import clone_fp16_decoder
                 new_dec = clone_fp16_decoder(new_dec, (128, 64, 64, 4, 2))

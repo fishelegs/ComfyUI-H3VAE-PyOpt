@@ -1,0 +1,91 @@
+{
+  "as_of": "2026-10-08",
+  "scope": "Fastest archived configuration per implementation at the stated shape and tile; not a synchronized benchmark or claim about untested implementations.",
+  "gpu": "RTX PRO 5000 72GB",
+  "shape_hwt": [
+    768,
+    1344,
+    124
+  ],
+  "encoder_tile": 256,
+  "decoder_tile": 256,
+  "statistic": "Archived warmed full-stage mean latency, not minimum individual sample.",
+  "notes": [
+    "ComfyUI and TensorRT references are historical; versions, inputs, software stacks, batching, precision and background GPU load differ.",
+    "No cross-experiment percentage speedups are inferred from these records.",
+    "PyOpt encode and decode results use different modes; their latencies must not be added as a measured combined configuration.",
+    "Previous PyOpt releases and slower configurations are excluded from the comparison charts; retained in the README iteration section and historical reports.",
+    "FP16-only PyOpt decode (10.923379s) is reported separately in the mode table, not as a second PyOpt bar in the fastest-configuration charts.",
+    "Current PyOpt decode is the warmed full-decode mean from 12 candidate calls in six APPA/PAAP paired blocks, not a minimum sample; same-window baseline 6.51851611328125s, candidate 6.440265706380208s. The previous 6.508537s FFN result is a separate historical experiment.",
+    "The decoder norm1 bundle uses independent compiled graphs and its own block0/final normalization kernels, with no original-kernel producer binding in P and no hooks/shadows in timed calls. Production acceptance additionally covers 8 native videos, holdouts and actual Comfy offload/reload on the bounded SM120 / Torch2.11 / CUDA13 / Triton3.6 recipe."
+  ],
+  "encode": [
+    {
+      "implementation": "TensorRT",
+      "label": "TensorRT rebuilt · FP16",
+      "date": "2026-09-18",
+      "version": "11.2.1.2",
+      "configuration": "Locally rebuilt FP16 tile256 engine from the same weights",
+      "precision": "FP16",
+      "source": "docs/h3_trt_256_same_tile_benchmark_2026-09-18.md",
+      "seconds": 14.27
+    },
+    {
+      "implementation": "ComfyUI",
+      "label": "ComfyUI --fast · FP16",
+      "date": "2026-09-18",
+      "version": "387f98a",
+      "configuration": "--fast fp16_accumulation",
+      "precision": "FP16 with FP16 accumulation",
+      "source": "docs/h3_latest_fast_ab_2026-09-18.md",
+      "seconds": 12.059
+    },
+    {
+      "implementation": "PyOpt",
+      "label": "PyOpt current best · INT8",
+      "precision": "INT8 mixed precision; FP16 interface and FP32 scales",
+      "seconds": 8.458107584635416,
+      "date": "2026-10-02",
+      "version": "Unreleased causal-zero follow-up to b5f68c1; source hashes in measurement JSON",
+      "configuration": "int8_encode=true, int8_decode=false, decode_fusions=false; staged batch4; skip aligned causal-zero convolution taps",
+      "source": "docs/benchmarks/int8_causal_zero_2026-10-02.json",
+      "source_value": "encode_timing.means_seconds.candidate"
+    }
+  ],
+  "decode": [
+    {
+      "implementation": "ComfyUI",
+      "label": "ComfyUI --fast · FP16",
+      "date": "2026-09-18",
+      "version": "387f98a",
+      "configuration": "--fast fp16_accumulation",
+      "precision": "FP16 with FP16 accumulation",
+      "source": "docs/h3_latest_fast_ab_2026-09-18.md",
+      "seconds": 12.44
+    },
+    {
+      "implementation": "TensorRT",
+      "label": "TensorRT rebuilt · FP16",
+      "date": "2026-09-18",
+      "version": "11.2.1.2",
+      "configuration": "Locally rebuilt FP16 tile256 engine from the same weights",
+      "precision": "FP16",
+      "source": "docs/h3_trt_256_same_tile_benchmark_2026-09-18.md",
+      "seconds": 11.966
+    },
+    {
+      "implementation": "PyOpt",
+      "label": "PyOpt current best · INT8",
+      "precision": "INT8 mixed precision; FP16 interface and FP32 scales",
+      "seconds": 6.440265706380208,
+      "date": "2026-10-08",
+      "version": "Unreleased norm1 follow-up to 7946aaa; private/public candidate source hashes and adoption review in evidence JSON",
+      "configuration": "int8_encode=false, int8_decode=true, decode_fusions=true;144 real INT8 linears;tile256/batch4;SM120 FFN-up/SwiGLU plus W16 residual/norm1/QKV quantization;owned block0 X2/W16 and final LayerNorm W8;PyTorch2.11.0/CUDA13.0/Triton3.6.0/CK0.2.34;natural independent graphs, no original producer binding or timed hooks",
+      "source": "docs/benchmarks/decoder_norm1_full_timing_2026-10-08.json",
+      "source_value": "records.terminal_report.record.summary.P_mean_ms",
+      "source_unit": "milliseconds",
+      "source_conversion": "divide by 1000",
+      "integration_source": "docs/benchmarks/decoder_norm1_production_shapes_2026-10-08.json"
+    }
+  ]
+}
