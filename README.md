@@ -168,8 +168,10 @@ Earlier iterations are collected here; competitor charts show only the current f
 | 2026-10-03 · INT8 residual/norm1/QKV quantization fusion | No new change adopted | [Prototype saves 1.28%](docs/decoder_norm1_quant_2026-10-03.md) under its recorded norm schedule; final 16-warp baseline fails exact quantization |
 | 2026-10-03 · INT8 norm1 contract follow-up | No new change adopted | [Exact W16 local chain is 4.43% faster](docs/decoder_norm1_contract_2026-10-03.md); complete validation stops at an unvalidated R1024 / two-warp schedule |
 | 2026-10-08 · INT8 norm1 R1024 / two-warp fusion | No new change adopted | [Fixed W2 local chain is 7.07% faster](docs/decoder_norm1_r1024_2026-10-08.md), with 35 exact layer checks; independently compiled full-video RGB fails the acceptance screen, so no full-decode timing |
+| 2026-10-08 · INT8 norm1 graph controls | No new change adopted | [Baseline RGB replay and 35 W16 shadows pass](docs/decoder_norm1_causal_2026-10-08.md); the W2 comparison stops at a diagnostic observer error, leaving full-graph attribution incomplete |
 
 Further encoder addressing/BK32 and FP16 CTA-group candidates were not adopted; [measurements and remaining directions](docs/encoder_fp16_followup_2026-10-03.md).
+An encoder producer/consumer fusion first needs activation-patch reuse to avoid repeated normalization; [static feasibility audit](docs/decoder_norm1_causal_2026-10-08.md#encoder-fusion-feasibility).
 
 Earlier comparisons and other workloads: [ComfyUI runtime](docs/h3_spatial_encoder_followup_2026-09-17.md) · [ComfyUI fast](docs/h3_latest_fast_ab_2026-09-18.md) · [TensorRT with matching tiles](docs/h3_trt_256_same_tile_benchmark_2026-09-18.md) · [Historical 368/672 tile benchmarks](docs/h3_same_tile_ab_benchmark_2026-09-16.md)
 
@@ -377,8 +379,10 @@ ComfyUI wrapper 和 CPU offload/CUDA reload 已验证；精度与性能测试分
 | 2026-10-03 · INT8 residual/norm1/QKV 量化融合 | 未采用新改动 | [原型在已测 norm 调度下节省 1.28%](docs/decoder_norm1_quant_2026-10-03.md)；最终 16-warps 基线未通过精确量化检查 |
 | 2026-10-03 · INT8 norm1 数值合同跟进 | 未采用新改动 | [W16 精确局部链耗时降低 4.43%](docs/decoder_norm1_contract_2026-10-03.md)；完整验证在尚未验证的 R1024 / 2-warps 调度处停止 |
 | 2026-10-08 · INT8 norm1 R1024 / 2-warps 融合 | 未采用新改动 | [固定 W2 局部链耗时降低 7.07%](docs/decoder_norm1_r1024_2026-10-08.md)，35 层精确检查通过；独立自然编译的完整视频 RGB 未过验收门，未进行完整 decode 计时 |
+| 2026-10-08 · INT8 norm1 完整图对照 | 未采用新改动 | [基线 RGB 精确回放及 35 层 W16 参考检查通过](docs/decoder_norm1_causal_2026-10-08.md)；W2 对照因诊断观察器错误中断，完整图归因尚未完成 |
 
 本轮 encoder 地址计算 / BK32 和 FP16 CTA 分组候选均未采用；[原始测量与后续方向](docs/encoder_fp16_followup_2026-10-03.md)。
+Encoder 的 producer/consumer 融合需先复用激活输入块，避免重复归一化；[静态可行性分析](docs/decoder_norm1_causal_2026-10-08.md#encoder-fusion-feasibility)。
 
 早期对比与其他规格：[ComfyUI runtime](docs/h3_spatial_encoder_followup_2026-09-17.md) · [ComfyUI fast](docs/h3_latest_fast_ab_2026-09-18.md) · [同 tile TensorRT](docs/h3_trt_256_same_tile_benchmark_2026-09-18.md) · [368/672 tile 历史基准](docs/h3_same_tile_ab_benchmark_2026-09-16.md)
 
