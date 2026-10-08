@@ -167,6 +167,7 @@ Earlier iterations are collected here; competitor charts show only the current f
 | 2026-10-03 · INT8 batch divergence diagnosis | No new change adopted | [Exact local counterfactual](docs/decoder_batch_diagnosis_2026-10-03.md) traces the first propagated difference to residual/norm1 before QKV; batch 4 retained |
 | 2026-10-03 · INT8 residual/norm1/QKV quantization fusion | No new change adopted | [Prototype saves 1.28%](docs/decoder_norm1_quant_2026-10-03.md) under its recorded norm schedule; final 16-warp baseline fails exact quantization |
 | 2026-10-03 · INT8 norm1 contract follow-up | No new change adopted | [Exact W16 local chain is 4.43% faster](docs/decoder_norm1_contract_2026-10-03.md); complete validation stops at an unvalidated R1024 / two-warp schedule |
+| 2026-10-08 · INT8 norm1 R1024 / two-warp fusion | No new change adopted | [Fixed W2 local chain is 7.07% faster](docs/decoder_norm1_r1024_2026-10-08.md), with 35 exact layer checks; independently compiled full-video RGB fails the acceptance screen, so no full-decode timing |
 
 Further encoder addressing/BK32 and FP16 CTA-group candidates were not adopted; [measurements and remaining directions](docs/encoder_fp16_followup_2026-10-03.md).
 
@@ -375,6 +376,7 @@ ComfyUI wrapper 和 CPU offload/CUDA reload 已验证；精度与性能测试分
 | 2026-10-03 · INT8 batch 差异定位 | 未采用新改动 | [精确局部对照](docs/decoder_batch_diagnosis_2026-10-03.md)定位首个传播差异到 QKV 前的 residual/norm1；保留 batch 4 |
 | 2026-10-03 · INT8 residual/norm1/QKV 量化融合 | 未采用新改动 | [原型在已测 norm 调度下节省 1.28%](docs/decoder_norm1_quant_2026-10-03.md)；最终 16-warps 基线未通过精确量化检查 |
 | 2026-10-03 · INT8 norm1 数值合同跟进 | 未采用新改动 | [W16 精确局部链耗时降低 4.43%](docs/decoder_norm1_contract_2026-10-03.md)；完整验证在尚未验证的 R1024 / 2-warps 调度处停止 |
+| 2026-10-08 · INT8 norm1 R1024 / 2-warps 融合 | 未采用新改动 | [固定 W2 局部链耗时降低 7.07%](docs/decoder_norm1_r1024_2026-10-08.md)，35 层精确检查通过；独立自然编译的完整视频 RGB 未过验收门，未进行完整 decode 计时 |
 
 本轮 encoder 地址计算 / BK32 和 FP16 CTA 分组候选均未采用；[原始测量与后续方向](docs/encoder_fp16_followup_2026-10-03.md)。
 
