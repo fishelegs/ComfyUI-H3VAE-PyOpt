@@ -235,7 +235,10 @@ candidate is therefore a separate RMS-only FP32→FP16 helper with the original
 X2/R2048/W16 arithmetic, continuing through the existing CK QKV path. It first
 needs same-input norm and QKV equality; a residual helper with zero inputs is
 not an equivalent contract. Its natural XBLOCK changed while the final
-LayerNorm tuple did not, but this proposed helper has not run.
+LayerNorm tuple did not in that W16 window. The subsequent
+[independent block0 experiment](decoder_norm1_block0_2026-10-08.md)
+validates same-input norm and CK QKV equality; its remaining first-group RGB
+difference is recorded separately from this earlier full-video result.
 
 Model parameters/buffers and candidate quantized storage identities remain
 unchanged; hooks are restored and both retained source-cache manifests match.
